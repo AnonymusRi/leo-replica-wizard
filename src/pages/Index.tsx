@@ -23,6 +23,7 @@ import { MaintenanceModule } from "@/components/maintenance/MaintenanceModule";
 import { ReportsModule } from "@/components/reports/ReportsModule";
 import { PhonebookModule } from "@/components/phonebook/PhonebookModule";
 import { OwnerBoardModule } from "@/components/owner/OwnerBoardModule";
+import { AircraftModule } from "@/components/aircraft/AircraftModule";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("SCHED");
@@ -31,6 +32,7 @@ const Index = () => {
     { id: "SCHED", label: "SCHED", icon: Calendar },
     { id: "SALES", label: "SALES", icon: Plane },
     { id: "OPS", label: "OPS", icon: Settings },
+    { id: "AIRCRAFT", label: "AIRCRAFT", icon: Plane },
     { id: "CREW", label: "CREW", icon: Users },
     { id: "MX", label: "MX", icon: Wrench },
     { id: "REPORTS", label: "REPORTS", icon: BarChart3 },
@@ -98,6 +100,7 @@ const Index = () => {
         {activeModule === "SCHED" && <ScheduleModule />}
         {activeModule === "SALES" && <SalesModule />}
         {activeModule === "OPS" && <OpsModule />}
+        {activeModule === "AIRCRAFT" && <AircraftModule />}
         {activeModule === "CREW" && <CrewModule />}
         {activeModule === "MX" && <MaintenanceModule />}
         {activeModule === "REPORTS" && <ReportsModule />}
