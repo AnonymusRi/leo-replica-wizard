@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +42,8 @@ export const PilotTimeTableModule = () => {
 
   const { data: crewMembers = [], isLoading: crewLoading } = useCrewMembers();
   const { data: flightHours = [], isLoading: hoursLoading } = usePilotFlightHours(selectedPilot);
+  
+  // Per la vista schedule utilizziamo il nuovo hook senza filtri di data per vedere tutti i turni
   const { data: schedule = [], isLoading: scheduleLoading } = usePilotSchedule(selectedPilot);
   const { data: limits = [], isLoading: limitsLoading } = useFlightTimeLimits();
 

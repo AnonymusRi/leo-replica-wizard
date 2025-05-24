@@ -3,21 +3,28 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { PilotSchedule } from '@/types/crew';
 
-export const usePilotSchedule = (pilotId?: string) => {
+export const usePilotSchedule = (pilotId?: string, dateRange?: { start: string; end: string }) => {
   return useQuery({
-    queryKey: ['pilot_schedule', pilotId],
+    queryKey: ['pilot_schedule', pilotId, dateRange],
     queryFn: async (): Promise<PilotSchedule[]> => {
       let query = supabase.from('pilot_schedule').select('*');
       
       if (pilotId) {
         query = query.eq('pilot_id', pilotId);
       }
+
+      // Aggiungi filtro per intervallo di date se specificato
+      if (dateRange) {
+        query = query
+          .gte('start_date', dateRange.start)
+          .lte('end_date', dateRange.end);
+      }
       
       const { data, error } = await query.order('start_date', { ascending: true });
       
       if (error) {
         console.error('Error fetching pilot schedule:', error);
-        return [];
+        throw error;
       }
       
       return data || [];

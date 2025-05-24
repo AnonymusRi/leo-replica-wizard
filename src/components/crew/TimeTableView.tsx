@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { 
   Calendar, 
   ChevronLeft, 
@@ -19,14 +20,16 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useCrewMembers } from "@/hooks/useCrewMembers";
 import { usePilotSchedule } from "@/hooks/usePilotSchedule";
-import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO } from "date-fns";
+import { format, addWeeks, subWeeks, addMonths, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, addDays, subDays } from "date-fns";
 import { it } from "date-fns/locale";
 import { ScheduleModal } from "./ScheduleModal";
 
 export const TimeTableView = () => {
-  const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedCrew, setSelectedCrew] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"week" | "day">("week");
+  const [viewMode, setViewMode] = useState<"week" | "month" | "custom">("week");
+  const [customStartDate, setCustomStartDate] = useState<string>("");
+  const [customEndDate, setCustomEndDate] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedPilot, setSelectedPilot] = useState<string>("");
@@ -34,7 +37,48 @@ export const TimeTableView = () => {
   const [modalMode, setModalMode] = useState<'create' | 'edit' | 'duplicate'>('create');
 
   const { data: crewMembers = [], isLoading: crewLoading } = useCrewMembers();
-  const { data: schedules = [], isLoading: scheduleLoading } = usePilotSchedule();
+
+  // Calcola range di date basato sulla modalità di visualizzazione
+  const getDateRange = () => {
+    switch (viewMode) {
+      case "week":
+        const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+        const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+        return {
+          start: format(weekStart, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
+          end: format(weekEnd, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        };
+      case "month":
+        const monthStart = startOfMonth(currentDate);
+        const monthEnd = endOfMonth(currentDate);
+        return {
+          start: format(monthStart, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
+          end: format(monthEnd, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        };
+      case "custom":
+        if (customStartDate && customEndDate) {
+          return {
+            start: format(new Date(customStartDate), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
+            end: format(new Date(customEndDate), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+          };
+        }
+        // Fallback a vista settimanale se le date custom non sono valide
+        const fallbackStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+        const fallbackEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+        return {
+          start: format(fallbackStart, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
+          end: format(fallbackEnd, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        };
+      default:
+        return undefined;
+    }
+  };
+
+  const dateRange = getDateRange();
+  const { data: schedules = [], isLoading: scheduleLoading } = usePilotSchedule(
+    selectedCrew === "all" ? undefined : selectedCrew,
+    dateRange
+  );
 
   const pilots = crewMembers.filter(member => 
     member.position === "captain" || member.position === "first_officer"
@@ -44,10 +88,34 @@ export const TimeTableView = () => {
     ? pilots 
     : pilots.filter(pilot => pilot.id === selectedCrew);
 
-  const weekStart = startOfWeek(currentWeek, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(currentWeek, { weekStartsOn: 1 });
-  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
+  // Genera i giorni da visualizzare basati sulla modalità
+  const getDisplayDays = () => {
+    switch (viewMode) {
+      case "week":
+        const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+        const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+        return eachDayOfInterval({ start: weekStart, end: weekEnd });
+      case "month":
+        const monthStart = startOfMonth(currentDate);
+        const monthEnd = endOfMonth(currentDate);
+        return eachDayOfInterval({ start: monthStart, end: monthEnd });
+      case "custom":
+        if (customStartDate && customEndDate) {
+          return eachDayOfInterval({ 
+            start: new Date(customStartDate), 
+            end: new Date(customEndDate) 
+          });
+        }
+        // Fallback a vista settimanale
+        const fallbackStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+        const fallbackEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+        return eachDayOfInterval({ start: fallbackStart, end: fallbackEnd });
+      default:
+        return [];
+    }
+  };
 
+  const displayDays = getDisplayDays();
   const timeSlots = Array.from({ length: 24 }, (_, i) => i);
 
   const getScheduleTypeColor = (type: string) => {
@@ -92,13 +160,41 @@ export const TimeTableView = () => {
     setIsModalOpen(true);
   };
 
-  const navigateWeek = (direction: "prev" | "next") => {
-    setCurrentWeek(prev => direction === "next" ? addWeeks(prev, 1) : subWeeks(prev, 1));
+  const navigateDate = (direction: "prev" | "next") => {
+    if (viewMode === "week") {
+      setCurrentDate(prev => direction === "next" ? addWeeks(prev, 1) : subWeeks(prev, 1));
+    } else if (viewMode === "month") {
+      setCurrentDate(prev => direction === "next" ? addMonths(prev, 1) : subMonths(prev, 1));
+    } else if (viewMode === "custom") {
+      const days = displayDays.length;
+      setCurrentDate(prev => direction === "next" ? addDays(prev, days) : subDays(prev, days));
+    }
+  };
+
+  const getViewTitle = () => {
+    switch (viewMode) {
+      case "week":
+        const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+        return `Settimana del ${format(weekStart, "dd MMMM yyyy", { locale: it })}`;
+      case "month":
+        return `${format(currentDate, "MMMM yyyy", { locale: it })}`;
+      case "custom":
+        if (customStartDate && customEndDate) {
+          return `${format(new Date(customStartDate), "dd MMM", { locale: it })} - ${format(new Date(customEndDate), "dd MMM yyyy", { locale: it })}`;
+        }
+        return "Periodo personalizzato";
+      default:
+        return "";
+    }
   };
 
   if (crewLoading || scheduleLoading) {
     return <div className="flex items-center justify-center h-64">Loading...</div>;
   }
+
+  console.log('Schedules found:', schedules.length);
+  console.log('Selected crew:', selectedCrew);
+  console.log('Date range:', dateRange);
 
   return (
     <div className="space-y-6">
@@ -142,34 +238,83 @@ export const TimeTableView = () => {
         </div>
       </div>
 
-      {/* Week Navigation */}
+      {/* View Mode and Date Navigation */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center">
-              <Calendar className="w-5 h-5 mr-2" />
-              Settimana del {format(weekStart, "dd MMMM yyyy", { locale: it })}
-            </CardTitle>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={() => navigateWeek("prev")}>
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setCurrentWeek(new Date())}>
-                Oggi
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => navigateWeek("next")}>
-                <ChevronRight className="w-4 h-4" />
+            <div className="flex items-center space-x-4">
+              <CardTitle className="flex items-center">
+                <Calendar className="w-5 h-5 mr-2" />
+                {getViewTitle()}
+              </CardTitle>
+              <Select value={viewMode} onValueChange={(value: "week" | "month" | "custom") => setViewMode(value)}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">Vista Settimanale</SelectItem>
+                  <SelectItem value="month">Vista Mensile</SelectItem>
+                  <SelectItem value="custom">Periodo Personalizzato</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {viewMode !== "custom" && (
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm" onClick={() => navigateDate("prev")}>
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>
+                  Oggi
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigateDate("next")}>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Custom Date Range */}
+          {viewMode === "custom" && (
+            <div className="flex items-center space-x-4 mt-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm">Da:</span>
+                <Input
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                  className="w-40"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm">A:</span>
+                <Input
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                  className="w-40"
+                />
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  setCustomStartDate(format(new Date(), "yyyy-MM-dd"));
+                  setCustomEndDate(format(addDays(new Date(), 30), "yyyy-MM-dd"));
+                }}
+              >
+                Prossimi 30 giorni
               </Button>
             </div>
-          </div>
+          )}
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <div className="min-w-[1200px]">
               {/* Header with days */}
-              <div className="grid grid-cols-8 gap-1 mb-2">
+              <div className={`grid gap-1 mb-2`} style={{ gridTemplateColumns: `200px repeat(${displayDays.length}, 1fr)` }}>
                 <div className="p-2 font-medium text-sm">Crew</div>
-                {weekDays.map((day) => (
+                {displayDays.map((day) => (
                   <div key={day.toISOString()} className="p-2 text-center">
                     <div className="font-medium text-sm">
                       {format(day, "EEE", { locale: it })}
@@ -183,7 +328,7 @@ export const TimeTableView = () => {
 
               {/* Crew rows */}
               {filteredCrewMembers.map((pilot) => (
-                <div key={pilot.id} className="grid grid-cols-8 gap-1 mb-2 border-b border-gray-100 pb-2">
+                <div key={pilot.id} className={`grid gap-1 mb-2 border-b border-gray-100 pb-2`} style={{ gridTemplateColumns: `200px repeat(${displayDays.length}, 1fr)` }}>
                   {/* Pilot name */}
                   <div className="p-2 flex items-center">
                     <User className="w-4 h-4 mr-2 text-gray-400" />
@@ -198,7 +343,7 @@ export const TimeTableView = () => {
                   </div>
 
                   {/* Days */}
-                  {weekDays.map((day) => (
+                  {displayDays.map((day) => (
                     <div 
                       key={day.toISOString()} 
                       className="min-h-[80px] border border-gray-200 rounded p-1 cursor-pointer hover:bg-blue-50 transition-colors"
@@ -272,6 +417,14 @@ export const TimeTableView = () => {
                   Nessun pilota selezionato o disponibile
                 </div>
               )}
+
+              {schedules.length === 0 && filteredCrewMembers.length > 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <Clock className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <h3 className="text-lg font-medium mb-2">Nessun turno trovato</h3>
+                  <p className="text-sm">Non ci sono turni programmati per il periodo selezionato</p>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
@@ -302,6 +455,7 @@ export const TimeTableView = () => {
           <div className="mt-4 text-xs text-gray-500 space-y-1">
             <div>💡 Clicca su una cella vuota per creare un nuovo turno</div>
             <div>⚙️ Clicca sui tre puntini su un turno per modificarlo o duplicarlo</div>
+            <div>📅 Usa la vista mensile o personalizzata per periodi più lunghi</div>
           </div>
         </CardContent>
       </Card>
