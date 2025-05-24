@@ -21,12 +21,16 @@ import { QuoteModal } from "./QuoteModal";
 import { ClientsView } from "./ClientsView";
 import { BookingsView } from "./BookingsView";
 import { useQuotes } from "@/hooks/useQuotes";
+import { useClients } from "@/hooks/useClients";
+import { useFlights } from "@/hooks/useFlights";
 import { format } from "date-fns";
 
 export const SalesModule = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showQuoteModal, setShowQuoteModal] = useState(false);
-  const { data: quotes = [], isLoading, error } = useQuotes();
+  const { data: quotes = [], isLoading: quotesLoading, error: quotesError } = useQuotes();
+  const { data: clients = [], isLoading: clientsLoading } = useClients();
+  const { data: flights = [], isLoading: flightsLoading } = useFlights();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -38,7 +42,7 @@ export const SalesModule = () => {
     }
   };
 
-  if (isLoading) {
+  if (quotesLoading || clientsLoading || flightsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-8 h-8 animate-spin" />
@@ -46,18 +50,21 @@ export const SalesModule = () => {
     );
   }
 
-  if (error) {
+  if (quotesError) {
     return (
       <div className="text-center text-red-600 p-8">
-        Errore nel caricamento dei preventivi: {error.message}
+        Errore nel caricamento dei dati: {quotesError.message}
       </div>
     );
   }
 
   // Calculate stats from real data
   const totalQuotes = quotes.length;
+  const totalClients = clients.length;
+  const totalFlights = flights.length;
   const pendingQuotes = quotes.filter(q => q.status === 'pending').length;
   const confirmedQuotes = quotes.filter(q => q.status === 'confirmed').length;
+  const activeFlights = flights.filter(f => f.status === 'active' || f.status === 'scheduled').length;
   const totalRevenue = quotes
     .filter(q => q.status === 'confirmed' && q.total_amount)
     .reduce((sum, q) => sum + (q.total_amount || 0), 0);
@@ -93,7 +100,7 @@ export const SalesModule = () => {
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
-            {/* KPI Cards */}
+            {/* Enhanced KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -102,29 +109,33 @@ export const SalesModule = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{totalQuotes}</div>
-                  <p className="text-xs text-muted-foreground">Preventivi totali</p>
+                  <p className="text-xs text-muted-foreground">
+                    {pendingQuotes} pending, {confirmedQuotes} confirmed
+                  </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pending Quotes</CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Active Clients</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-yellow-600">{pendingQuotes}</div>
-                  <p className="text-xs text-muted-foreground">In attesa di risposta</p>
+                  <div className="text-2xl font-bold">{totalClients}</div>
+                  <p className="text-xs text-muted-foreground">Total registered clients</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Confirmed Quotes</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Active Flights</CardTitle>
+                  <Plane className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-green-600">{confirmedQuotes}</div>
-                  <p className="text-xs text-muted-foreground">Confermati</p>
+                  <div className="text-2xl font-bold text-blue-600">{activeFlights}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {totalFlights} total flights
+                  </p>
                 </CardContent>
               </Card>
 
@@ -135,12 +146,12 @@ export const SalesModule = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">€{totalRevenue.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">Ricavi confermati</p>
+                  <p className="text-xs text-muted-foreground">Confirmed bookings</p>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Recent Quotes Table */}
+            {/* Recent Quotes Table with enhanced data */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Recent Quotes</CardTitle>
@@ -154,6 +165,7 @@ export const SalesModule = () => {
                         <th className="pb-3 font-medium">Client</th>
                         <th className="pb-3 font-medium">Route</th>
                         <th className="pb-3 font-medium">Passengers</th>
+                        <th className="pb-3 font-medium">Aircraft Type</th>
                         <th className="pb-3 font-medium">Value</th>
                         <th className="pb-3 font-medium">Status</th>
                         <th className="pb-3 font-medium">Created</th>
@@ -172,12 +184,19 @@ export const SalesModule = () => {
                             <Users className="w-4 h-4 mr-1 text-gray-400" />
                             {quote.passenger_count}
                           </td>
+                          <td className="py-3">
+                            {quote.aircraft_type ? (
+                              <Badge variant="outline">{quote.aircraft_type}</Badge>
+                            ) : (
+                              <span className="text-gray-400">TBD</span>
+                            )}
+                          </td>
                           <td className="py-3 font-medium">
                             {quote.total_amount ? `€${quote.total_amount.toLocaleString()}` : 'TBD'}
                           </td>
                           <td className="py-3">
-                            <Badge className={getStatusColor(quote.status)}>
-                              {quote.status}
+                            <Badge className={getStatusColor(quote.status || 'pending')}>
+                              {quote.status || 'pending'}
                             </Badge>
                           </td>
                           <td className="py-3 text-gray-500">

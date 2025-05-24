@@ -51,6 +51,51 @@ export type Database = {
         }
         Relationships: []
       }
+      airports: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string
+          elevation: number | null
+          iata_code: string | null
+          icao_code: string
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          elevation?: number | null
+          iata_code?: string | null
+          icao_code: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          elevation?: number | null
+          iata_code?: string | null
+          icao_code?: string
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -141,6 +186,104 @@ export type Database = {
         }
         Relationships: []
       }
+      crew_qualifications: {
+        Row: {
+          aircraft_type: string
+          authority: string | null
+          certificate_number: string | null
+          created_at: string
+          crew_member_id: string | null
+          expiry_date: string | null
+          id: string
+          is_active: boolean
+          issue_date: string
+          qualification_type: string
+          updated_at: string
+        }
+        Insert: {
+          aircraft_type: string
+          authority?: string | null
+          certificate_number?: string | null
+          created_at?: string
+          crew_member_id?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean
+          issue_date: string
+          qualification_type: string
+          updated_at?: string
+        }
+        Update: {
+          aircraft_type?: string
+          authority?: string | null
+          certificate_number?: string | null
+          created_at?: string
+          crew_member_id?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean
+          issue_date?: string
+          qualification_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_qualifications_crew_member_id_fkey"
+            columns: ["crew_member_id"]
+            isOneToOne: false
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flight_assignments: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          created_at: string
+          crew_member_id: string | null
+          flight_id: string | null
+          id: string
+          notes: string | null
+          position: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          created_at?: string
+          crew_member_id?: string | null
+          flight_id?: string | null
+          id?: string
+          notes?: string | null
+          position: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          created_at?: string
+          crew_member_id?: string | null
+          flight_id?: string | null
+          id?: string
+          notes?: string | null
+          position?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flight_assignments_crew_member_id_fkey"
+            columns: ["crew_member_id"]
+            isOneToOne: false
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flight_assignments_flight_id_fkey"
+            columns: ["flight_id"]
+            isOneToOne: false
+            referencedRelation: "flights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flight_crew: {
         Row: {
           created_at: string
@@ -173,6 +316,56 @@ export type Database = {
           },
           {
             foreignKeyName: "flight_crew_flight_id_fkey"
+            columns: ["flight_id"]
+            isOneToOne: false
+            referencedRelation: "flights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flight_legs: {
+        Row: {
+          arrival_airport: string
+          arrival_time: string
+          created_at: string
+          departure_airport: string
+          departure_time: string
+          distance: number | null
+          flight_id: string | null
+          fuel_required: number | null
+          id: string
+          leg_number: number
+          updated_at: string
+        }
+        Insert: {
+          arrival_airport: string
+          arrival_time: string
+          created_at?: string
+          departure_airport: string
+          departure_time: string
+          distance?: number | null
+          flight_id?: string | null
+          fuel_required?: number | null
+          id?: string
+          leg_number: number
+          updated_at?: string
+        }
+        Update: {
+          arrival_airport?: string
+          arrival_time?: string
+          created_at?: string
+          departure_airport?: string
+          departure_time?: string
+          distance?: number | null
+          flight_id?: string | null
+          fuel_required?: number | null
+          id?: string
+          leg_number?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flight_legs_flight_id_fkey"
             columns: ["flight_id"]
             isOneToOne: false
             referencedRelation: "flights"
@@ -342,6 +535,42 @@ export type Database = {
           },
         ]
       }
+      maintenance_types: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_mandatory: boolean
+          name: string
+          required_cycles: number | null
+          required_hours: number | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_mandatory?: boolean
+          name: string
+          required_cycles?: number | null
+          required_hours?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_mandatory?: boolean
+          name?: string
+          required_cycles?: number | null
+          required_hours?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pilot_flight_hours: {
         Row: {
           created_at: string
@@ -431,6 +660,57 @@ export type Database = {
           },
         ]
       }
+      published_schedules: {
+        Row: {
+          created_at: string
+          flight_id: string | null
+          id: string
+          is_commercial: boolean | null
+          is_option: boolean | null
+          published_at: string
+          published_by: string | null
+          schedule_version_id: string | null
+          trip_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          flight_id?: string | null
+          id?: string
+          is_commercial?: boolean | null
+          is_option?: boolean | null
+          published_at?: string
+          published_by?: string | null
+          schedule_version_id?: string | null
+          trip_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          flight_id?: string | null
+          id?: string
+          is_commercial?: boolean | null
+          is_option?: boolean | null
+          published_at?: string
+          published_by?: string | null
+          schedule_version_id?: string | null
+          trip_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "published_schedules_flight_id_fkey"
+            columns: ["flight_id"]
+            isOneToOne: false
+            referencedRelation: "flights"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "published_schedules_schedule_version_id_fkey"
+            columns: ["schedule_version_id"]
+            isOneToOne: false
+            referencedRelation: "schedule_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quotes: {
         Row: {
           aircraft_type: string | null
@@ -486,6 +766,97 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule_changes: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          change_type: string
+          changed_at: string
+          changed_by: string | null
+          flight_id: string | null
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          reason: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          change_type: string
+          changed_at?: string
+          changed_by?: string | null
+          flight_id?: string | null
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          change_type?: string
+          changed_at?: string
+          changed_by?: string | null
+          flight_id?: string | null
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_changes_flight_id_fkey"
+            columns: ["flight_id"]
+            isOneToOne: false
+            referencedRelation: "flights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule_versions: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          version_number: number
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          version_number?: number
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_versions_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"

@@ -1,5 +1,5 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Flight } from '@/types/database';
 
@@ -11,10 +11,10 @@ export const useFlights = () => {
         .from('flights')
         .select(`
           *,
-          aircraft:aircraft_id(tail_number, aircraft_type),
-          client:client_id(company_name, contact_person)
+          aircraft:aircraft(*),
+          client:clients(*)
         `)
-        .order('departure_time', { ascending: true });
+        .order('departure_time', { ascending: false });
       
       if (error) throw error;
       return data as Flight[];
@@ -22,22 +22,45 @@ export const useFlights = () => {
   });
 };
 
-export const useCreateFlight = () => {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (flight: Omit<Flight, 'id' | 'created_at' | 'updated_at'>) => {
+export const useFlightById = (id: string) => {
+  return useQuery({
+    queryKey: ['flight', id],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from('flights')
-        .insert([flight])
-        .select()
+        .select(`
+          *,
+          aircraft:aircraft(*),
+          client:clients(*)
+        `)
+        .eq('id', id)
         .single();
       
       if (error) throw error;
-      return data;
+      return data as Flight;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['flights'] });
-    }
+    enabled: !!id
+  });
+};
+
+export const useFlightsByDateRange = (startDate: string, endDate: string) => {
+  return useQuery({
+    queryKey: ['flights', 'range', startDate, endDate],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('flights')
+        .select(`
+          *,
+          aircraft:aircraft(*),
+          client:clients(*)
+        `)
+        .gte('departure_time', startDate)
+        .lte('departure_time', endDate)
+        .order('departure_time');
+      
+      if (error) throw error;
+      return data as Flight[];
+    },
+    enabled: !!startDate && !!endDate
   });
 };
