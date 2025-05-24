@@ -6,7 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Plane, MapPin, Users } from "lucide-react";
+import { Calendar, Clock, Plane, MapPin, Users, Loader2 } from "lucide-react";
+import { useAircraft } from "@/hooks/useAircraft";
+import { useClients } from "@/hooks/useClients";
+import { useCreateFlight } from "@/hooks/useFlights";
+import { toast } from "sonner";
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -15,29 +19,70 @@ interface ScheduleModalProps {
 
 export const ScheduleModal = ({ isOpen, onClose }: ScheduleModalProps) => {
   const [formData, setFormData] = useState({
-    flightId: "",
-    aircraft: "",
-    departure: "",
-    arrival: "",
-    departureDate: "",
-    departureTime: "",
-    arrivalTime: "",
-    passengers: "",
-    crew: [] as string[],
-    flightType: "charter"
+    flight_number: "",
+    aircraft_id: "",
+    client_id: "",
+    departure_airport: "",
+    arrival_airport: "",
+    departure_date: "",
+    departure_time: "",
+    arrival_time: "",
+    passenger_count: 0,
+    status: "scheduled" as const
   });
 
-  const aircraftOptions = [
-    "N123AB - Citation X",
-    "N456CD - Gulfstream G650",
-    "N789EF - Bombardier Global 7500"
-  ];
+  const { data: aircraft = [], isLoading: aircraftLoading } = useAircraft();
+  const { data: clients = [], isLoading: clientsLoading } = useClients();
+  const createFlightMutation = useCreateFlight();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Schedule created:", formData);
-    onClose();
+    
+    if (!formData.flight_number || !formData.departure_airport || !formData.arrival_airport) {
+      toast.error("Compila tutti i campi obbligatori");
+      return;
+    }
+
+    try {
+      const departureDateTime = new Date(`${formData.departure_date}T${formData.departure_time}`);
+      const arrivalDateTime = new Date(`${formData.departure_date}T${formData.arrival_time}`);
+
+      await createFlightMutation.mutateAsync({
+        flight_number: formData.flight_number,
+        aircraft_id: formData.aircraft_id || null,
+        client_id: formData.client_id || null,
+        departure_airport: formData.departure_airport,
+        arrival_airport: formData.arrival_airport,
+        departure_time: departureDateTime.toISOString(),
+        arrival_time: arrivalDateTime.toISOString(),
+        passenger_count: formData.passenger_count,
+        status: formData.status
+      });
+
+      toast.success("Volo creato con successo!");
+      onClose();
+      
+      // Reset form
+      setFormData({
+        flight_number: "",
+        aircraft_id: "",
+        client_id: "",
+        departure_airport: "",
+        arrival_airport: "",
+        departure_date: "",
+        departure_time: "",
+        arrival_time: "",
+        passenger_count: 0,
+        status: "scheduled"
+      });
+    } catch (error) {
+      console.error("Error creating flight:", error);
+      toast.error("Errore nella creazione del volo");
+    }
   };
+
+  const selectedAircraft = aircraft.find(a => a.id === formData.aircraft_id);
+  const selectedClient = clients.find(c => c.id === formData.client_id);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -52,28 +97,30 @@ export const ScheduleModal = ({ isOpen, onClose }: ScheduleModalProps) => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="flightId">Flight ID</Label>
+              <Label htmlFor="flight_number">Flight Number *</Label>
               <Input
-                id="flightId"
+                id="flight_number"
                 placeholder="FL001"
-                value={formData.flightId}
-                onChange={(e) => setFormData(prev => ({ ...prev, flightId: e.target.value }))}
+                value={formData.flight_number}
+                onChange={(e) => setFormData(prev => ({ ...prev, flight_number: e.target.value }))}
+                required
               />
             </div>
             <div>
-              <Label htmlFor="flightType">Flight Type</Label>
+              <Label htmlFor="status">Flight Status</Label>
               <Select 
-                value={formData.flightType}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, flightType: value }))}
+                value={formData.status}
+                onValueChange={(value: any) => setFormData(prev => ({ ...prev, status: value }))}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="charter">Charter</SelectItem>
-                  <SelectItem value="positioning">Positioning</SelectItem>
-                  <SelectItem value="maintenance">Maintenance</SelectItem>
-                  <SelectItem value="training">Training</SelectItem>
+                  <SelectItem value="scheduled">Scheduled</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                  <SelectItem value="delayed">Delayed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -82,19 +129,40 @@ export const ScheduleModal = ({ isOpen, onClose }: ScheduleModalProps) => {
           <div>
             <Label htmlFor="aircraft">Aircraft</Label>
             <Select 
-              value={formData.aircraft}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, aircraft: value }))}
+              value={formData.aircraft_id}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, aircraft_id: value }))}
+              disabled={aircraftLoading}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select aircraft" />
+                <SelectValue placeholder={aircraftLoading ? "Loading..." : "Select aircraft"} />
               </SelectTrigger>
               <SelectContent>
-                {aircraftOptions.map((aircraft) => (
-                  <SelectItem key={aircraft} value={aircraft}>
+                {aircraft.map((ac) => (
+                  <SelectItem key={ac.id} value={ac.id}>
                     <div className="flex items-center">
                       <Plane className="w-4 h-4 mr-2" />
-                      {aircraft}
+                      {ac.tail_number} - {ac.aircraft_type}
                     </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="client">Client</Label>
+            <Select 
+              value={formData.client_id}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, client_id: value }))}
+              disabled={clientsLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={clientsLoading ? "Loading..." : "Select client"} />
+              </SelectTrigger>
+              <SelectContent>
+                {clients.map((client) => (
+                  <SelectItem key={client.id} value={client.id}>
+                    {client.company_name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -103,63 +171,66 @@ export const ScheduleModal = ({ isOpen, onClose }: ScheduleModalProps) => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="departure">Departure Airport</Label>
+              <Label htmlFor="departure_airport">Departure Airport *</Label>
               <Input
-                id="departure"
-                placeholder="KJFK"
-                value={formData.departure}
-                onChange={(e) => setFormData(prev => ({ ...prev, departure: e.target.value }))}
+                id="departure_airport"
+                placeholder="EGLL"
+                value={formData.departure_airport}
+                onChange={(e) => setFormData(prev => ({ ...prev, departure_airport: e.target.value.toUpperCase() }))}
+                required
               />
             </div>
             <div>
-              <Label htmlFor="arrival">Arrival Airport</Label>
+              <Label htmlFor="arrival_airport">Arrival Airport *</Label>
               <Input
-                id="arrival"
-                placeholder="KLAX"
-                value={formData.arrival}
-                onChange={(e) => setFormData(prev => ({ ...prev, arrival: e.target.value }))}
+                id="arrival_airport"
+                placeholder="KJFK"
+                value={formData.arrival_airport}
+                onChange={(e) => setFormData(prev => ({ ...prev, arrival_airport: e.target.value.toUpperCase() }))}
+                required
               />
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="departureDate">Departure Date</Label>
+              <Label htmlFor="departure_date">Departure Date *</Label>
               <Input
-                id="departureDate"
+                id="departure_date"
                 type="date"
-                value={formData.departureDate}
-                onChange={(e) => setFormData(prev => ({ ...prev, departureDate: e.target.value }))}
+                value={formData.departure_date}
+                onChange={(e) => setFormData(prev => ({ ...prev, departure_date: e.target.value }))}
+                required
               />
             </div>
             <div>
-              <Label htmlFor="departureTime">Departure Time</Label>
+              <Label htmlFor="departure_time">Departure Time</Label>
               <Input
-                id="departureTime"
+                id="departure_time"
                 type="time"
-                value={formData.departureTime}
-                onChange={(e) => setFormData(prev => ({ ...prev, departureTime: e.target.value }))}
+                value={formData.departure_time}
+                onChange={(e) => setFormData(prev => ({ ...prev, departure_time: e.target.value }))}
               />
             </div>
             <div>
-              <Label htmlFor="arrivalTime">Arrival Time</Label>
+              <Label htmlFor="arrival_time">Arrival Time</Label>
               <Input
-                id="arrivalTime"
+                id="arrival_time"
                 type="time"
-                value={formData.arrivalTime}
-                onChange={(e) => setFormData(prev => ({ ...prev, arrivalTime: e.target.value }))}
+                value={formData.arrival_time}
+                onChange={(e) => setFormData(prev => ({ ...prev, arrival_time: e.target.value }))}
               />
             </div>
           </div>
 
           <div>
-            <Label htmlFor="passengers">Number of Passengers</Label>
+            <Label htmlFor="passenger_count">Number of Passengers</Label>
             <Input
-              id="passengers"
+              id="passenger_count"
               type="number"
               placeholder="8"
-              value={formData.passengers}
-              onChange={(e) => setFormData(prev => ({ ...prev, passengers: e.target.value }))}
+              value={formData.passenger_count}
+              onChange={(e) => setFormData(prev => ({ ...prev, passenger_count: parseInt(e.target.value) || 0 }))}
             />
           </div>
 
@@ -173,24 +244,23 @@ export const ScheduleModal = ({ isOpen, onClose }: ScheduleModalProps) => {
                 <div className="flex items-center">
                   <MapPin className="w-4 h-4 mr-2 text-gray-400" />
                   <span className="font-medium">Route:</span>
-                  <span className="ml-2">{formData.departure || "---"} → {formData.arrival || "---"}</span>
+                  <span className="ml-2">{formData.departure_airport || "---"} → {formData.arrival_airport || "---"}</span>
                 </div>
                 <div className="flex items-center">
                   <Plane className="w-4 h-4 mr-2 text-gray-400" />
                   <span className="font-medium">Aircraft:</span>
-                  <span className="ml-2">{formData.aircraft || "Not selected"}</span>
+                  <span className="ml-2">{selectedAircraft?.tail_number || "Not selected"}</span>
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center">
                   <Users className="w-4 h-4 mr-2 text-gray-400" />
                   <span className="font-medium">Passengers:</span>
-                  <span className="ml-2">{formData.passengers || "0"}</span>
+                  <span className="ml-2">{formData.passenger_count}</span>
                 </div>
                 <div className="flex items-center">
-                  <Badge variant="outline" className="ml-6">
-                    {formData.flightType}
-                  </Badge>
+                  <span className="font-medium">Client:</span>
+                  <span className="ml-2">{selectedClient?.company_name || "Not selected"}</span>
                 </div>
               </div>
             </div>
@@ -200,8 +270,19 @@ export const ScheduleModal = ({ isOpen, onClose }: ScheduleModalProps) => {
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-              Create Schedule
+            <Button 
+              type="submit" 
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={createFlightMutation.isPending}
+            >
+              {createFlightMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create Schedule"
+              )}
             </Button>
           </div>
         </form>

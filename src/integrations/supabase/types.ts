@@ -9,7 +9,362 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      aircraft: {
+        Row: {
+          aircraft_type: string
+          created_at: string
+          home_base: string | null
+          id: string
+          manufacturer: string
+          max_passengers: number | null
+          model: string
+          status: Database["public"]["Enums"]["aircraft_status"]
+          tail_number: string
+          updated_at: string
+          year_manufactured: number | null
+        }
+        Insert: {
+          aircraft_type: string
+          created_at?: string
+          home_base?: string | null
+          id?: string
+          manufacturer: string
+          max_passengers?: number | null
+          model: string
+          status?: Database["public"]["Enums"]["aircraft_status"]
+          tail_number: string
+          updated_at?: string
+          year_manufactured?: number | null
+        }
+        Update: {
+          aircraft_type?: string
+          created_at?: string
+          home_base?: string | null
+          id?: string
+          manufacturer?: string
+          max_passengers?: number | null
+          model?: string
+          status?: Database["public"]["Enums"]["aircraft_status"]
+          tail_number?: string
+          updated_at?: string
+          year_manufactured?: number | null
+        }
+        Relationships: []
+      }
+      clients: {
+        Row: {
+          address: string | null
+          city: string | null
+          company_name: string
+          contact_person: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          id: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          company_name: string
+          contact_person?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          company_name?: string
+          contact_person?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      crew_members: {
+        Row: {
+          base_location: string | null
+          created_at: string
+          email: string | null
+          first_name: string
+          id: string
+          is_active: boolean | null
+          last_name: string
+          license_expiry: string | null
+          license_number: string | null
+          medical_expiry: string | null
+          phone: string | null
+          position: Database["public"]["Enums"]["crew_position"]
+          updated_at: string
+        }
+        Insert: {
+          base_location?: string | null
+          created_at?: string
+          email?: string | null
+          first_name: string
+          id?: string
+          is_active?: boolean | null
+          last_name: string
+          license_expiry?: string | null
+          license_number?: string | null
+          medical_expiry?: string | null
+          phone?: string | null
+          position: Database["public"]["Enums"]["crew_position"]
+          updated_at?: string
+        }
+        Update: {
+          base_location?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string
+          id?: string
+          is_active?: boolean | null
+          last_name?: string
+          license_expiry?: string | null
+          license_number?: string | null
+          medical_expiry?: string | null
+          phone?: string | null
+          position?: Database["public"]["Enums"]["crew_position"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      flight_crew: {
+        Row: {
+          created_at: string
+          crew_member_id: string | null
+          flight_id: string | null
+          id: string
+          position: Database["public"]["Enums"]["crew_position"]
+        }
+        Insert: {
+          created_at?: string
+          crew_member_id?: string | null
+          flight_id?: string | null
+          id?: string
+          position: Database["public"]["Enums"]["crew_position"]
+        }
+        Update: {
+          created_at?: string
+          crew_member_id?: string | null
+          flight_id?: string | null
+          id?: string
+          position?: Database["public"]["Enums"]["crew_position"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flight_crew_crew_member_id_fkey"
+            columns: ["crew_member_id"]
+            isOneToOne: false
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flight_crew_flight_id_fkey"
+            columns: ["flight_id"]
+            isOneToOne: false
+            referencedRelation: "flights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flights: {
+        Row: {
+          aircraft_id: string | null
+          arrival_airport: string
+          arrival_time: string
+          client_id: string | null
+          created_at: string
+          departure_airport: string
+          departure_time: string
+          flight_number: string
+          id: string
+          notes: string | null
+          passenger_count: number | null
+          status: Database["public"]["Enums"]["flight_status"]
+          updated_at: string
+        }
+        Insert: {
+          aircraft_id?: string | null
+          arrival_airport: string
+          arrival_time: string
+          client_id?: string | null
+          created_at?: string
+          departure_airport: string
+          departure_time: string
+          flight_number: string
+          id?: string
+          notes?: string | null
+          passenger_count?: number | null
+          status?: Database["public"]["Enums"]["flight_status"]
+          updated_at?: string
+        }
+        Update: {
+          aircraft_id?: string | null
+          arrival_airport?: string
+          arrival_time?: string
+          client_id?: string | null
+          created_at?: string
+          departure_airport?: string
+          departure_time?: string
+          flight_number?: string
+          id?: string
+          notes?: string | null
+          passenger_count?: number | null
+          status?: Database["public"]["Enums"]["flight_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flights_aircraft_id_fkey"
+            columns: ["aircraft_id"]
+            isOneToOne: false
+            referencedRelation: "aircraft"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flights_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_records: {
+        Row: {
+          aircraft_id: string | null
+          completed_date: string | null
+          cost: number | null
+          created_at: string
+          description: string
+          id: string
+          maintenance_type: string
+          notes: string | null
+          scheduled_date: string
+          status: Database["public"]["Enums"]["maintenance_status"]
+          technician_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          aircraft_id?: string | null
+          completed_date?: string | null
+          cost?: number | null
+          created_at?: string
+          description: string
+          id?: string
+          maintenance_type: string
+          notes?: string | null
+          scheduled_date: string
+          status?: Database["public"]["Enums"]["maintenance_status"]
+          technician_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aircraft_id?: string | null
+          completed_date?: string | null
+          cost?: number | null
+          created_at?: string
+          description?: string
+          id?: string
+          maintenance_type?: string
+          notes?: string | null
+          scheduled_date?: string
+          status?: Database["public"]["Enums"]["maintenance_status"]
+          technician_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_records_aircraft_id_fkey"
+            columns: ["aircraft_id"]
+            isOneToOne: false
+            referencedRelation: "aircraft"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_records_technician_id_fkey"
+            columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          aircraft_type: string | null
+          arrival_airport: string
+          client_id: string | null
+          created_at: string
+          departure_airport: string
+          departure_date: string
+          id: string
+          notes: string | null
+          passenger_count: number
+          quote_number: string
+          return_date: string | null
+          status: string | null
+          total_amount: number | null
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          aircraft_type?: string | null
+          arrival_airport: string
+          client_id?: string | null
+          created_at?: string
+          departure_airport: string
+          departure_date: string
+          id?: string
+          notes?: string | null
+          passenger_count: number
+          quote_number: string
+          return_date?: string | null
+          status?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          aircraft_type?: string | null
+          arrival_airport?: string
+          client_id?: string | null
+          created_at?: string
+          departure_airport?: string
+          departure_date?: string
+          id?: string
+          notes?: string | null
+          passenger_count?: number
+          quote_number?: string
+          return_date?: string | null
+          status?: string | null
+          total_amount?: number | null
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +373,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      aircraft_status: "available" | "maintenance" | "aog" | "retired"
+      crew_position: "captain" | "first_officer" | "cabin_crew" | "mechanic"
+      flight_status:
+        | "scheduled"
+        | "active"
+        | "completed"
+        | "cancelled"
+        | "delayed"
+      maintenance_status: "scheduled" | "in_progress" | "completed" | "overdue"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +496,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      aircraft_status: ["available", "maintenance", "aog", "retired"],
+      crew_position: ["captain", "first_officer", "cabin_crew", "mechanic"],
+      flight_status: [
+        "scheduled",
+        "active",
+        "completed",
+        "cancelled",
+        "delayed",
+      ],
+      maintenance_status: ["scheduled", "in_progress", "completed", "overdue"],
+    },
   },
 } as const

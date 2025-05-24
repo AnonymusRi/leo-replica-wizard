@@ -14,64 +14,53 @@ import {
   TrendingUp,
   Clock,
   MapPin,
-  Phone,
-  Mail,
-  FileText
+  FileText,
+  Loader2
 } from "lucide-react";
 import { QuoteModal } from "./QuoteModal";
 import { ClientsView } from "./ClientsView";
 import { BookingsView } from "./BookingsView";
+import { useQuotes } from "@/hooks/useQuotes";
+import { format } from "date-fns";
 
 export const SalesModule = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showQuoteModal, setShowQuoteModal] = useState(false);
-
-  // Mock data per il dashboard
-  const salesStats = {
-    totalQuotes: 47,
-    pendingQuotes: 12,
-    confirmedBookings: 8,
-    revenue: 245000
-  };
-
-  const recentQuotes = [
-    {
-      id: "Q001",
-      client: "Executive Air Charter",
-      route: "EGLL → KJFK",
-      aircraft: "Citation X",
-      status: "Pending",
-      value: 45000,
-      created: "2024-01-15"
-    },
-    {
-      id: "Q002", 
-      client: "Global Business Jets",
-      route: "LFPG → EDDF",
-      aircraft: "Falcon 7X",
-      status: "Confirmed",
-      value: 32000,
-      created: "2024-01-14"
-    },
-    {
-      id: "Q003",
-      client: "Private Airways",
-      route: "EGKK → LSZH",
-      aircraft: "Gulfstream G650",
-      status: "Expired",
-      value: 28000,
-      created: "2024-01-13"
-    }
-  ];
+  const { data: quotes = [], isLoading, error } = useQuotes();
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Confirmed": return "bg-green-100 text-green-800";
-      case "Pending": return "bg-yellow-100 text-yellow-800";
-      case "Expired": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "confirmed": return "bg-green-100 text-green-800";
+      case "pending": return "bg-yellow-100 text-yellow-800";
+      case "expired": return "bg-red-100 text-red-800";
+      case "cancelled": return "bg-gray-100 text-gray-800";
+      default: return "bg-blue-100 text-blue-800";
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-red-600 p-8">
+        Errore nel caricamento dei preventivi: {error.message}
+      </div>
+    );
+  }
+
+  // Calculate stats from real data
+  const totalQuotes = quotes.length;
+  const pendingQuotes = quotes.filter(q => q.status === 'pending').length;
+  const confirmedQuotes = quotes.filter(q => q.status === 'confirmed').length;
+  const totalRevenue = quotes
+    .filter(q => q.status === 'confirmed' && q.total_amount)
+    .reduce((sum, q) => sum + (q.total_amount || 0), 0);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border">
@@ -112,8 +101,8 @@ export const SalesModule = () => {
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{salesStats.totalQuotes}</div>
-                  <p className="text-xs text-muted-foreground">+12% from last month</p>
+                  <div className="text-2xl font-bold">{totalQuotes}</div>
+                  <p className="text-xs text-muted-foreground">Preventivi totali</p>
                 </CardContent>
               </Card>
 
@@ -123,19 +112,19 @@ export const SalesModule = () => {
                   <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-yellow-600">{salesStats.pendingQuotes}</div>
-                  <p className="text-xs text-muted-foreground">Awaiting response</p>
+                  <div className="text-2xl font-bold text-yellow-600">{pendingQuotes}</div>
+                  <p className="text-xs text-muted-foreground">In attesa di risposta</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Confirmed Bookings</CardTitle>
+                  <CardTitle className="text-sm font-medium">Confirmed Quotes</CardTitle>
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-green-600">{salesStats.confirmedBookings}</div>
-                  <p className="text-xs text-muted-foreground">This month</p>
+                  <div className="text-2xl font-bold text-green-600">{confirmedQuotes}</div>
+                  <p className="text-xs text-muted-foreground">Confermati</p>
                 </CardContent>
               </Card>
 
@@ -145,8 +134,8 @@ export const SalesModule = () => {
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${salesStats.revenue.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">+8% from last month</p>
+                  <div className="text-2xl font-bold">€{totalRevenue.toLocaleString()}</div>
+                  <p className="text-xs text-muted-foreground">Ricavi confermati</p>
                 </CardContent>
               </Card>
             </div>
@@ -161,39 +150,48 @@ export const SalesModule = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b text-left">
-                        <th className="pb-3 font-medium">Quote ID</th>
+                        <th className="pb-3 font-medium">Quote Number</th>
                         <th className="pb-3 font-medium">Client</th>
                         <th className="pb-3 font-medium">Route</th>
-                        <th className="pb-3 font-medium">Aircraft</th>
+                        <th className="pb-3 font-medium">Passengers</th>
                         <th className="pb-3 font-medium">Value</th>
                         <th className="pb-3 font-medium">Status</th>
                         <th className="pb-3 font-medium">Created</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {recentQuotes.map((quote) => (
+                      {quotes.slice(0, 10).map((quote) => (
                         <tr key={quote.id} className="border-b hover:bg-gray-50">
-                          <td className="py-3 font-medium text-blue-600">{quote.id}</td>
-                          <td className="py-3">{quote.client}</td>
+                          <td className="py-3 font-medium text-blue-600">{quote.quote_number}</td>
+                          <td className="py-3">{quote.client?.company_name || 'TBD'}</td>
                           <td className="py-3 flex items-center">
                             <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                            {quote.route}
+                            {quote.departure_airport} → {quote.arrival_airport}
                           </td>
                           <td className="py-3 flex items-center">
-                            <Plane className="w-4 h-4 mr-1 text-gray-400" />
-                            {quote.aircraft}
+                            <Users className="w-4 h-4 mr-1 text-gray-400" />
+                            {quote.passenger_count}
                           </td>
-                          <td className="py-3 font-medium">${quote.value.toLocaleString()}</td>
+                          <td className="py-3 font-medium">
+                            {quote.total_amount ? `€${quote.total_amount.toLocaleString()}` : 'TBD'}
+                          </td>
                           <td className="py-3">
                             <Badge className={getStatusColor(quote.status)}>
                               {quote.status}
                             </Badge>
                           </td>
-                          <td className="py-3 text-gray-500">{quote.created}</td>
+                          <td className="py-3 text-gray-500">
+                            {format(new Date(quote.created_at), 'dd/MM/yyyy')}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                  {quotes.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      Nessun preventivo presente
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
