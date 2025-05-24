@@ -13,7 +13,8 @@ import {
   User,
   Globe,
   Clock,
-  Filter
+  Filter,
+  Timer
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SalesModule } from "@/components/sales/SalesModule";
@@ -24,6 +25,7 @@ import { ReportsModule } from "@/components/reports/ReportsModule";
 import { PhonebookModule } from "@/components/phonebook/PhonebookModule";
 import { OwnerBoardModule } from "@/components/owner/OwnerBoardModule";
 import { AircraftModule } from "@/components/aircraft/AircraftModule";
+import { PilotTimeTableModule } from "@/components/crew/PilotTimeTableModule";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("SCHED");
@@ -34,6 +36,7 @@ const Index = () => {
     { id: "OPS", label: "OPS", icon: Settings },
     { id: "AIRCRAFT", label: "AIRCRAFT", icon: Plane },
     { id: "CREW", label: "CREW", icon: Users },
+    { id: "CREW-TIME", label: "CREW TIME", icon: Timer },
     { id: "MX", label: "MX", icon: Wrench },
     { id: "REPORTS", label: "REPORTS", icon: BarChart3 },
     { id: "PHONEBOOK", label: "PHONEBOOK", icon: Phone },
@@ -102,6 +105,7 @@ const Index = () => {
         {activeModule === "OPS" && <OpsModule />}
         {activeModule === "AIRCRAFT" && <AircraftModule />}
         {activeModule === "CREW" && <CrewModule />}
+        {activeModule === "CREW-TIME" && <PilotTimeTableModule />}
         {activeModule === "MX" && <MaintenanceModule />}
         {activeModule === "REPORTS" && <ReportsModule />}
         {activeModule === "PHONEBOOK" && <PhonebookModule />}
