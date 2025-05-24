@@ -8,15 +8,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, MapPin, Users, Clock, Plus, Send, MessageSquare } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, Plus, Send, MessageSquare, CheckSquare, Calculator, Euro, Share } from "lucide-react";
 import { useQuotes } from "@/hooks/useQuotes";
 import { useAirports } from "@/hooks/useAirports";
 import { format } from "date-fns";
+import { SalesChecklistModal } from "./SalesChecklistModal";
+import { AdvancedQuoteModal } from "./AdvancedQuoteModal";
 
 export const QuoteManagement = () => {
   const [selectedQuote, setSelectedQuote] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showChecklistModal, setShowChecklistModal] = useState(false);
+  const [showAdvancedQuoteModal, setShowAdvancedQuoteModal] = useState(false);
   const { data: quotes = [], isLoading } = useQuotes();
   const { data: airports = [] } = useAirports();
 
@@ -40,6 +44,13 @@ export const QuoteManagement = () => {
     return "border-b-4 border-green-500";
   };
 
+  const getPricingMethodBadge = (quote: any) => {
+    if (quote.pricing_method === 'costs_margin') {
+      return <Badge variant="outline" className="text-xs">Costs+Margin</Badge>;
+    }
+    return <Badge variant="outline" className="text-xs">Price+Margin</Badge>;
+  };
+
   const filteredQuotes = quotes.filter(quote => {
     const statusMatch = filterStatus === "all" || quote.status === filterStatus;
     const searchMatch = quote.quote_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -53,15 +64,21 @@ export const QuoteManagement = () => {
     return <div className="flex items-center justify-center h-64">Loading quotes...</div>;
   }
 
+  const selectedQuoteData = quotes.find(q => q.id === selectedQuote);
+
   return (
     <div className="space-y-6">
       {/* Header with filters */}
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Quote Management</h2>
-          <p className="text-gray-600">Manage quotes with marketplace integrations</p>
+          <p className="text-gray-600">Advanced quote management with marketplace integrations</p>
         </div>
         <div className="flex gap-3">
+          <Button onClick={() => setShowAdvancedQuoteModal(true)} className="bg-green-600 hover:bg-green-700">
+            <Calculator className="w-4 h-4 mr-2" />
+            Advanced Quote
+          </Button>
           <Input
             placeholder="Search quotes..."
             value={searchTerm}
@@ -110,6 +127,12 @@ export const QuoteManagement = () => {
                           <Badge className={getStatusColor(quote.status || 'pending')}>
                             {quote.status || 'pending'}
                           </Badge>
+                          {getPricingMethodBadge(quote)}
+                          {quote.marketplace_source !== 'direct' && (
+                            <Badge variant="secondary" className="text-xs">
+                              {quote.marketplace_source}
+                            </Badge>
+                          )}
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4 text-sm">
@@ -133,12 +156,28 @@ export const QuoteManagement = () => {
                             </div>
                           </div>
                         </div>
+
+                        {/* Pricing breakdown preview for costs+margin method */}
+                        {quote.pricing_method === 'costs_margin' && (
+                          <div className="mt-2 text-xs text-gray-500 grid grid-cols-2 gap-1">
+                            {quote.base_cost && <div>Base: €{quote.base_cost.toLocaleString()}</div>}
+                            {quote.fuel_cost && <div>Fuel: €{quote.fuel_cost.toLocaleString()}</div>}
+                            {quote.crew_cost && <div>Crew: €{quote.crew_cost.toLocaleString()}</div>}
+                            {quote.margin_percentage && <div>Margin: {quote.margin_percentage}%</div>}
+                          </div>
+                        )}
                       </div>
                       
                       <div className="text-right">
-                        <div className="font-semibold">
-                          {quote.total_amount ? `€${quote.total_amount.toLocaleString()}` : 'TBD'}
+                        <div className="font-semibold flex items-center">
+                          <Euro className="w-4 h-4 mr-1" />
+                          {quote.total_amount ? `${quote.total_amount.toLocaleString()}` : 'TBD'}
                         </div>
+                        {quote.vat_amount && (
+                          <div className="text-xs text-gray-500">
+                            +VAT €{quote.vat_amount.toLocaleString()}
+                          </div>
+                        )}
                         <div className="text-sm text-gray-500">
                           {format(new Date(quote.created_at), 'dd/MM/yyyy')}
                         </div>
@@ -154,7 +193,10 @@ export const QuoteManagement = () => {
         {/* Quote Details Sidebar */}
         <div className="space-y-4">
           {selectedQuote ? (
-            <QuoteDetailsSidebar quoteId={selectedQuote} />
+            <QuoteDetailsSidebar 
+              quoteId={selectedQuote} 
+              onOpenChecklist={() => setShowChecklistModal(true)}
+            />
           ) : (
             <Card>
               <CardContent className="p-6 text-center text-gray-500">
@@ -165,11 +207,32 @@ export const QuoteManagement = () => {
           )}
         </div>
       </div>
+
+      {/* Modals */}
+      <AdvancedQuoteModal 
+        open={showAdvancedQuoteModal} 
+        onOpenChange={setShowAdvancedQuoteModal} 
+      />
+      
+      {selectedQuoteData && (
+        <SalesChecklistModal
+          open={showChecklistModal}
+          onOpenChange={setShowChecklistModal}
+          quoteId={selectedQuote!}
+          quoteNumber={selectedQuoteData.quote_number}
+        />
+      )}
     </div>
   );
 };
 
-const QuoteDetailsSidebar = ({ quoteId }: { quoteId: string }) => {
+const QuoteDetailsSidebar = ({ 
+  quoteId, 
+  onOpenChecklist 
+}: { 
+  quoteId: string; 
+  onOpenChecklist: () => void;
+}) => {
   const { data: quotes = [] } = useQuotes();
   const quote = quotes.find(q => q.id === quoteId);
 
@@ -220,13 +283,30 @@ const QuoteDetailsSidebar = ({ quoteId }: { quoteId: string }) => {
           </div>
         </div>
 
+        {/* Pricing details for costs+margin */}
+        {quote.pricing_method === 'costs_margin' && (
+          <div className="p-3 bg-gray-50 rounded-lg">
+            <Label className="text-sm font-medium">Cost Breakdown</Label>
+            <div className="text-sm space-y-1 mt-1">
+              {quote.base_cost && <div className="flex justify-between"><span>Base:</span><span>€{quote.base_cost.toLocaleString()}</span></div>}
+              {quote.fuel_cost && <div className="flex justify-between"><span>Fuel:</span><span>€{quote.fuel_cost.toLocaleString()}</span></div>}
+              {quote.crew_cost && <div className="flex justify-between"><span>Crew:</span><span>€{quote.crew_cost.toLocaleString()}</span></div>}
+              {quote.margin_percentage && <div className="flex justify-between"><span>Margin:</span><span>{quote.margin_percentage}%</span></div>}
+            </div>
+          </div>
+        )}
+
         <div className="space-y-2">
+          <Button className="w-full" size="sm" onClick={onOpenChecklist}>
+            <CheckSquare className="w-4 h-4 mr-2" />
+            Sales Checklist
+          </Button>
           <Button className="w-full" size="sm">
             <MessageSquare className="w-4 h-4 mr-2" />
             Send Message
           </Button>
           <Button variant="outline" className="w-full" size="sm">
-            <Send className="w-4 h-4 mr-2" />
+            <Share className="w-4 h-4 mr-2" />
             Share Trip Details
           </Button>
           <Button variant="outline" className="w-full" size="sm">

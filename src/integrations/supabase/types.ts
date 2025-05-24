@@ -51,6 +51,96 @@ export type Database = {
         }
         Relationships: []
       }
+      aircraft_fees: {
+        Row: {
+          aircraft_type: string
+          amount: number
+          calculation_method: string | null
+          created_at: string
+          currency: string
+          fee_name: string
+          fee_type: string
+          id: string
+          notes: string | null
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          aircraft_type: string
+          amount: number
+          calculation_method?: string | null
+          created_at?: string
+          currency?: string
+          fee_name: string
+          fee_type: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          aircraft_type?: string
+          amount?: number
+          calculation_method?: string | null
+          created_at?: string
+          currency?: string
+          fee_name?: string
+          fee_type?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
+      airport_fees: {
+        Row: {
+          aircraft_category: string | null
+          airport_code: string
+          amount: number
+          created_at: string
+          currency: string
+          fee_name: string
+          fee_type: string
+          id: string
+          notes: string | null
+          updated_at: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          aircraft_category?: string | null
+          airport_code: string
+          amount: number
+          created_at?: string
+          currency?: string
+          fee_name: string
+          fee_type: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          aircraft_category?: string | null
+          airport_code?: string
+          amount?: number
+          created_at?: string
+          currency?: string
+          fee_name?: string
+          fee_type?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       airports: {
         Row: {
           city: string | null
@@ -95,6 +185,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      checklist_items: {
+        Row: {
+          checklist_id: string | null
+          created_at: string
+          id: string
+          is_required: boolean
+          item_text: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          checklist_id?: string | null
+          created_at?: string
+          id?: string
+          is_required?: boolean
+          item_text: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          checklist_id?: string | null
+          created_at?: string
+          id?: string
+          is_required?: boolean
+          item_text?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_items_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "sales_checklists"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       clients: {
         Row: {
@@ -236,6 +364,39 @@ export type Database = {
           },
         ]
       }
+      email_templates: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          subject: string
+          template_type: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          subject: string
+          template_type?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          subject?: string
+          template_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       flight_assignments: {
         Row: {
           assigned_at: string
@@ -369,6 +530,51 @@ export type Database = {
             columns: ["flight_id"]
             isOneToOne: false
             referencedRelation: "flights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flight_passengers: {
+        Row: {
+          created_at: string
+          flight_id: string | null
+          id: string
+          is_vip: boolean
+          passenger_id: string | null
+          seat_number: string | null
+          special_requests: string | null
+        }
+        Insert: {
+          created_at?: string
+          flight_id?: string | null
+          id?: string
+          is_vip?: boolean
+          passenger_id?: string | null
+          seat_number?: string | null
+          special_requests?: string | null
+        }
+        Update: {
+          created_at?: string
+          flight_id?: string | null
+          id?: string
+          is_vip?: boolean
+          passenger_id?: string | null
+          seat_number?: string | null
+          special_requests?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flight_passengers_flight_id_fkey"
+            columns: ["flight_id"]
+            isOneToOne: false
+            referencedRelation: "flights"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flight_passengers_passenger_id_fkey"
+            columns: ["passenger_id"]
+            isOneToOne: false
+            referencedRelation: "passengers"
             referencedColumns: ["id"]
           },
         ]
@@ -571,6 +777,110 @@ export type Database = {
         }
         Relationships: []
       }
+      messages: {
+        Row: {
+          avinode_reference: string | null
+          content: string
+          created_at: string
+          id: string
+          is_internal: boolean
+          message_type: string
+          quote_id: string | null
+          recipient_email: string | null
+          recipient_name: string | null
+          sender_email: string | null
+          sender_name: string
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          avinode_reference?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          message_type?: string
+          quote_id?: string | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+          sender_email?: string | null
+          sender_name: string
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          avinode_reference?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean
+          message_type?: string
+          quote_id?: string | null
+          recipient_email?: string | null
+          recipient_name?: string | null
+          sender_email?: string | null
+          sender_name?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      passengers: {
+        Row: {
+          created_at: string
+          date_of_birth: string | null
+          email: string | null
+          first_name: string
+          id: string
+          last_name: string
+          nationality: string | null
+          passport_expiry: string | null
+          passport_number: string | null
+          phone: string | null
+          special_requirements: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          nationality?: string | null
+          passport_expiry?: string | null
+          passport_number?: string | null
+          phone?: string | null
+          special_requirements?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date_of_birth?: string | null
+          email?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          nationality?: string | null
+          passport_expiry?: string | null
+          passport_number?: string | null
+          phone?: string | null
+          special_requirements?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pilot_flight_hours: {
         Row: {
           created_at: string
@@ -711,57 +1021,135 @@ export type Database = {
           },
         ]
       }
+      quote_checklist_progress: {
+        Row: {
+          checklist_item_id: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          is_completed: boolean
+          notes: string | null
+          quote_id: string | null
+        }
+        Insert: {
+          checklist_item_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          notes?: string | null
+          quote_id?: string | null
+        }
+        Update: {
+          checklist_item_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          notes?: string | null
+          quote_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_checklist_progress_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_checklist_progress_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quotes: {
         Row: {
           aircraft_type: string | null
           arrival_airport: string
+          base_cost: number | null
           client_id: string | null
           created_at: string
+          crew_cost: number | null
           departure_airport: string
           departure_date: string
+          fuel_cost: number | null
+          handling_cost: number | null
           id: string
+          margin_percentage: number | null
+          marketplace_source: string | null
           notes: string | null
+          other_costs: number | null
           passenger_count: number
+          pricing_method: string | null
           quote_number: string
           return_date: string | null
           status: string | null
           total_amount: number | null
           updated_at: string
           valid_until: string | null
+          vat_amount: number | null
+          vat_rate: number | null
         }
         Insert: {
           aircraft_type?: string | null
           arrival_airport: string
+          base_cost?: number | null
           client_id?: string | null
           created_at?: string
+          crew_cost?: number | null
           departure_airport: string
           departure_date: string
+          fuel_cost?: number | null
+          handling_cost?: number | null
           id?: string
+          margin_percentage?: number | null
+          marketplace_source?: string | null
           notes?: string | null
+          other_costs?: number | null
           passenger_count: number
+          pricing_method?: string | null
           quote_number: string
           return_date?: string | null
           status?: string | null
           total_amount?: number | null
           updated_at?: string
           valid_until?: string | null
+          vat_amount?: number | null
+          vat_rate?: number | null
         }
         Update: {
           aircraft_type?: string | null
           arrival_airport?: string
+          base_cost?: number | null
           client_id?: string | null
           created_at?: string
+          crew_cost?: number | null
           departure_airport?: string
           departure_date?: string
+          fuel_cost?: number | null
+          handling_cost?: number | null
           id?: string
+          margin_percentage?: number | null
+          marketplace_source?: string | null
           notes?: string | null
+          other_costs?: number | null
           passenger_count?: number
+          pricing_method?: string | null
           quote_number?: string
           return_date?: string | null
           status?: string | null
           total_amount?: number | null
           updated_at?: string
           valid_until?: string | null
+          vat_amount?: number | null
+          vat_rate?: number | null
         }
         Relationships: [
           {
@@ -772,6 +1160,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sales_checklists: {
+        Row: {
+          checklist_type: string
+          created_at: string
+          description: string | null
+          id: string
+          is_default: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          checklist_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          checklist_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sales_documents: {
+        Row: {
+          created_at: string
+          document_type: string
+          id: string
+          is_active: boolean
+          name: string
+          template_content: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_type?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          template_content: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_type?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          template_content?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       schedule_changes: {
         Row: {
@@ -863,6 +1311,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vat_rates: {
+        Row: {
+          country_code: string
+          country_name: string
+          created_at: string
+          id: string
+          is_default: boolean
+          updated_at: string
+          vat_rate: number
+        }
+        Insert: {
+          country_code: string
+          country_name: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          updated_at?: string
+          vat_rate?: number
+        }
+        Update: {
+          country_code?: string
+          country_name?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          updated_at?: string
+          vat_rate?: number
+        }
+        Relationships: []
       }
     }
     Views: {

@@ -28,10 +28,12 @@ import { useQuotes } from "@/hooks/useQuotes";
 import { useClients } from "@/hooks/useClients";
 import { useFlights } from "@/hooks/useFlights";
 import { format } from "date-fns";
+import { AdvancedQuoteModal } from "./AdvancedQuoteModal";
 
 export const SalesModule = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [showAdvancedQuoteModal, setShowAdvancedQuoteModal] = useState(false);
   const [showAirportDirectory, setShowAirportDirectory] = useState(false);
   const [showMessaging, setShowMessaging] = useState(false);
   const { data: quotes = [], isLoading: quotesLoading, error: quotesError } = useQuotes();
@@ -98,7 +100,7 @@ export const SalesModule = () => {
             </Button>
             <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => setShowQuoteModal(true)}>
               <Plus className="w-4 h-4 mr-1" />
-              New Quote
+              Quick Quote
             </Button>
           </div>
         </div>
@@ -319,6 +321,7 @@ export const SalesModule = () => {
 
       {/* Modals */}
       <QuoteModal open={showQuoteModal} onOpenChange={setShowQuoteModal} />
+      <AdvancedQuoteModal open={showAdvancedQuoteModal} onOpenChange={setShowAdvancedQuoteModal} />
       <AirportDirectory open={showAirportDirectory} onOpenChange={setShowAirportDirectory} />
       <MessagingModule open={showMessaging} onOpenChange={setShowMessaging} />
     </div>
