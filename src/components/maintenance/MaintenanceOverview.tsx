@@ -31,7 +31,10 @@ export const MaintenanceOverview = () => {
   const activeHoldItems = holdItems.filter(item => item.status === 'active').length;
   const expiredDocuments = documents.filter(doc => doc.status === 'expired').length;
   const expiringSoonDocuments = documents.filter(doc => doc.status === 'expiring_soon').length;
-  const overdueMaintenances = maintenanceRecords.filter(m => m.status === 'overdue').length;
+  
+  // Filter maintenance records properly
+  const overdueMaintenanceRecords = maintenanceRecords.filter(m => m.status === 'overdue');
+  const overdueMaintenances = overdueMaintenanceRecords.length;
   
   // Recent oil consumption (last 30 days)
   const recentOilRecords = oilRecords.filter(record => {
@@ -184,7 +187,7 @@ export const MaintenanceOverview = () => {
               </div>
             ))}
             
-            {activeHoldItems.slice(0, 2).map((item) => (
+            {holdItems.filter(item => item.status === 'active').slice(0, 2).map((item) => (
               <div key={item.id} className="flex justify-between items-center p-2 bg-yellow-50 rounded">
                 <div>
                   <div className="font-medium text-sm">{item.item_reference}</div>
@@ -196,7 +199,7 @@ export const MaintenanceOverview = () => {
               </div>
             ))}
             
-            {expiringDocuments.length === 0 && activeHoldItems.length === 0 && (
+            {expiringDocuments.length === 0 && holdItems.filter(item => item.status === 'active').length === 0 && (
               <div className="text-center py-4 text-gray-500">
                 <CheckCircle className="w-8 h-8 mx-auto mb-2 text-green-500" />
                 No critical items found
