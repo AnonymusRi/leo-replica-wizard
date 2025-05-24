@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +15,7 @@ import {
   Filter
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SalesModule } from "@/components/sales/SalesModule";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("SCHED");
@@ -131,34 +131,6 @@ const ScheduleModule = () => {
 };
 
 // Sales Module Component
-const SalesModule = () => {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-4 border-b bg-gray-50">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Sales CRM</h2>
-          <div className="flex items-center space-x-2">
-            <Button size="sm" variant="outline">
-              <Filter className="w-4 h-4 mr-1" />
-              FILTER
-            </Button>
-            <Button size="sm" className="bg-green-600 hover:bg-green-700">
-              NEW QUOTE
-            </Button>
-          </div>
-        </div>
-      </div>
-      <div className="p-6">
-        <div className="text-center text-gray-500 py-12">
-          <Plane className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium mb-2">Sales Management</h3>
-          <p className="text-sm">Manage quotes, bookings, and customer relationships</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // OPS Module Component
 const OpsModule = () => {
   return (
