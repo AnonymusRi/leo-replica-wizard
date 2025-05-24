@@ -21,7 +21,8 @@ import {
   CheckCircle,
   XCircle,
   BarChart3,
-  User
+  User,
+  Database
 } from "lucide-react";
 import { useCrewMembers } from "@/hooks/useCrewMembers";
 import { usePilotFlightHours, usePilotSchedule, useFlightTimeLimits } from "@/hooks/usePilotFlightHours";
@@ -44,6 +45,9 @@ export const PilotTimeTableModule = () => {
   );
 
   const selectedPilotData = pilots.find(p => p.id === selectedPilot);
+
+  // Controlla se le tabelle sono state create
+  const tablesNotCreated = flightHours.length === 0 && schedule.length === 0 && limits.length === 0;
 
   // Calcola le ore di volo per periodo
   const calculateFlightHours = (pilotId: string, period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
@@ -75,7 +79,7 @@ export const PilotTimeTableModule = () => {
   const checkFTLCompliance = (pilotId: string) => {
     if (limits.length === 0) return { compliant: true, warnings: [] };
     
-    const regulation = limits[0]; // Usa la prima regolamentazione disponibile
+    const regulation = limits[0];
     const warnings = [];
     
     const dailyHours = calculateFlightHours(pilotId, 'daily');
@@ -122,6 +126,46 @@ export const PilotTimeTableModule = () => {
       default: return <Clock className="w-4 h-4" />;
     }
   };
+
+  // Mostra messaggio se le tabelle non sono state create
+  if (tablesNotCreated) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Pilot Time Table & FTL Management</h1>
+            <p className="text-gray-600">Gestione orari di lavoro, ore di volo e compliance regolamentari</p>
+          </div>
+        </div>
+
+        <Card className="border-orange-200 bg-orange-50">
+          <CardHeader>
+            <CardTitle className="text-orange-800 flex items-center">
+              <Database className="w-5 h-5 mr-2" />
+              Database Setup Richiesto
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-orange-700">
+                Per utilizzare il modulo Pilot Time Table, è necessario prima eseguire l'SQL fornito in precedenza per creare le tabelle richieste nel database Supabase:
+              </p>
+              <ul className="list-disc list-inside text-orange-700 space-y-1">
+                <li><code>pilot_flight_hours</code> - per tracciare le ore di volo</li>
+                <li><code>pilot_schedule</code> - per gestire i turni e il riposo</li>
+                <li><code>flight_time_limits</code> - per i limiti regolamentari FTL</li>
+              </ul>
+              <div className="bg-orange-100 p-3 rounded-lg">
+                <p className="text-sm text-orange-800">
+                  <strong>Prossimo passo:</strong> Esegui il comando SQL fornito nel messaggio precedente nel tuo progetto Supabase per attivare tutte le funzionalità.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
