@@ -541,6 +541,39 @@ export type Database = {
           },
         ]
       }
+      document_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          document_id: string | null
+          document_type: string
+          entity_id: string
+          entity_type: string
+          id: string
+          link_type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          document_id?: string | null
+          document_type: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          link_type?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          document_id?: string | null
+          document_type?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          link_type?: string
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           content: string
@@ -1525,6 +1558,54 @@ export type Database = {
           },
         ]
       }
+      quote_flight_links: {
+        Row: {
+          created_at: string
+          flight_id: string | null
+          id: string
+          linked_at: string
+          linked_by: string | null
+          notes: string | null
+          quote_id: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          flight_id?: string | null
+          id?: string
+          linked_at?: string
+          linked_by?: string | null
+          notes?: string | null
+          quote_id?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          flight_id?: string | null
+          id?: string
+          linked_at?: string
+          linked_by?: string | null
+          notes?: string | null
+          quote_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_flight_links_flight_id_fkey"
+            columns: ["flight_id"]
+            isOneToOne: false
+            referencedRelation: "flights"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_flight_links_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quotes: {
         Row: {
           aircraft_type: string | null
@@ -1804,6 +1885,132 @@ export type Database = {
           },
         ]
       }
+      sync_status: {
+        Row: {
+          created_at: string
+          entity_id: string
+          entity_type: string
+          error_details: string | null
+          id: string
+          last_sync_at: string | null
+          source_module: string
+          sync_data: Json | null
+          sync_status: string
+          target_module: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          error_details?: string | null
+          id?: string
+          last_sync_at?: string | null
+          source_module: string
+          sync_data?: Json | null
+          sync_status?: string
+          target_module: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          error_details?: string | null
+          id?: string
+          last_sync_at?: string | null
+          source_module?: string
+          sync_data?: Json | null
+          sync_status?: string
+          target_module?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      system_notifications: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          expires_at: string | null
+          id: string
+          is_read: boolean
+          message: string
+          module_source: string
+          module_target: string
+          notification_type: string
+          priority: string
+          read_at: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          expires_at?: string | null
+          id?: string
+          is_read?: boolean
+          message: string
+          module_source: string
+          module_target: string
+          notification_type: string
+          priority?: string
+          read_at?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          expires_at?: string | null
+          id?: string
+          is_read?: boolean
+          message?: string
+          module_source?: string
+          module_target?: string
+          notification_type?: string
+          priority?: string
+          read_at?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      user_permissions: {
+        Row: {
+          expires_at: string | null
+          granted_at: string
+          granted_by: string | null
+          id: string
+          is_active: boolean
+          module: string
+          permission_type: string
+          resource_id: string | null
+          user_email: string
+        }
+        Insert: {
+          expires_at?: string | null
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean
+          module: string
+          permission_type: string
+          resource_id?: string | null
+          user_email: string
+        }
+        Update: {
+          expires_at?: string | null
+          granted_at?: string
+          granted_by?: string | null
+          id?: string
+          is_active?: boolean
+          module?: string
+          permission_type?: string
+          resource_id?: string | null
+          user_email?: string
+        }
+        Relationships: []
+      }
       vat_rates: {
         Row: {
           country_code: string
@@ -1831,6 +2038,95 @@ export type Database = {
           is_default?: boolean
           updated_at?: string
           vat_rate?: number
+        }
+        Relationships: []
+      }
+      workflow_executions: {
+        Row: {
+          completed_at: string | null
+          entity_id: string
+          entity_type: string
+          error_message: string | null
+          executed_at: string
+          id: string
+          result: Json | null
+          status: string
+          workflow_rule_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          entity_id: string
+          entity_type: string
+          error_message?: string | null
+          executed_at?: string
+          id?: string
+          result?: Json | null
+          status?: string
+          workflow_rule_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          entity_id?: string
+          entity_type?: string
+          error_message?: string | null
+          executed_at?: string
+          id?: string
+          result?: Json | null
+          status?: string
+          workflow_rule_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_executions_workflow_rule_id_fkey"
+            columns: ["workflow_rule_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_rules: {
+        Row: {
+          conditions: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          parameters: Json | null
+          target_action: string
+          target_module: string
+          trigger_event: string
+          trigger_module: string
+          updated_at: string
+        }
+        Insert: {
+          conditions?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          parameters?: Json | null
+          target_action: string
+          target_module: string
+          trigger_event: string
+          trigger_module: string
+          updated_at?: string
+        }
+        Update: {
+          conditions?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          parameters?: Json | null
+          target_action?: string
+          target_module?: string
+          trigger_event?: string
+          trigger_module?: string
+          updated_at?: string
         }
         Relationships: []
       }

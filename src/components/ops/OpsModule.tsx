@@ -40,6 +40,10 @@ import { AirportDirectoryModal } from "./AirportDirectoryModal";
 import { FlightChecklistModal } from "./FlightChecklistModal";
 import { HandlingRequestModal } from "./HandlingRequestModal";
 import { DocumentGenerationModal } from "./DocumentGenerationModal";
+import { NotificationCenter } from "./NotificationCenter";
+import { useSystemNotifications, useCreateNotification } from "@/hooks/useSystemNotifications";
+import { useWorkflowRules, useExecuteWorkflow } from "@/hooks/useWorkflowRules";
+import { useQuoteFlightLinks, useLinkQuoteToFlight } from "@/hooks/useQuoteFlightLinks";
 
 export const OpsModule = () => {
   const [activeView, setActiveView] = useState("detailed");
@@ -87,9 +91,33 @@ export const OpsModule = () => {
     }
   };
 
+  const createNotification = useCreateNotification();
+  const executeWorkflow = useExecuteWorkflow();
+
   const handleFlightSelect = (flight: any) => {
     setSelectedFlight(flight);
     setIsChecklistModalOpen(true);
+    
+    // Trigger workflow when flight is selected
+    executeWorkflow.mutate({
+      triggerModule: 'ops',
+      triggerEvent: 'flight_selected',
+      entityId: flight.id,
+      entityType: 'flight',
+      data: { flightNumber: flight.flight_number }
+    });
+  };
+
+  // Function to create cross-module notifications
+  const createCrossModuleNotification = (title: string, message: string, targetModule: string, priority: 'low' | 'medium' | 'high' | 'urgent' = 'medium') => {
+    createNotification.mutate({
+      module_source: 'ops',
+      module_target: targetModule,
+      notification_type: 'info',
+      title,
+      message,
+      priority
+    });
   };
 
   if (flightsLoading) {
@@ -115,6 +143,7 @@ export const OpsModule = () => {
           <p className="text-gray-600">Gestione avanzata delle operazioni di volo</p>
         </div>
         <div className="flex items-center space-x-3">
+          <NotificationCenter moduleTarget="ops" />
           <Button 
             variant="outline" 
             size="sm"
@@ -123,7 +152,15 @@ export const OpsModule = () => {
             <MapPin className="w-4 h-4 mr-2" />
             Airport Directory
           </Button>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => createCrossModuleNotification(
+              'Export richiesto',
+              'È stato richiesto un export del programma di volo',
+              'reports'
+            )}
+          >
             <Download className="w-4 h-4 mr-2" />
             Export Schedule
           </Button>
