@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,11 +14,16 @@ import {
   Clock,
   MapPin,
   FileText,
-  Loader2
+  Loader2,
+  MessageSquare,
+  Mail
 } from "lucide-react";
 import { QuoteModal } from "./QuoteModal";
 import { ClientsView } from "./ClientsView";
 import { BookingsView } from "./BookingsView";
+import { QuoteManagement } from "./QuoteManagement";
+import { AirportDirectory } from "./AirportDirectory";
+import { MessagingModule } from "./MessagingModule";
 import { useQuotes } from "@/hooks/useQuotes";
 import { useClients } from "@/hooks/useClients";
 import { useFlights } from "@/hooks/useFlights";
@@ -28,6 +32,8 @@ import { format } from "date-fns";
 export const SalesModule = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [showAirportDirectory, setShowAirportDirectory] = useState(false);
+  const [showMessaging, setShowMessaging] = useState(false);
   const { data: quotes = [], isLoading: quotesLoading, error: quotesError } = useQuotes();
   const { data: clients = [], isLoading: clientsLoading } = useClients();
   const { data: flights = [], isLoading: flightsLoading } = useFlights();
@@ -75,16 +81,24 @@ export const SalesModule = () => {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold flex items-center">
             <DollarSign className="w-5 h-5 mr-2 text-green-600" />
-            Sales CRM
+            Sales CRM - Complete Management System
           </h2>
           <div className="flex items-center space-x-2">
+            <Button size="sm" variant="outline" onClick={() => setShowAirportDirectory(true)}>
+              <MapPin className="w-4 h-4 mr-1" />
+              Airport Directory
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setShowMessaging(true)}>
+              <MessageSquare className="w-4 h-4 mr-1" />
+              Messages
+            </Button>
             <Button size="sm" variant="outline">
               <Filter className="w-4 h-4 mr-1" />
-              FILTER
+              Filter
             </Button>
             <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => setShowQuoteModal(true)}>
               <Plus className="w-4 h-4 mr-1" />
-              NEW QUOTE
+              New Quote
             </Button>
           </div>
         </div>
@@ -92,15 +106,16 @@ export const SalesModule = () => {
 
       <div className="p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="quotes">Quotes</TabsTrigger>
+            <TabsTrigger value="quotes">Quote Management</TabsTrigger>
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
             <TabsTrigger value="clients">Clients</TabsTrigger>
+            <TabsTrigger value="marketplace">Marketplace</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="space-y-6">
-            {/* Enhanced KPI Cards */}
+            {/* Enhanced KPI Cards with Marketplace Integration */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -112,6 +127,10 @@ export const SalesModule = () => {
                   <p className="text-xs text-muted-foreground">
                     {pendingQuotes} pending, {confirmedQuotes} confirmed
                   </p>
+                  <div className="flex gap-1 mt-2">
+                    <Badge variant="outline" className="text-xs">Avinode</Badge>
+                    <Badge variant="outline" className="text-xs">Direct</Badge>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -147,6 +166,33 @@ export const SalesModule = () => {
                 <CardContent>
                   <div className="text-2xl font-bold">€{totalRevenue.toLocaleString()}</div>
                   <p className="text-xs text-muted-foreground">Confirmed bookings</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab("quotes")}>
+                <CardContent className="p-4 text-center">
+                  <FileText className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+                  <h3 className="font-medium">Manage Quotes</h3>
+                  <p className="text-sm text-gray-600">Create and track quotes with multiple pricing methods</p>
+                </CardContent>
+              </Card>
+
+              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowAirportDirectory(true)}>
+                <CardContent className="p-4 text-center">
+                  <MapPin className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                  <h3 className="font-medium">Airport Directory</h3>
+                  <p className="text-sm text-gray-600">Preview airport details and services</p>
+                </CardContent>
+              </Card>
+
+              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowMessaging(true)}>
+                <CardContent className="p-4 text-center">
+                  <MessageSquare className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+                  <h3 className="font-medium">Messages</h3>
+                  <p className="text-sm text-gray-600">Client communication and internal notes</p>
                 </CardContent>
               </Card>
             </div>
@@ -217,15 +263,7 @@ export const SalesModule = () => {
           </TabsContent>
 
           <TabsContent value="quotes">
-            <div className="text-center py-12">
-              <FileText className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium mb-2">Quotes Management</h3>
-              <p className="text-sm text-gray-500 mb-4">Create and manage flight quotes with multiple aircraft options</p>
-              <Button onClick={() => setShowQuoteModal(true)} className="bg-green-600 hover:bg-green-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Create New Quote
-              </Button>
-            </div>
+            <QuoteManagement />
           </TabsContent>
 
           <TabsContent value="bookings">
@@ -235,10 +273,54 @@ export const SalesModule = () => {
           <TabsContent value="clients">
             <ClientsView />
           </TabsContent>
+
+          <TabsContent value="marketplace">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Marketplace Integrations</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-semibold">Avinode Integration</h3>
+                        <Badge className="bg-green-100 text-green-800">Active</Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3">
+                        Connected to Avinode marketplace for quote requests and messaging
+                      </p>
+                      <div className="text-sm">
+                        <p>Recent activity: 12 requests this week</p>
+                        <p>Response rate: 95%</p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 border rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-semibold">Direct Bookings</h3>
+                        <Badge className="bg-blue-100 text-blue-800">Active</Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3">
+                        Direct client bookings and repeat customers
+                      </p>
+                      <div className="text-sm">
+                        <p>This month: 8 direct bookings</p>
+                        <p>Conversion rate: 78%</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
         </Tabs>
       </div>
 
+      {/* Modals */}
       <QuoteModal open={showQuoteModal} onOpenChange={setShowQuoteModal} />
+      <AirportDirectory open={showAirportDirectory} onOpenChange={setShowAirportDirectory} />
+      <MessagingModule open={showMessaging} onOpenChange={setShowMessaging} />
     </div>
   );
 };

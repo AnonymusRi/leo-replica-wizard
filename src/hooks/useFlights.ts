@@ -79,7 +79,7 @@ export const useCreateFlight = () => {
       departure_time: string;
       arrival_time: string;
       passenger_count?: number;
-      status: string;
+      status: 'scheduled' | 'active' | 'completed' | 'cancelled' | 'delayed';
       notes?: string;
     }) => {
       const { data, error } = await supabase
