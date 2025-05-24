@@ -195,10 +195,13 @@ export const PilotTimeModal = ({ isOpen, onClose, pilots }: PilotTimeModalProps)
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="available">Disponibile</SelectItem>
+                    <SelectItem value="duty">Servizio</SelectItem>
                     <SelectItem value="rest">Riposo</SelectItem>
-                    <SelectItem value="trading">Trading</SelectItem>
+                    <SelectItem value="training">Addestramento</SelectItem>
+                    <SelectItem value="available">Disponibile</SelectItem>
                     <SelectItem value="unavailable">Non Disponibile</SelectItem>
+                    <SelectItem value="vacation">Ferie</SelectItem>
+                    <SelectItem value="sick">Malattia</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

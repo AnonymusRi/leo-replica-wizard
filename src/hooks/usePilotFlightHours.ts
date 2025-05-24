@@ -41,27 +41,20 @@ export const usePilotFlightHours = (pilotId?: string) => {
   return useQuery({
     queryKey: ['pilot_flight_hours', pilotId],
     queryFn: async (): Promise<PilotFlightHour[]> => {
-      try {
-        // Use the raw SQL approach to query tables that may not exist in the schema
-        const tableName = 'pilot_flight_hours';
-        let query = supabase.from(tableName as any).select('*');
-        
-        if (pilotId) {
-          query = query.eq('pilot_id', pilotId);
-        }
-        
-        const { data, error } = await query.order('flight_date', { ascending: false });
-        
-        if (error) {
-          console.log('pilot_flight_hours table not yet created, returning empty array');
-          return [];
-        }
-        
-        return (data as unknown as PilotFlightHour[]) || [];
-      } catch (error) {
-        console.log('Tables not yet created, returning empty array');
+      let query = supabase.from('pilot_flight_hours').select('*');
+      
+      if (pilotId) {
+        query = query.eq('pilot_id', pilotId);
+      }
+      
+      const { data, error } = await query.order('flight_date', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching pilot flight hours:', error);
         return [];
       }
+      
+      return data || [];
     }
   });
 };
@@ -70,26 +63,20 @@ export const usePilotSchedule = (pilotId?: string) => {
   return useQuery({
     queryKey: ['pilot_schedule', pilotId],
     queryFn: async (): Promise<PilotSchedule[]> => {
-      try {
-        const tableName = 'pilot_schedule';
-        let query = supabase.from(tableName as any).select('*');
-        
-        if (pilotId) {
-          query = query.eq('pilot_id', pilotId);
-        }
-        
-        const { data, error } = await query.order('start_date', { ascending: true });
-        
-        if (error) {
-          console.log('pilot_schedule table not yet created, returning empty array');
-          return [];
-        }
-        
-        return (data as unknown as PilotSchedule[]) || [];
-      } catch (error) {
-        console.log('Tables not yet created, returning empty array');
+      let query = supabase.from('pilot_schedule').select('*');
+      
+      if (pilotId) {
+        query = query.eq('pilot_id', pilotId);
+      }
+      
+      const { data, error } = await query.order('start_date', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching pilot schedule:', error);
         return [];
       }
+      
+      return data || [];
     }
   });
 };
@@ -98,23 +85,17 @@ export const useFlightTimeLimits = () => {
   return useQuery({
     queryKey: ['flight_time_limits'],
     queryFn: async (): Promise<FlightTimeLimit[]> => {
-      try {
-        const tableName = 'flight_time_limits';
-        const { data, error } = await supabase
-          .from(tableName as any)
-          .select('*')
-          .order('regulation_name');
-        
-        if (error) {
-          console.log('flight_time_limits table not yet created, returning empty array');
-          return [];
-        }
-        
-        return (data as unknown as FlightTimeLimit[]) || [];
-      } catch (error) {
-        console.log('Tables not yet created, returning empty array');
+      const { data, error } = await supabase
+        .from('flight_time_limits')
+        .select('*')
+        .order('regulation_name');
+      
+      if (error) {
+        console.error('Error fetching flight time limits:', error);
         return [];
       }
+      
+      return data || [];
     }
   });
 };
@@ -124,26 +105,20 @@ export const useCreatePilotFlightHour = () => {
   
   return useMutation({
     mutationFn: async (flightHour: Omit<PilotFlightHour, 'id' | 'created_at' | 'updated_at'>) => {
-      try {
-        const tableName = 'pilot_flight_hours';
-        const { data, error } = await supabase
-          .from(tableName as any)
-          .insert([{
-            pilot_id: flightHour.pilot_id,
-            flight_id: flightHour.flight_id || null,
-            flight_date: flightHour.flight_date,
-            flight_hours: flightHour.flight_hours,
-            flight_type: flightHour.flight_type
-          }])
-          .select()
-          .single();
-        
-        if (error) throw error;
-        return data as unknown as PilotFlightHour;
-      } catch (error) {
-        console.error('Error creating pilot flight hour:', error);
-        throw error;
-      }
+      const { data, error } = await supabase
+        .from('pilot_flight_hours')
+        .insert([{
+          pilot_id: flightHour.pilot_id,
+          flight_id: flightHour.flight_id || null,
+          flight_date: flightHour.flight_date,
+          flight_hours: flightHour.flight_hours,
+          flight_type: flightHour.flight_type
+        }])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pilot_flight_hours'] });
@@ -156,26 +131,20 @@ export const useCreatePilotSchedule = () => {
   
   return useMutation({
     mutationFn: async (schedule: Omit<PilotSchedule, 'id' | 'created_at' | 'updated_at'>) => {
-      try {
-        const tableName = 'pilot_schedule';
-        const { data, error } = await supabase
-          .from(tableName as any)
-          .insert([{
-            pilot_id: schedule.pilot_id,
-            start_date: schedule.start_date,
-            end_date: schedule.end_date,
-            schedule_type: schedule.schedule_type,
-            notes: schedule.notes || null
-          }])
-          .select()
-          .single();
-        
-        if (error) throw error;
-        return data as unknown as PilotSchedule;
-      } catch (error) {
-        console.error('Error creating pilot schedule:', error);
-        throw error;
-      }
+      const { data, error } = await supabase
+        .from('pilot_schedule')
+        .insert([{
+          pilot_id: schedule.pilot_id,
+          start_date: schedule.start_date,
+          end_date: schedule.end_date,
+          schedule_type: schedule.schedule_type,
+          notes: schedule.notes || null
+        }])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pilot_schedule'] });

@@ -180,6 +180,45 @@ export type Database = {
           },
         ]
       }
+      flight_time_limits: {
+        Row: {
+          created_at: string
+          daily_limit: number
+          id: string
+          min_rest_between_duties: number
+          min_weekly_rest: number
+          monthly_limit: number
+          regulation_name: string
+          updated_at: string
+          weekly_limit: number
+          yearly_limit: number
+        }
+        Insert: {
+          created_at?: string
+          daily_limit: number
+          id?: string
+          min_rest_between_duties: number
+          min_weekly_rest: number
+          monthly_limit: number
+          regulation_name: string
+          updated_at?: string
+          weekly_limit: number
+          yearly_limit: number
+        }
+        Update: {
+          created_at?: string
+          daily_limit?: number
+          id?: string
+          min_rest_between_duties?: number
+          min_weekly_rest?: number
+          monthly_limit?: number
+          regulation_name?: string
+          updated_at?: string
+          weekly_limit?: number
+          yearly_limit?: number
+        }
+        Relationships: []
+      }
       flights: {
         Row: {
           aircraft_id: string | null
@@ -297,6 +336,95 @@ export type Database = {
           {
             foreignKeyName: "maintenance_records_technician_id_fkey"
             columns: ["technician_id"]
+            isOneToOne: false
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pilot_flight_hours: {
+        Row: {
+          created_at: string
+          flight_date: string
+          flight_hours: number
+          flight_id: string | null
+          flight_type: string
+          id: string
+          pilot_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          flight_date: string
+          flight_hours: number
+          flight_id?: string | null
+          flight_type: string
+          id?: string
+          pilot_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          flight_date?: string
+          flight_hours?: number
+          flight_id?: string | null
+          flight_type?: string
+          id?: string
+          pilot_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pilot_flight_hours_flight_id_fkey"
+            columns: ["flight_id"]
+            isOneToOne: false
+            referencedRelation: "flights"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pilot_flight_hours_pilot_id_fkey"
+            columns: ["pilot_id"]
+            isOneToOne: false
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pilot_schedule: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          notes: string | null
+          pilot_id: string
+          schedule_type: string
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          notes?: string | null
+          pilot_id: string
+          schedule_type: string
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          notes?: string | null
+          pilot_id?: string
+          schedule_type?: string
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pilot_schedule_pilot_id_fkey"
+            columns: ["pilot_id"]
             isOneToOne: false
             referencedRelation: "crew_members"
             referencedColumns: ["id"]

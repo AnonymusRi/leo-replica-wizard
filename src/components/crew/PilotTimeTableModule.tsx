@@ -11,9 +11,7 @@ import {
   Clock, 
   AlertTriangle, 
   Plus, 
-  Filter, 
   Users, 
-  Plane, 
   Timer,
   TrendingUp,
   Moon,
@@ -22,16 +20,18 @@ import {
   XCircle,
   BarChart3,
   User,
-  Database
+  Briefcase,
+  Coffee,
+  GraduationCap,
+  Plane
 } from "lucide-react";
 import { useCrewMembers } from "@/hooks/useCrewMembers";
 import { usePilotFlightHours, usePilotSchedule, useFlightTimeLimits } from "@/hooks/usePilotFlightHours";
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, parseISO, differenceInHours } from "date-fns";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, differenceInHours } from "date-fns";
 import { PilotTimeModal } from "./PilotTimeModal";
 
 export const PilotTimeTableModule = () => {
   const [selectedPilot, setSelectedPilot] = useState("");
-  const [selectedPeriod, setSelectedPeriod] = useState("week");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("schedule");
 
@@ -45,9 +45,6 @@ export const PilotTimeTableModule = () => {
   );
 
   const selectedPilotData = pilots.find(p => p.id === selectedPilot);
-
-  // Controlla se le tabelle sono state create
-  const tablesNotCreated = flightHours.length === 0 && schedule.length === 0 && limits.length === 0;
 
   // Calcola le ore di volo per periodo
   const calculateFlightHours = (pilotId: string, period: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
@@ -109,63 +106,40 @@ export const PilotTimeTableModule = () => {
 
   const getScheduleTypeColor = (type: string) => {
     switch (type) {
+      case "duty": return "bg-blue-100 text-blue-800";
       case "rest": return "bg-green-100 text-green-800";
-      case "trading": return "bg-blue-100 text-blue-800";
+      case "training": return "bg-purple-100 text-purple-800";
       case "available": return "bg-gray-100 text-gray-800";
       case "unavailable": return "bg-red-100 text-red-800";
+      case "vacation": return "bg-yellow-100 text-yellow-800";
+      case "sick": return "bg-orange-100 text-orange-800";
       default: return "bg-gray-100 text-gray-800";
     }
   };
 
   const getScheduleTypeIcon = (type: string) => {
     switch (type) {
+      case "duty": return <Briefcase className="w-4 h-4" />;
       case "rest": return <Moon className="w-4 h-4" />;
-      case "trading": return <Users className="w-4 h-4" />;
+      case "training": return <GraduationCap className="w-4 h-4" />;
       case "available": return <CheckCircle className="w-4 h-4" />;
       case "unavailable": return <XCircle className="w-4 h-4" />;
+      case "vacation": return <Coffee className="w-4 h-4" />;
+      case "sick": return <AlertTriangle className="w-4 h-4" />;
       default: return <Clock className="w-4 h-4" />;
     }
   };
 
-  // Mostra messaggio se le tabelle non sono state create
-  if (tablesNotCreated) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Pilot Time Table & FTL Management</h1>
-            <p className="text-gray-600">Gestione orari di lavoro, ore di volo e compliance regolamentari</p>
-          </div>
-        </div>
-
-        <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
-            <CardTitle className="text-orange-800 flex items-center">
-              <Database className="w-5 h-5 mr-2" />
-              Database Setup Richiesto
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-orange-700">
-                Per utilizzare il modulo Pilot Time Table, è necessario prima eseguire l'SQL fornito in precedenza per creare le tabelle richieste nel database Supabase:
-              </p>
-              <ul className="list-disc list-inside text-orange-700 space-y-1">
-                <li><code>pilot_flight_hours</code> - per tracciare le ore di volo</li>
-                <li><code>pilot_schedule</code> - per gestire i turni e il riposo</li>
-                <li><code>flight_time_limits</code> - per i limiti regolamentari FTL</li>
-              </ul>
-              <div className="bg-orange-100 p-3 rounded-lg">
-                <p className="text-sm text-orange-800">
-                  <strong>Prossimo passo:</strong> Esegui il comando SQL fornito nel messaggio precedente nel tuo progetto Supabase per attivare tutte le funzionalità.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const getFlightTypeIcon = (type: string) => {
+    switch (type) {
+      case "commercial": return <Plane className="w-4 h-4" />;
+      case "training": return <GraduationCap className="w-4 h-4" />;
+      case "ferry": return <Users className="w-4 h-4" />;
+      case "positioning": return <Users className="w-4 h-4" />;
+      case "maintenance": return <AlertTriangle className="w-4 h-4" />;
+      default: return <Plane className="w-4 h-4" />;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -389,7 +363,8 @@ export const PilotTimeTableModule = () => {
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className="capitalize">
-                              {hour.flight_type}
+                              {getFlightTypeIcon(hour.flight_type)}
+                              <span className="ml-1">{hour.flight_type}</span>
                             </Badge>
                           </TableCell>
                           <TableCell>{hour.flight_id || '-'}</TableCell>
@@ -444,10 +419,15 @@ export const PilotTimeTableModule = () => {
                     </div>
                   </div>
                 ))}
+                {limits.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    Nessuna regolamentazione configurata
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            {selectedPilot && (
+            {selectedPilot && limits.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -460,8 +440,6 @@ export const PilotTimeTableModule = () => {
                     const compliance = checkFTLCompliance(selectedPilot);
                     const hours = compliance.hours;
                     const regulation = limits[0];
-                    
-                    if (!regulation) return <div>Nessuna regolamentazione configurata</div>;
                     
                     return (
                       <div className="space-y-4">
