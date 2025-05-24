@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useCrewMembers } from "@/hooks/useCrewMembers";
-import { usePilotSchedule } from "@/hooks/usePilotFlightHours";
+import { usePilotSchedule } from "@/hooks/usePilotSchedule";
 import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
 import { ScheduleModal } from "./ScheduleModal";

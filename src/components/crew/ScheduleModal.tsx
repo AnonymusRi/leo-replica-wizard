@@ -15,7 +15,7 @@ import {
   useCreatePilotSchedule, 
   useUpdatePilotSchedule, 
   useDeletePilotSchedule 
-} from "@/hooks/usePilotFlightHours";
+} from "@/hooks/usePilotSchedule";
 import { CrewMember } from "@/types/database";
 import { Calendar, Copy, Plus, X, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
