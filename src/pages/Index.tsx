@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -127,64 +128,6 @@ const OpsModule = () => {
           <Settings className="w-16 h-16 mx-auto mb-4 text-gray-300" />
           <h3 className="text-lg font-medium mb-2">Operations Management</h3>
           <p className="text-sm">Track flights, manage checklists, and coordinate operations</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Crew Module Component
-const CrewModule = () => {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-4 border-b bg-gray-50">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Crew Management</h2>
-          <div className="flex items-center space-x-2">
-            <Button size="sm" variant="outline">
-              <Filter className="w-4 h-4 mr-1" />
-              FILTER
-            </Button>
-            <Button size="sm" className="bg-green-600 hover:bg-green-700">
-              ADD CREW
-            </Button>
-          </div>
-        </div>
-      </div>
-      <div className="p-6">
-        <div className="text-center text-gray-500 py-12">
-          <Users className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium mb-2">Crew Management</h3>
-          <p className="text-sm">Manage crew schedules, qualifications, and duty rosters</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Maintenance Module Component
-const MaintenanceModule = () => {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-4 border-b bg-gray-50">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Aircraft Maintenance</h2>
-          <div className="flex items-center space-x-2">
-            <Button size="sm" variant="outline">
-              <Filter className="w-4 h-4 mr-1" />
-              FILTER
-            </Button>
-            <Button size="sm" className="bg-green-600 hover:bg-green-700">
-              ADD MAINTENANCE
-            </Button>
-          </div>
-        </div>
-      </div>
-      <div className="p-6">
-        <div className="text-center text-gray-500 py-12">
-          <Wrench className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium mb-2">Maintenance Management</h3>
-          <p className="text-sm">Track aircraft maintenance, AOG status, and compliance</p>
         </div>
       </div>
     </div>
