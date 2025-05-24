@@ -31,9 +31,9 @@ export interface HandlingRequest {
 }
 
 export const useFlightDocuments = (flightId?: string) => {
-  return useQuery({
+  return useQuery<FlightDocument[]>({
     queryKey: ['flight-documents', flightId],
-    queryFn: async () => {
+    queryFn: async (): Promise<FlightDocument[]> => {
       let query = supabase
         .from('sales_documents')
         .select('*')
@@ -48,7 +48,7 @@ export const useFlightDocuments = (flightId?: string) => {
       if (error) throw error;
       
       // Transform the data to match our interface
-      return (data || []).map(doc => ({
+      const transformedData: FlightDocument[] = (data || []).map(doc => ({
         id: doc.id,
         flight_id: flightId,
         document_type: doc.document_type,
@@ -59,17 +59,19 @@ export const useFlightDocuments = (flightId?: string) => {
         is_active: doc.is_active,
         created_at: doc.created_at,
         updated_at: doc.updated_at
-      })) as FlightDocument[];
+      }));
+      
+      return transformedData;
     }
   });
 };
 
 export const useHandlingRequests = (flightId?: string) => {
-  return useQuery({
+  return useQuery<HandlingRequest[]>({
     queryKey: ['handling-requests', flightId],
-    queryFn: async () => {
+    queryFn: async (): Promise<HandlingRequest[]> => {
       // Simulate handling requests data since we don't have the table yet
-      return [] as HandlingRequest[];
+      return [];
     },
     enabled: !!flightId
   });
@@ -83,11 +85,11 @@ export const useGenerateDocument = () => {
       flightId: string;
       documentType: string;
       templateContent: string;
-    }) => {
+    }): Promise<FlightDocument> => {
       // Simulate document generation
       const generatedContent = data.templateContent.replace(/\{\{flight_number\}\}/g, 'FL001');
       
-      return {
+      const newDocument: FlightDocument = {
         id: crypto.randomUUID(),
         flight_id: data.flightId,
         document_type: data.documentType,
@@ -98,7 +100,9 @@ export const useGenerateDocument = () => {
         is_active: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      } as FlightDocument;
+      };
+      
+      return newDocument;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['flight-documents', variables.flightId] });
@@ -120,15 +124,17 @@ export const useSendHandlingRequest = () => {
       service_type: string;
       request_details: string;
       requested_by: string;
-    }) => {
+    }): Promise<HandlingRequest> => {
       // Simulate sending handling request
-      return {
+      const newRequest: HandlingRequest = {
         id: crypto.randomUUID(),
         ...requestData,
-        status: 'sent' as const,
+        status: 'sent',
         requested_at: new Date().toISOString(),
         created_at: new Date().toISOString()
-      } as HandlingRequest;
+      };
+      
+      return newRequest;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['handling-requests', variables.flight_id] });
