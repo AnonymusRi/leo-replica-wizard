@@ -11,17 +11,24 @@ import {
   Clock, 
   User,
   Filter,
-  Plus
+  Plus,
+  Copy,
+  Edit
 } from "lucide-react";
 import { useCrewMembers } from "@/hooks/useCrewMembers";
 import { usePilotSchedule } from "@/hooks/usePilotFlightHours";
 import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
+import { ScheduleModal } from "./ScheduleModal";
 
 export const TimeTableView = () => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedCrew, setSelectedCrew] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"week" | "day">("week");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedPilot, setSelectedPilot] = useState<string>("");
+  const [existingSchedule, setExistingSchedule] = useState<any>(null);
 
   const { data: crewMembers = [], isLoading: crewLoading } = useCrewMembers();
   const { data: schedules = [], isLoading: scheduleLoading } = usePilotSchedule();
@@ -66,6 +73,21 @@ export const TimeTableView = () => {
     });
   };
 
+  const handleCellClick = (pilotId: string, day: Date) => {
+    setSelectedPilot(pilotId);
+    setSelectedDate(day);
+    setExistingSchedule(null);
+    setIsModalOpen(true);
+  };
+
+  const handleScheduleClick = (e: React.MouseEvent, schedule: any) => {
+    e.stopPropagation();
+    setExistingSchedule(schedule);
+    setSelectedPilot(schedule.pilot_id);
+    setSelectedDate(parseISO(schedule.start_date));
+    setIsModalOpen(true);
+  };
+
   const navigateWeek = (direction: "prev" | "next") => {
     setCurrentWeek(prev => direction === "next" ? addWeeks(prev, 1) : subWeeks(prev, 1));
   };
@@ -100,7 +122,15 @@ export const TimeTableView = () => {
             <Filter className="w-4 h-4 mr-2" />
             Filtri
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={() => {
+              setSelectedPilot("");
+              setSelectedDate(new Date());
+              setExistingSchedule(null);
+              setIsModalOpen(true);
+            }}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Nuovo Turno
           </Button>
@@ -164,7 +194,11 @@ export const TimeTableView = () => {
 
                   {/* Days */}
                   {weekDays.map((day) => (
-                    <div key={day.toISOString()} className="min-h-[80px] border border-gray-200 rounded p-1">
+                    <div 
+                      key={day.toISOString()} 
+                      className="min-h-[80px] border border-gray-200 rounded p-1 cursor-pointer hover:bg-blue-50 transition-colors"
+                      onClick={() => handleCellClick(pilot.id, day)}
+                    >
                       <div className="space-y-1">
                         {timeSlots.map((hour) => {
                           const schedule = getScheduleForTimeSlot(pilot.id, day, hour);
@@ -179,13 +213,14 @@ export const TimeTableView = () => {
                           const duration = Math.round((scheduleEnd.getTime() - scheduleStart.getTime()) / (1000 * 60 * 60));
                           
                           return (
-                            <Badge 
+                            <div
                               key={`${schedule.id}-${hour}`}
-                              className={`${getScheduleTypeColor(schedule.schedule_type)} text-xs px-1 py-0.5 block`}
+                              className={`${getScheduleTypeColor(schedule.schedule_type)} text-xs px-1 py-0.5 block rounded cursor-pointer hover:opacity-80 group relative`}
                               style={{ 
                                 height: `${Math.max(16, duration * 4)}px`,
                                 fontSize: '10px'
                               }}
+                              onClick={(e) => handleScheduleClick(e, schedule)}
                             >
                               <div className="truncate">
                                 {schedule.schedule_type}
@@ -193,7 +228,10 @@ export const TimeTableView = () => {
                               <div className="text-[8px] opacity-80">
                                 {format(scheduleStart, "HH:mm")}-{format(scheduleEnd, "HH:mm")}
                               </div>
-                            </Badge>
+                              <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Copy className="w-3 h-3 text-white" />
+                              </div>
+                            </div>
                           );
                         })}
                       </div>
@@ -234,8 +272,20 @@ export const TimeTableView = () => {
               </div>
             ))}
           </div>
+          <div className="mt-4 text-xs text-gray-500">
+            💡 Clicca su una cella vuota per creare un nuovo turno, clicca su un turno esistente per duplicarlo
+          </div>
         </CardContent>
       </Card>
+
+      <ScheduleModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        pilots={pilots}
+        selectedDate={selectedDate}
+        selectedPilot={selectedPilot}
+        existingSchedule={existingSchedule}
+      />
     </div>
   );
 };
