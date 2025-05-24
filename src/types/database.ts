@@ -1,4 +1,3 @@
-
 export interface Aircraft {
   id: string;
   tail_number: string;
@@ -77,7 +76,21 @@ export interface Quote {
   notes?: string;
   created_at: string;
   updated_at: string;
-  client?: Client;
+  // New pricing fields
+  pricing_method?: string;
+  base_cost?: number;
+  margin_percentage?: number;
+  fuel_cost?: number;
+  crew_cost?: number;
+  handling_cost?: number;
+  other_costs?: number;
+  vat_rate?: number;
+  vat_amount?: number;
+  marketplace_source?: string;
+  client?: {
+    company_name: string;
+    contact_person?: string;
+  };
 }
 
 export interface MaintenanceRecord {

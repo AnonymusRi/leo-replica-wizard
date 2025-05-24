@@ -25,7 +25,7 @@ export const useCreateQuote = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (quote: Omit<Quote, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (quote: Omit<Quote, 'id' | 'created_at' | 'updated_at' | 'client'>) => {
       const { data, error } = await supabase
         .from('quotes')
         .insert([quote])
