@@ -135,9 +135,9 @@ export const useHelicopterSimulation = () => {
             flight_date: format(date, 'yyyy-MM-dd'),
             flight_hours: Math.random() * 8 + 1,
             oil_added_liters: Math.random() * 2,
-            oil_level_before: Math.random() * 100 + 50,
-            oil_level_after: Math.random() * 100 + 40,
-            consumption_rate: Math.random() * 0.5 + 0.1,
+            oil_level_before: Math.random() * 50 + 50, // 50-100%
+            oil_level_after: Math.random() * 50 + 40,  // 40-90%
+            consumption_rate: Math.random() * 0.5 + 0.1, // 0.1-0.6 liters/hour (dentro il limite 99.9)
             notes: 'Controllo routine consumo olio',
             recorded_by: 'Meccanico di turno'
           };
