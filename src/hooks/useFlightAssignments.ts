@@ -63,6 +63,32 @@ export const useFlightAssignmentsByCrew = (crewMemberId: string) => {
   });
 };
 
+export const useUpcomingAssignments = (crewMemberId?: string) => {
+  return useQuery({
+    queryKey: ['upcoming-assignments', crewMemberId],
+    queryFn: async () => {
+      let query = supabase
+        .from('flight_assignments')
+        .select(`
+          *,
+          flight:flights(*),
+          crew_member:crew_members(*)
+        `)
+        .gte('flight.departure_time', new Date().toISOString())
+        .order('flight.departure_time');
+        
+      if (crewMemberId) {
+        query = query.eq('crew_member_id', crewMemberId);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      return data as FlightAssignment[];
+    }
+  });
+};
+
 export const useCreateFlightAssignment = () => {
   const queryClient = useQueryClient();
   
@@ -79,6 +105,7 @@ export const useCreateFlightAssignment = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['flight-assignments'] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-assignments'] });
       toast.success('Crew member assigned to flight successfully');
     },
     onError: (error) => {
@@ -104,6 +131,7 @@ export const useUpdateFlightAssignment = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['flight-assignments'] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-assignments'] });
       toast.success('Flight assignment updated successfully');
     },
     onError: (error) => {
@@ -126,6 +154,7 @@ export const useDeleteFlightAssignment = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['flight-assignments'] });
+      queryClient.invalidateQueries({ queryKey: ['upcoming-assignments'] });
       toast.success('Flight assignment removed successfully');
     },
     onError: (error) => {

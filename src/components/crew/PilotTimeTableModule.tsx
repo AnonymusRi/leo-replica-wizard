@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -383,58 +382,182 @@ export const PilotTimeTableModule = () => {
         </TabsContent>
 
         <TabsContent value="compliance" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <AlertTriangle className="w-5 h-5 mr-2" />
-                  Limiti Regolamentari
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {limits.map((limit) => (
-                  <div key={limit.id} className="space-y-3 p-4 border rounded-lg">
-                    <h4 className="font-semibold">{limit.regulation_name}</h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-600">Giornaliero:</span>
-                        <span className="ml-2 font-medium">{limit.daily_limit}h</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">Settimanale:</span>
-                        <span className="ml-2 font-medium">{limit.weekly_limit}h</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">Mensile:</span>
-                        <span className="ml-2 font-medium">{limit.monthly_limit}h</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">Annuale:</span>
-                        <span className="ml-2 font-medium">{limit.yearly_limit}h</span>
-                      </div>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      <div>Riposo minimo tra servizi: {limit.min_rest_between_duties}h</div>
-                      <div>Riposo settimanale minimo: {limit.min_weekly_rest}h</div>
-                    </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <AlertTriangle className="w-5 h-5 mr-2" />
+                Compliance FTL (Flight Time Limitations)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {limits.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <h3 className="text-lg font-medium mb-2">Nessun Limite FTL Configurato</h3>
+                  <p className="text-sm">Configurare i limiti FTL per monitorare la compliance</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* FTL Limits Overview */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {limits.map((limit) => (
+                      <Card key={limit.id} className="border border-gray-200">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-lg">{limit.regulation_name}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <span className="text-gray-600">Limite Giornaliero:</span>
+                              <div className="font-semibold">{limit.daily_limit}h</div>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Limite Settimanale:</span>
+                              <div className="font-semibold">{limit.weekly_limit}h</div>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Limite Mensile:</span>
+                              <div className="font-semibold">{limit.monthly_limit}h</div>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Limite Annuale:</span>
+                              <div className="font-semibold">{limit.yearly_limit}h</div>
+                            </div>
+                          </div>
+                          <div className="border-t pt-3 space-y-2 text-sm">
+                            <div>
+                              <span className="text-gray-600">Riposo min. tra servizi:</span>
+                              <span className="font-semibold ml-2">{limit.min_rest_between_duties}h</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Riposo settimanale min.:</span>
+                              <span className="font-semibold ml-2">{limit.min_weekly_rest}h</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
-                ))}
-                {limits.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    Nessuna regolamentazione configurata
-                  </div>
-                )}
-              </CardContent>
-            </Card>
 
-            {selectedPilot && selectedPilotData && limits.length > 0 && (
-              <FTLComplianceCard
-                pilotName={`${selectedPilotData.first_name} ${selectedPilotData.last_name}`}
-                compliance={checkFTLCompliance(selectedPilot)}
-                limits={limits[0]}
-              />
-            )}
-          </div>
+                  {/* Individual Pilot Compliance */}
+                  {selectedPilot && selectedPilotData && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>
+                          Compliance {selectedPilotData.first_name} {selectedPilotData.last_name}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {(() => {
+                          const compliance = checkFTLCompliance(selectedPilot);
+                          const regulation = limits[0];
+                          
+                          return (
+                            <div className="space-y-4">
+                              <div className="flex items-center space-x-2">
+                                <Badge variant={compliance.compliant ? "default" : "destructive"}>
+                                  {compliance.compliant ? "Conforme" : "Non Conforme"}
+                                </Badge>
+                                {!compliance.compliant && (
+                                  <span className="text-sm text-red-600">
+                                    {compliance.warnings.length} violazione/i rilevata/e
+                                  </span>
+                                )}
+                              </div>
+
+                              {compliance.hours && (
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                  <div className="text-center p-3 border rounded">
+                                    <div className="text-sm text-gray-600 mb-1">Ore Oggi</div>
+                                    <div className={`text-xl font-bold ${compliance.hours.dailyHours > regulation.daily_limit ? 'text-red-600' : 'text-green-600'}`}>
+                                      {compliance.hours.dailyHours.toFixed(1)}h
+                                    </div>
+                                    <div className="text-xs text-gray-500">di {regulation.daily_limit}h</div>
+                                  </div>
+                                  <div className="text-center p-3 border rounded">
+                                    <div className="text-sm text-gray-600 mb-1">Ore Settimana</div>
+                                    <div className={`text-xl font-bold ${compliance.hours.weeklyHours > regulation.weekly_limit ? 'text-red-600' : 'text-green-600'}`}>
+                                      {compliance.hours.weeklyHours.toFixed(1)}h
+                                    </div>
+                                    <div className="text-xs text-gray-500">di {regulation.weekly_limit}h</div>
+                                  </div>
+                                  <div className="text-center p-3 border rounded">
+                                    <div className="text-sm text-gray-600 mb-1">Ore Mese</div>
+                                    <div className={`text-xl font-bold ${compliance.hours.monthlyHours > regulation.monthly_limit ? 'text-red-600' : 'text-green-600'}`}>
+                                      {compliance.hours.monthlyHours.toFixed(1)}h
+                                    </div>
+                                    <div className="text-xs text-gray-500">di {regulation.monthly_limit}h</div>
+                                  </div>
+                                  <div className="text-center p-3 border rounded">
+                                    <div className="text-sm text-gray-600 mb-1">Ore Anno</div>
+                                    <div className={`text-xl font-bold ${compliance.hours.yearlyHours > regulation.yearly_limit ? 'text-red-600' : 'text-green-600'}`}>
+                                      {compliance.hours.yearlyHours.toFixed(1)}h
+                                    </div>
+                                    <div className="text-xs text-gray-500">di {regulation.yearly_limit}h</div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {compliance.warnings.length > 0 && (
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                  <h4 className="font-medium text-red-800 mb-2">Violazioni Rilevate:</h4>
+                                  <ul className="space-y-1">
+                                    {compliance.warnings.map((warning, index) => (
+                                      <li key={index} className="text-sm text-red-700 flex items-center">
+                                        <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" />
+                                        {warning}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* All Pilots Compliance Summary */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Riepilogo Compliance Tutti i Piloti</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {pilots.map((pilot) => {
+                          const compliance = checkFTLCompliance(pilot.id);
+                          return (
+                            <div key={pilot.id} className="flex items-center justify-between p-3 border rounded">
+                              <div className="flex items-center space-x-3">
+                                <User className="w-4 h-4 text-gray-400" />
+                                <span className="font-medium">
+                                  {pilot.first_name} {pilot.last_name}
+                                </span>
+                                <Badge variant="outline" className="text-xs">
+                                  {pilot.position}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Badge variant={compliance.compliant ? "default" : "destructive"}>
+                                  {compliance.compliant ? "Conforme" : "Non Conforme"}
+                                </Badge>
+                                {!compliance.compliant && (
+                                  <span className="text-xs text-red-600">
+                                    {compliance.warnings.length} violazione/i
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="trading" className="space-y-4">
@@ -442,23 +565,22 @@ export const PilotTimeTableModule = () => {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Users className="w-5 h-5 mr-2" />
-                Trading e Scambi Turni
+                Trading Turni Equipaggio
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="text-center py-8 text-gray-500">
-                  <Users className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                  <h3 className="text-lg font-medium mb-2">Sistema Trading</h3>
-                  <p className="text-sm">Funzionalità per scambio turni tra piloti in sviluppo</p>
-                </div>
+              <div className="text-center text-gray-500 py-12">
+                <Users className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-medium mb-2">Trading Turni</h3>
+                <p className="text-sm">Funzionalità per lo scambio turni tra membri dell'equipaggio</p>
+                <p className="text-xs text-gray-400 mt-2">Feature in sviluppo</p>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      <PilotTimeModal 
+      <PilotTimeModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         pilots={pilots}
