@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +27,9 @@ import {
   CalendarDays
 } from "lucide-react";
 import { useCrewMembers } from "@/hooks/useCrewMembers";
-import { usePilotFlightHours, usePilotSchedule, useFlightTimeLimits } from "@/hooks/usePilotFlightHours";
+import { usePilotFlightHours } from "@/hooks/usePilotFlightHours";
+import { usePilotSchedule } from "@/hooks/usePilotSchedule";
+import { useFlightTimeLimits } from "@/hooks/useFlightTimeLimits";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, differenceInHours } from "date-fns";
 import { PilotTimeModal } from "./PilotTimeModal";
 import { TimeTableView } from "./TimeTableView";
