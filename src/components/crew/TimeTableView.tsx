@@ -13,8 +13,10 @@ import {
   Filter,
   Plus,
   Copy,
-  Edit
+  Edit,
+  MoreHorizontal
 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useCrewMembers } from "@/hooks/useCrewMembers";
 import { usePilotSchedule } from "@/hooks/usePilotFlightHours";
 import { format, addWeeks, subWeeks, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO } from "date-fns";
@@ -29,6 +31,7 @@ export const TimeTableView = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedPilot, setSelectedPilot] = useState<string>("");
   const [existingSchedule, setExistingSchedule] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'duplicate'>('create');
 
   const { data: crewMembers = [], isLoading: crewLoading } = useCrewMembers();
   const { data: schedules = [], isLoading: scheduleLoading } = usePilotSchedule();
@@ -77,14 +80,15 @@ export const TimeTableView = () => {
     setSelectedPilot(pilotId);
     setSelectedDate(day);
     setExistingSchedule(null);
+    setModalMode('create');
     setIsModalOpen(true);
   };
 
-  const handleScheduleClick = (e: React.MouseEvent, schedule: any) => {
-    e.stopPropagation();
+  const handleScheduleAction = (action: 'edit' | 'duplicate', schedule: any) => {
     setExistingSchedule(schedule);
     setSelectedPilot(schedule.pilot_id);
     setSelectedDate(parseISO(schedule.start_date));
+    setModalMode(action);
     setIsModalOpen(true);
   };
 
@@ -128,6 +132,7 @@ export const TimeTableView = () => {
               setSelectedPilot("");
               setSelectedDate(new Date());
               setExistingSchedule(null);
+              setModalMode('create');
               setIsModalOpen(true);
             }}
           >
@@ -220,7 +225,7 @@ export const TimeTableView = () => {
                                 height: `${Math.max(16, duration * 4)}px`,
                                 fontSize: '10px'
                               }}
-                              onClick={(e) => handleScheduleClick(e, schedule)}
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <div className="truncate">
                                 {schedule.schedule_type}
@@ -228,8 +233,30 @@ export const TimeTableView = () => {
                               <div className="text-[8px] opacity-80">
                                 {format(scheduleStart, "HH:mm")}-{format(scheduleEnd, "HH:mm")}
                               </div>
+                              
+                              {/* Action buttons */}
                               <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Copy className="w-3 h-3 text-white" />
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      className="h-4 w-4 p-0 text-white hover:bg-white/20"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <MoreHorizontal className="w-3 h-3" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => handleScheduleAction('edit', schedule)}>
+                                      <Edit className="w-3 h-3 mr-2" />
+                                      Modifica
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleScheduleAction('duplicate', schedule)}>
+                                      <Copy className="w-3 h-3 mr-2" />
+                                      Duplica
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </div>
                             </div>
                           );
@@ -272,8 +299,9 @@ export const TimeTableView = () => {
               </div>
             ))}
           </div>
-          <div className="mt-4 text-xs text-gray-500">
-            💡 Clicca su una cella vuota per creare un nuovo turno, clicca su un turno esistente per duplicarlo
+          <div className="mt-4 text-xs text-gray-500 space-y-1">
+            <div>💡 Clicca su una cella vuota per creare un nuovo turno</div>
+            <div>⚙️ Clicca sui tre puntini su un turno per modificarlo o duplicarlo</div>
           </div>
         </CardContent>
       </Card>
@@ -285,6 +313,7 @@ export const TimeTableView = () => {
         selectedDate={selectedDate}
         selectedPilot={selectedPilot}
         existingSchedule={existingSchedule}
+        mode={modalMode}
       />
     </div>
   );

@@ -151,3 +151,93 @@ export const useCreatePilotSchedule = () => {
     }
   });
 };
+
+export const useUpdatePilotSchedule = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...schedule }: Partial<PilotSchedule> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('pilot_schedule')
+        .update({
+          pilot_id: schedule.pilot_id,
+          start_date: schedule.start_date,
+          end_date: schedule.end_date,
+          schedule_type: schedule.schedule_type,
+          notes: schedule.notes || null
+        })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pilot_schedule'] });
+    }
+  });
+};
+
+export const useDeletePilotSchedule = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('pilot_schedule')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pilot_schedule'] });
+    }
+  });
+};
+
+export const useUpdatePilotFlightHour = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...flightHour }: Partial<PilotFlightHour> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('pilot_flight_hours')
+        .update({
+          pilot_id: flightHour.pilot_id,
+          flight_id: flightHour.flight_id || null,
+          flight_date: flightHour.flight_date,
+          flight_hours: flightHour.flight_hours,
+          flight_type: flightHour.flight_type
+        })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pilot_flight_hours'] });
+    }
+  });
+};
+
+export const useDeletePilotFlightHour = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('pilot_flight_hours')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pilot_flight_hours'] });
+    }
+  });
+};

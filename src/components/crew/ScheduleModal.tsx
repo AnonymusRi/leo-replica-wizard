@@ -11,9 +11,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format, addDays } from "date-fns";
-import { useCreatePilotSchedule } from "@/hooks/usePilotFlightHours";
+import { 
+  useCreatePilotSchedule, 
+  useUpdatePilotSchedule, 
+  useDeletePilotSchedule 
+} from "@/hooks/usePilotFlightHours";
 import { CrewMember } from "@/types/database";
-import { Calendar, Copy, Plus, X } from "lucide-react";
+import { Calendar, Copy, Plus, X, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const scheduleSchema = z.object({
@@ -31,6 +35,7 @@ interface ScheduleModalProps {
   selectedDate?: Date;
   selectedPilot?: string;
   existingSchedule?: any;
+  mode?: 'create' | 'edit' | 'duplicate';
 }
 
 export const ScheduleModal = ({ 
@@ -39,13 +44,15 @@ export const ScheduleModal = ({
   pilots, 
   selectedDate, 
   selectedPilot,
-  existingSchedule 
+  existingSchedule,
+  mode = 'create'
 }: ScheduleModalProps) => {
   const [selectedDates, setSelectedDates] = useState<Date[]>(selectedDate ? [selectedDate] : []);
-  const [isDuplicateMode, setIsDuplicateMode] = useState(false);
   const { toast } = useToast();
   
   const createScheduleMutation = useCreatePilotSchedule();
+  const updateScheduleMutation = useUpdatePilotSchedule();
+  const deleteScheduleMutation = useDeletePilotSchedule();
 
   const form = useForm({
     resolver: zodResolver(scheduleSchema),
@@ -79,43 +86,103 @@ export const ScheduleModal = ({
     setSelectedDates(selectedDates.filter((_, index) => index !== indexToRemove));
   };
 
+  const handleDelete = async () => {
+    if (!existingSchedule?.id) return;
+    
+    try {
+      await deleteScheduleMutation.mutateAsync(existingSchedule.id);
+      toast({
+        title: "Turno eliminato",
+        description: "Il turno è stato eliminato con successo"
+      });
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Errore",
+        description: "Errore durante l'eliminazione del turno",
+        variant: "destructive"
+      });
+    }
+  };
+
   const onSubmit = async (data: any) => {
     try {
-      const promises = selectedDates.map(date => {
-        const startDateTime = new Date(date);
+      if (mode === 'edit' && existingSchedule?.id) {
+        // Modifica turno esistente
+        const startDateTime = new Date(selectedDate || existingSchedule.start_date);
         const [startHour, startMinute] = data.start_time.split(':');
         startDateTime.setHours(parseInt(startHour), parseInt(startMinute), 0);
 
-        const endDateTime = new Date(date);
+        const endDateTime = new Date(selectedDate || existingSchedule.start_date);
         const [endHour, endMinute] = data.end_time.split(':');
         endDateTime.setHours(parseInt(endHour), parseInt(endMinute), 0);
 
-        return createScheduleMutation.mutateAsync({
+        await updateScheduleMutation.mutateAsync({
+          id: existingSchedule.id,
           pilot_id: data.pilot_id,
           start_date: startDateTime.toISOString(),
           end_date: endDateTime.toISOString(),
           schedule_type: data.schedule_type,
           notes: data.notes
         });
-      });
 
-      await Promise.all(promises);
-      
-      toast({
-        title: "Turno creato",
-        description: `${selectedDates.length} turno/i creato/i con successo`
-      });
+        toast({
+          title: "Turno aggiornato",
+          description: "Il turno è stato aggiornato con successo"
+        });
+      } else {
+        // Crea nuovi turni (creazione o duplicazione)
+        const promises = selectedDates.map(date => {
+          const startDateTime = new Date(date);
+          const [startHour, startMinute] = data.start_time.split(':');
+          startDateTime.setHours(parseInt(startHour), parseInt(startMinute), 0);
+
+          const endDateTime = new Date(date);
+          const [endHour, endMinute] = data.end_time.split(':');
+          endDateTime.setHours(parseInt(endHour), parseInt(endMinute), 0);
+
+          return createScheduleMutation.mutateAsync({
+            pilot_id: data.pilot_id,
+            start_date: startDateTime.toISOString(),
+            end_date: endDateTime.toISOString(),
+            schedule_type: data.schedule_type,
+            notes: data.notes
+          });
+        });
+
+        await Promise.all(promises);
+        
+        toast({
+          title: mode === 'duplicate' ? "Turno duplicato" : "Turno creato",
+          description: `${selectedDates.length} turno/i ${mode === 'duplicate' ? 'duplicato/i' : 'creato/i'} con successo`
+        });
+      }
       
       onClose();
       form.reset();
       setSelectedDates(selectedDate ? [selectedDate] : []);
-      setIsDuplicateMode(false);
     } catch (error) {
       toast({
         title: "Errore",
-        description: "Errore durante la creazione del turno",
+        description: `Errore durante ${mode === 'edit' ? 'l\'aggiornamento' : 'la creazione'} del turno`,
         variant: "destructive"
       });
+    }
+  };
+
+  const getModalTitle = () => {
+    switch (mode) {
+      case 'edit': return 'Modifica Turno';
+      case 'duplicate': return 'Duplica Turno';
+      default: return 'Nuovo Turno';
+    }
+  };
+
+  const getModalIcon = () => {
+    switch (mode) {
+      case 'edit': return <Edit className="w-5 h-5 mr-2" />;
+      case 'duplicate': return <Copy className="w-5 h-5 mr-2" />;
+      default: return <Plus className="w-5 h-5 mr-2" />;
     }
   };
 
@@ -124,17 +191,8 @@ export const ScheduleModal = ({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center">
-            {existingSchedule ? (
-              <>
-                <Copy className="w-5 h-5 mr-2" />
-                Duplica Turno
-              </>
-            ) : (
-              <>
-                <Plus className="w-5 h-5 mr-2" />
-                Nuovo Turno
-              </>
-            )}
+            {getModalIcon()}
+            {getModalTitle()}
           </DialogTitle>
         </DialogHeader>
 
@@ -223,40 +281,42 @@ export const ScheduleModal = ({
               />
             </div>
 
-            {/* Date Duplication Section */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Date Selezionate</label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addDateForDuplication}
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Aggiungi Giorno
-                </Button>
-              </div>
-              
-              <div className="flex flex-wrap gap-2">
-                {selectedDates.map((date, index) => (
-                  <Badge
-                    key={index}
+            {/* Date Duplication Section - Solo per creazione e duplicazione */}
+            {mode !== 'edit' && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Date Selezionate</label>
+                  <Button
+                    type="button"
                     variant="outline"
-                    className="flex items-center gap-1"
+                    size="sm"
+                    onClick={addDateForDuplication}
                   >
-                    <Calendar className="w-3 h-3" />
-                    {format(date, "dd/MM")}
-                    {selectedDates.length > 1 && (
-                      <X
-                        className="w-3 h-3 cursor-pointer hover:text-red-500"
-                        onClick={() => removeDateFromDuplication(index)}
-                      />
-                    )}
-                  </Badge>
-                ))}
+                    <Plus className="w-4 h-4 mr-1" />
+                    Aggiungi Giorno
+                  </Button>
+                </div>
+                
+                <div className="flex flex-wrap gap-2">
+                  {selectedDates.map((date, index) => (
+                    <Badge
+                      key={index}
+                      variant="outline"
+                      className="flex items-center gap-1"
+                    >
+                      <Calendar className="w-3 h-3" />
+                      {format(date, "dd/MM")}
+                      {selectedDates.length > 1 && (
+                        <X
+                          className="w-3 h-3 cursor-pointer hover:text-red-500"
+                          onClick={() => removeDateFromDuplication(index)}
+                        />
+                      )}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <FormField
               control={form.control}
@@ -276,17 +336,36 @@ export const ScheduleModal = ({
               )}
             />
 
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Annulla
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={createScheduleMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {createScheduleMutation.isPending ? "Salvando..." : "Salva Turno"}
-              </Button>
+            <div className="flex justify-between items-center pt-4">
+              {/* Pulsante Elimina - Solo per modalità edit */}
+              {mode === 'edit' && (
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={deleteScheduleMutation.isPending}
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  {deleteScheduleMutation.isPending ? "Eliminando..." : "Elimina"}
+                </Button>
+              )}
+              
+              <div className="flex space-x-2 ml-auto">
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Annulla
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={createScheduleMutation.isPending || updateScheduleMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {createScheduleMutation.isPending || updateScheduleMutation.isPending ? 
+                    "Salvando..." : 
+                    mode === 'edit' ? "Aggiorna" : "Salva"
+                  }
+                </Button>
+              </div>
             </div>
           </form>
         </Form>
