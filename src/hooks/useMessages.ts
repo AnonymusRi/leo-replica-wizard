@@ -64,3 +64,28 @@ export const useCreateMessage = () => {
     }
   });
 };
+
+export const useUpdateMessage = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...message }: Partial<Message> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('messages')
+        .update(message)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+      toast.success('Message updated successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to update message: ' + error.message);
+    }
+  });
+};

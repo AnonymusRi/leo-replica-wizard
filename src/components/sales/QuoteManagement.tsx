@@ -1,19 +1,19 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, MapPin, Users, Clock, Plus, Send, MessageSquare, CheckSquare, Calculator, Euro, Share } from "lucide-react";
-import { useQuotes } from "@/hooks/useQuotes";
+import { Calendar, MapPin, Users, Clock, Plus, Send, MessageSquare, CheckSquare, Calculator, Euro, Share, Edit, Trash2 } from "lucide-react";
+import { useQuotes, useUpdateQuote, useDeleteQuote } from "@/hooks/useQuotes";
 import { useAirports } from "@/hooks/useAirports";
 import { format } from "date-fns";
 import { SalesChecklistModal } from "./SalesChecklistModal";
 import { AdvancedQuoteModal } from "./AdvancedQuoteModal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
 export const QuoteManagement = () => {
   const [selectedQuote, setSelectedQuote] = useState<string | null>(null);
@@ -21,8 +21,13 @@ export const QuoteManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showChecklistModal, setShowChecklistModal] = useState(false);
   const [showAdvancedQuoteModal, setShowAdvancedQuoteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  
   const { data: quotes = [], isLoading } = useQuotes();
   const { data: airports = [] } = useAirports();
+  const updateQuote = useUpdateQuote();
+  const deleteQuote = useDeleteQuote();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -49,6 +54,27 @@ export const QuoteManagement = () => {
       return <Badge variant="outline" className="text-xs">Costs+Margin</Badge>;
     }
     return <Badge variant="outline" className="text-xs">Price+Margin</Badge>;
+  };
+
+  const handleUpdateQuoteStatus = async (quoteId: string, newStatus: string) => {
+    try {
+      await updateQuote.mutateAsync({ id: quoteId, status: newStatus });
+      toast.success('Quote status updated successfully');
+    } catch (error) {
+      console.error('Error updating quote status:', error);
+    }
+  };
+
+  const handleDeleteQuote = async (quoteId: string) => {
+    if (window.confirm('Are you sure you want to delete this quote?')) {
+      try {
+        await deleteQuote.mutateAsync(quoteId);
+        setSelectedQuote(null);
+        toast.success('Quote deleted successfully');
+      } catch (error) {
+        console.error('Error deleting quote:', error);
+      }
+    }
   };
 
   const filteredQuotes = quotes.filter(quote => {
@@ -120,6 +146,7 @@ export const QuoteManagement = () => {
                     } ${getTimeFrameUnderlining(quote.departure_date)}`}
                     onClick={() => setSelectedQuote(quote.id)}
                   >
+                    
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
@@ -196,6 +223,10 @@ export const QuoteManagement = () => {
             <QuoteDetailsSidebar 
               quoteId={selectedQuote} 
               onOpenChecklist={() => setShowChecklistModal(true)}
+              onEdit={() => setShowEditModal(true)}
+              onMessage={() => setShowMessageModal(true)}
+              onDelete={() => handleDeleteQuote(selectedQuote)}
+              onStatusChange={handleUpdateQuoteStatus}
             />
           ) : (
             <Card>
@@ -228,10 +259,18 @@ export const QuoteManagement = () => {
 
 const QuoteDetailsSidebar = ({ 
   quoteId, 
-  onOpenChecklist 
+  onOpenChecklist,
+  onEdit,
+  onMessage,
+  onDelete,
+  onStatusChange
 }: { 
   quoteId: string; 
   onOpenChecklist: () => void;
+  onEdit: () => void;
+  onMessage: () => void;
+  onDelete: () => void;
+  onStatusChange: (quoteId: string, status: string) => void;
 }) => {
   const { data: quotes = [] } = useQuotes();
   const quote = quotes.find(q => q.id === quoteId);
@@ -243,12 +282,18 @@ const QuoteDetailsSidebar = ({
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>Quote Details</span>
-          <Badge className={quote.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
-            {quote.status}
-          </Badge>
+          <div className="flex items-center space-x-2">
+            <Badge className={quote.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+              {quote.status}
+            </Badge>
+            <Button variant="ghost" size="sm" onClick={() => onDelete()}>
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        
         <div>
           <Label className="text-sm font-medium">Quote Number</Label>
           <p className="text-lg font-semibold text-blue-600">{quote.quote_number}</p>
@@ -265,6 +310,21 @@ const QuoteDetailsSidebar = ({
         <div>
           <Label className="text-sm font-medium">Client</Label>
           <p>{quote.client?.company_name || 'TBD'}</p>
+        </div>
+
+        <div>
+          <Label className="text-sm font-medium">Status</Label>
+          <Select value={quote.status || 'pending'} onValueChange={(value) => onStatusChange(quoteId, value)}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -301,7 +361,7 @@ const QuoteDetailsSidebar = ({
             <CheckSquare className="w-4 h-4 mr-2" />
             Sales Checklist
           </Button>
-          <Button className="w-full" size="sm">
+          <Button className="w-full" size="sm" onClick={onMessage}>
             <MessageSquare className="w-4 h-4 mr-2" />
             Send Message
           </Button>
@@ -309,7 +369,8 @@ const QuoteDetailsSidebar = ({
             <Share className="w-4 h-4 mr-2" />
             Share Trip Details
           </Button>
-          <Button variant="outline" className="w-full" size="sm">
+          <Button variant="outline" className="w-full" size="sm" onClick={onEdit}>
+            <Edit className="w-4 h-4 mr-2" />
             Edit Quote
           </Button>
         </div>

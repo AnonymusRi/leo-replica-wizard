@@ -16,12 +16,14 @@ import {
   FileText,
   Loader2,
   MessageSquare,
-  Mail
+  Mail,
+  Globe
 } from "lucide-react";
 import { QuoteModal } from "./QuoteModal";
 import { ClientsView } from "./ClientsView";
 import { BookingsView } from "./BookingsView";
 import { QuoteManagement } from "./QuoteManagement";
+import { MarketplaceView } from "./MarketplaceView";
 import { AirportDirectory } from "./AirportDirectory";
 import { MessagingModule } from "./MessagingModule";
 import { useQuotes } from "@/hooks/useQuotes";
@@ -61,7 +63,7 @@ export const SalesModule = () => {
   if (quotesError) {
     return (
       <div className="text-center text-red-600 p-8">
-        Errore nel caricamento dei dati: {quotesError.message}
+        Error loading data: {quotesError.message}
       </div>
     );
   }
@@ -173,12 +175,20 @@ export const SalesModule = () => {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab("quotes")}>
                 <CardContent className="p-4 text-center">
                   <FileText className="w-8 h-8 mx-auto mb-2 text-blue-600" />
                   <h3 className="font-medium">Manage Quotes</h3>
                   <p className="text-sm text-gray-600">Create and track quotes with multiple pricing methods</p>
+                </CardContent>
+              </Card>
+
+              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab("marketplace")}>
+                <CardContent className="p-4 text-center">
+                  <Globe className="w-8 h-8 mx-auto mb-2 text-green-600" />
+                  <h3 className="font-medium">Marketplace</h3>
+                  <p className="text-sm text-gray-600">Avinode integration and direct bookings</p>
                 </CardContent>
               </Card>
 
@@ -256,7 +266,7 @@ export const SalesModule = () => {
                   </table>
                   {quotes.length === 0 && (
                     <div className="text-center py-8 text-gray-500">
-                      Nessun preventivo presente
+                      No quotes available
                     </div>
                   )}
                 </div>
@@ -277,44 +287,7 @@ export const SalesModule = () => {
           </TabsContent>
 
           <TabsContent value="marketplace">
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Marketplace Integrations</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 border rounded-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold">Avinode Integration</h3>
-                        <Badge className="bg-green-100 text-green-800">Active</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">
-                        Connected to Avinode marketplace for quote requests and messaging
-                      </p>
-                      <div className="text-sm">
-                        <p>Recent activity: 12 requests this week</p>
-                        <p>Response rate: 95%</p>
-                      </div>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold">Direct Bookings</h3>
-                        <Badge className="bg-blue-100 text-blue-800">Active</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">
-                        Direct client bookings and repeat customers
-                      </p>
-                      <div className="text-sm">
-                        <p>This month: 8 direct bookings</p>
-                        <p>Conversion rate: 78%</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <MarketplaceView />
           </TabsContent>
         </Tabs>
       </div>

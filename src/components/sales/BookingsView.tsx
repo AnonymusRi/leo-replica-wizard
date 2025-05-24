@@ -1,318 +1,305 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Calendar, 
-  Clock, 
   MapPin, 
-  Plane, 
   Users, 
-  DollarSign,
-  Filter,
-  Grid3X3,
-  List,
-  ChevronLeft,
-  ChevronRight
+  Plane, 
+  Search,
+  Euro,
+  Clock,
+  Filter
 } from "lucide-react";
+import { useQuotes } from "@/hooks/useQuotes";
+import { useFlights } from "@/hooks/useFlights";
+import { format } from "date-fns";
 
 export const BookingsView = () => {
-  const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
-  const [currentDate, setCurrentDate] = useState(new Date());
-
-  const bookings = [
-    {
-      id: "B001",
-      client: "Executive Air Charter",
-      aircraft: "Citation X",
-      route: "EGLL → KJFK",
-      departure: "2024-01-20T08:00:00",
-      arrival: "2024-01-20T16:30:00",
-      passengers: 8,
-      status: "Confirmed",
-      value: 45000,
-      crew: "Capt. Smith, FO Johnson"
-    },
-    {
-      id: "B002", 
-      client: "Global Business Jets",
-      aircraft: "Falcon 7X",
-      route: "LFPG → EDDF",
-      departure: "2024-01-22T14:00:00",
-      arrival: "2024-01-22T15:30:00",
-      passengers: 12,
-      status: "Confirmed",
-      value: 32000,
-      crew: "Capt. Brown, FO Wilson"
-    },
-    {
-      id: "B003",
-      client: "Private Airways",
-      aircraft: "Gulfstream G650",
-      route: "EGKK → LSZH",
-      departure: "2024-01-25T10:30:00",
-      arrival: "2024-01-25T12:00:00",
-      passengers: 14,
-      status: "Pending",
-      value: 28000,
-      crew: "TBD"
-    }
-  ];
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const { data: quotes = [], isLoading: quotesLoading } = useQuotes();
+  const { data: flights = [], isLoading: flightsLoading } = useFlights();
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Confirmed": return "bg-green-100 text-green-800";
-      case "Pending": return "bg-yellow-100 text-yellow-800";
-      case "Cancelled": return "bg-red-100 text-red-800";
+      case "confirmed": return "bg-green-100 text-green-800";
+      case "pending": return "bg-yellow-100 text-yellow-800";
+      case "expired": return "bg-red-100 text-red-800";
+      case "cancelled": return "bg-gray-100 text-gray-800";
+      default: return "bg-blue-100 text-blue-800";
+    }
+  };
+
+  const getFlightStatusColor = (status: string) => {
+    switch (status) {
+      case "completed": return "bg-green-100 text-green-800";
+      case "active": return "bg-blue-100 text-blue-800";
+      case "scheduled": return "bg-yellow-100 text-yellow-800";
+      case "cancelled": return "bg-red-100 text-red-800";
+      case "delayed": return "bg-orange-100 text-orange-800";
       default: return "bg-gray-100 text-gray-800";
     }
   };
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const confirmedQuotes = quotes.filter(quote => quote.status === 'confirmed');
+  const totalRevenue = confirmedQuotes.reduce((sum, quote) => sum + (quote.total_amount || 0), 0);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  // Generate calendar days for current month
-  const generateCalendarDays = () => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay());
+  const filteredQuotes = confirmedQuotes.filter(quote => {
+    const matchesSearch = quote.quote_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         quote.client?.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         quote.departure_airport.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         quote.arrival_airport.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const days = [];
-    const currentDay = new Date(startDate);
-    
-    for (let i = 0; i < 42; i++) {
-      days.push(new Date(currentDay));
-      currentDay.setDate(currentDay.getDate() + 1);
-    }
-    
-    return days;
-  };
+    if (statusFilter === "all") return matchesSearch;
+    return matchesSearch && quote.status === statusFilter;
+  });
 
-  const getBookingsForDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return bookings.filter(booking => 
-      booking.departure.startsWith(dateStr)
-    );
-  };
-
-  const calendarDays = generateCalendarDays();
-  const monthNames = ["January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"];
+  if (quotesLoading || flightsLoading) {
+    return <div className="flex items-center justify-center h-64">Loading bookings...</div>;
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <h3 className="text-lg font-semibold">Bookings & Schedule</h3>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant={viewMode === "calendar" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("calendar")}
-            >
-              <Grid3X3 className="w-4 h-4 mr-1" />
-              Calendar
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setViewMode("list")}
-            >
-              <List className="w-4 h-4 mr-1" />
-              List
-            </Button>
-          </div>
+      {/* Header and Filters */}
+      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Bookings Management</h2>
+          <p className="text-gray-600">Confirmed quotes and flight operations</p>
         </div>
-        <Button size="sm" variant="outline">
-          <Filter className="w-4 h-4 mr-1" />
-          Filter
-        </Button>
+        <div className="flex gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search bookings..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-64"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Filter status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "calendar" | "list")}>
-        <TabsContent value="calendar">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center">
-                  <Calendar className="w-5 h-5 mr-2" />
-                  {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-                </CardTitle>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1))}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentDate(new Date())}
-                  >
-                    Today
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1))}
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Confirmed Bookings</p>
+                <p className="text-2xl font-bold">{confirmedQuotes.length}</p>
+              </div>
+              <Calendar className="w-8 h-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Active Flights</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {flights.filter(f => f.status === 'active' || f.status === 'scheduled').length}
+                </p>
+              </div>
+              <Plane className="w-8 h-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Revenue</p>
+                <p className="text-2xl font-bold text-green-600">
+                  €{totalRevenue.toLocaleString()}
+                </p>
+              </div>
+              <Euro className="w-8 h-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Avg. Booking Value</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  €{confirmedQuotes.length > 0 ? Math.round(totalRevenue / confirmedQuotes.length).toLocaleString() : '0'}
+                </p>
+              </div>
+              <Euro className="w-8 h-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Bookings List */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>Confirmed Bookings</span>
+            <Badge variant="outline">{filteredQuotes.length} bookings</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {filteredQuotes.map((quote) => (
+              <div
+                key={quote.id}
+                className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="font-semibold text-blue-600">{quote.quote_number}</span>
+                      <Badge className={getStatusColor(quote.status || 'confirmed')}>
+                        {quote.status || 'confirmed'}
+                      </Badge>
+                      {quote.marketplace_source !== 'direct' && (
+                        <Badge variant="secondary" className="text-xs">
+                          {quote.marketplace_source}
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <div className="flex items-center text-gray-600 mb-1">
+                          <MapPin className="w-4 h-4 mr-1" />
+                          Route
+                        </div>
+                        <div className="font-medium">
+                          {quote.departure_airport} → {quote.arrival_airport}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <div className="flex items-center text-gray-600 mb-1">
+                          <Calendar className="w-4 h-4 mr-1" />
+                          Departure
+                        </div>
+                        <div className="font-medium">
+                          {format(new Date(quote.departure_date), 'dd/MM/yyyy')}
+                        </div>
+                        {quote.return_date && (
+                          <div className="text-xs text-gray-500">
+                            Return: {format(new Date(quote.return_date), 'dd/MM/yyyy')}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <div className="flex items-center text-gray-600 mb-1">
+                          <Users className="w-4 h-4 mr-1" />
+                          Passengers
+                        </div>
+                        <div className="font-medium">{quote.passenger_count}</div>
+                        {quote.aircraft_type && (
+                          <div className="text-xs text-gray-500">{quote.aircraft_type}</div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="mt-3 flex items-center justify-between">
+                      <div>
+                        <span className="text-sm text-gray-600">Client: </span>
+                        <span className="font-medium">{quote.client?.company_name || 'TBD'}</span>
+                      </div>
+                      
+                      <div className="text-right">
+                        <div className="font-semibold text-lg flex items-center">
+                          <Euro className="w-4 h-4 mr-1" />
+                          {quote.total_amount ? quote.total_amount.toLocaleString() : 'TBD'}
+                        </div>
+                        {quote.vat_amount && (
+                          <div className="text-xs text-gray-500">
+                            +VAT €{quote.vat_amount.toLocaleString()}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {quote.notes && (
+                      <div className="mt-3 p-2 bg-gray-50 rounded text-sm">
+                        <span className="font-medium">Notes: </span>
+                        {quote.notes}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-7 gap-1">
-                {/* Day headers */}
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                  <div key={day} className="p-2 text-center text-sm font-medium text-gray-500">
-                    {day}
-                  </div>
-                ))}
-                
-                {/* Calendar days */}
-                {calendarDays.map((day, index) => {
-                  const dayBookings = getBookingsForDate(day);
-                  const isCurrentMonth = day.getMonth() === currentDate.getMonth();
-                  const isToday = day.toDateString() === new Date().toDateString();
-                  
-                  return (
-                    <div
-                      key={index}
-                      className={`p-2 min-h-[100px] border rounded-lg ${
-                        isCurrentMonth ? 'bg-white' : 'bg-gray-50'
-                      } ${isToday ? 'ring-2 ring-blue-500' : ''}`}
-                    >
-                      <div className={`text-sm ${isCurrentMonth ? 'text-gray-900' : 'text-gray-400'} ${isToday ? 'font-bold' : ''}`}>
-                        {day.getDate()}
-                      </div>
-                      <div className="space-y-1 mt-1">
-                        {dayBookings.map(booking => (
-                          <div
-                            key={booking.id}
-                            className="text-xs p-1 rounded bg-blue-100 text-blue-800 truncate"
-                            title={`${booking.client} - ${booking.route}`}
-                          >
-                            {formatTime(booking.departure)} {booking.aircraft}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="list">
-          <div className="space-y-4">
-            {bookings.map((booking) => (
-              <Card key={booking.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-3 flex-1">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <h3 className="font-semibold text-lg">{booking.client}</h3>
-                          <Badge className={getStatusColor(booking.status)}>
-                            {booking.status}
-                          </Badge>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-gray-500">Booking ID</p>
-                          <p className="font-medium">{booking.id}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="flex items-center space-x-2">
-                          <Plane className="w-4 h-4 text-blue-600" />
-                          <div>
-                            <p className="text-sm text-gray-500">Aircraft</p>
-                            <p className="font-medium">{booking.aircraft}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <MapPin className="w-4 h-4 text-green-600" />
-                          <div>
-                            <p className="text-sm text-gray-500">Route</p>
-                            <p className="font-medium">{booking.route}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <Users className="w-4 h-4 text-purple-600" />
-                          <div>
-                            <p className="text-sm text-gray-500">Passengers</p>
-                            <p className="font-medium">{booking.passengers}</p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="flex items-center space-x-2">
-                          <Clock className="w-4 h-4 text-orange-600" />
-                          <div>
-                            <p className="text-sm text-gray-500">Departure</p>
-                            <p className="font-medium">
-                              {formatDate(booking.departure)} {formatTime(booking.departure)}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <Clock className="w-4 h-4 text-red-600" />
-                          <div>
-                            <p className="text-sm text-gray-500">Arrival</p>
-                            <p className="font-medium">
-                              {formatDate(booking.arrival)} {formatTime(booking.arrival)}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <DollarSign className="w-4 h-4 text-green-600" />
-                          <div>
-                            <p className="text-sm text-gray-500">Value</p>
-                            <p className="font-medium text-green-600">
-                              ${booking.value.toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="pt-2 border-t">
-                        <p className="text-sm text-gray-500">Crew: {booking.crew}</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             ))}
           </div>
-        </TabsContent>
-      </Tabs>
+          
+          {filteredQuotes.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>No confirmed bookings found</p>
+              {searchTerm && <p className="text-sm">Try adjusting your search criteria</p>}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Recent Flights */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Flight Operations</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {flights.slice(0, 5).map((flight) => (
+              <div key={flight.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <Plane className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <div className="font-medium">{flight.flight_number}</div>
+                    <div className="text-sm text-gray-600">
+                      {flight.departure_airport} → {flight.arrival_airport}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="text-right">
+                  <Badge className={getFlightStatusColor(flight.status)}>
+                    {flight.status}
+                  </Badge>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {format(new Date(flight.departure_time), 'dd/MM HH:mm')}
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {flights.length === 0 && (
+              <div className="text-center py-6 text-gray-500">
+                <Plane className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p>No flight operations found</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
