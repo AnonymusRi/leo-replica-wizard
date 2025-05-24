@@ -1,54 +1,87 @@
-
-import { useAircraftTechnicalData } from "@/hooks/useAircraftTechnicalData";
-import { useAircraftDocuments, useExpiringDocuments } from "@/hooks/useAircraftDocuments";
-import { useAircraftHoldItems } from "@/hooks/useAircraftHoldItems";
-import { useOilConsumptionRecords } from "@/hooks/useOilConsumption";
-import { useMaintenanceRecords } from "@/hooks/useMaintenanceRecords";
+import { useState, useEffect } from "react";
 import { MetricsCards } from "./overview/MetricsCards";
 import { FleetStatusCard } from "./overview/FleetStatusCard";
-import { CriticalItemsCard } from "./overview/CriticalItemsCard";
 import { UpcomingMaintenanceCard } from "./overview/UpcomingMaintenanceCard";
+import { CriticalItemsCard } from "./overview/CriticalItemsCard";
 import { OilConsumptionCard } from "./overview/OilConsumptionCard";
+import { useAircraftTechnicalData } from "@/hooks/useAircraftTechnicalData";
+import { useMaintenanceRecords } from "@/hooks/useMaintenanceRecords";
+import { useAircraftDocuments } from "@/hooks/useAircraftDocuments";
+import { useAircraftHoldItems } from "@/hooks/useAircraftHoldItems";
+import { useOilConsumptionRecords } from "@/hooks/useOilConsumptionRecords";
+import { HelicopterSimulation } from "./HelicopterSimulation";
 
 export const MaintenanceOverview = () => {
   const { data: technicalData = [] } = useAircraftTechnicalData();
+  const { data: maintenanceRecords = [] } = useMaintenanceRecords();
   const { data: documents = [] } = useAircraftDocuments();
-  const { data: expiringDocuments = [] } = useExpiringDocuments();
   const { data: holdItems = [] } = useAircraftHoldItems();
   const { data: oilRecords = [] } = useOilConsumptionRecords();
-  const { data: maintenanceRecords = [] } = useMaintenanceRecords();
 
-  // Calculate statistics
-  const activeHoldItems = holdItems.filter(item => item.status === 'active').length;
-  const expiredDocuments = documents.filter(doc => doc.status === 'expired').length;
-  const expiringSoonDocuments = documents.filter(doc => doc.status === 'expiring_soon').length;
-  
-  // Filter maintenance records properly
-  const overdueMaintenanceRecords = maintenanceRecords.filter(m => m.status === 'overdue');
-  const overdueMaintenances = overdueMaintenanceRecords.length;
-  
-  // Recent oil consumption (last 30 days)
-  const recentOilRecords = oilRecords.filter(record => {
+  // Calculate metrics
+  const overdueMaintenances = maintenanceRecords.filter(
+    (record) => record.status === "overdue"
+  ).length;
+
+  const expiredDocuments = documents.filter(
+    (doc) => doc.status === "expired"
+  ).length;
+
+  const expiringSoonDocuments = documents.filter(
+    (doc) => doc.status === "expiring_soon"
+  ).length;
+
+  const activeHoldItems = holdItems.filter(
+    (item) => item.status === "active"
+  ).length;
+
+  // Calculate average oil consumption for the last 30 days
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const recentOilRecords = oilRecords.filter((record) => {
     const recordDate = new Date(record.flight_date);
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     return recordDate >= thirtyDaysAgo;
   });
 
-  const averageOilConsumption = recentOilRecords.length > 0 
-    ? recentOilRecords.reduce((sum, record) => sum + (record.consumption_rate || 0), 0) / recentOilRecords.length
-    : 0;
+  const validConsumptionRates = recentOilRecords
+    .map((record) => record.consumption_rate)
+    .filter((rate): rate is number => rate !== null && rate !== undefined);
 
-  // Upcoming maintenance
+  const averageOilConsumption =
+    validConsumptionRates.length > 0
+      ? validConsumptionRates.reduce((sum, rate) => sum + rate, 0) /
+        validConsumptionRates.length
+      : 0;
+
+  // Get upcoming maintenances (next 30 days)
+  const today = new Date();
+  const thirtyDaysFromNow = new Date();
+  thirtyDaysFromNow.setDate(today.getDate() + 30);
+
   const upcomingMaintenances = maintenanceRecords
-    .filter(m => m.status === 'scheduled')
-    .sort((a, b) => new Date(a.scheduled_date).getTime() - new Date(b.scheduled_date).getTime())
-    .slice(0, 3);
+    .filter((record) => {
+      const scheduledDate = new Date(record.scheduled_date);
+      return (
+        scheduledDate >= today &&
+        scheduledDate <= thirtyDaysFromNow &&
+        record.status !== "completed"
+      );
+    })
+    .sort(
+      (a, b) =>
+        new Date(a.scheduled_date).getTime() -
+        new Date(b.scheduled_date).getTime()
+    )
+    .slice(0, 5);
 
   return (
     <div className="space-y-6">
-      {/* Alert Cards */}
-      <MetricsCards 
+      {/* Helicopter Simulation Section */}
+      <HelicopterSimulation />
+      
+      {/* Existing overview sections */}
+      <MetricsCards
         overdueMaintenances={overdueMaintenances}
         expiredDocuments={expiredDocuments}
         expiringSoonDocuments={expiringSoonDocuments}
@@ -56,20 +89,18 @@ export const MaintenanceOverview = () => {
         averageOilConsumption={averageOilConsumption}
       />
 
-      {/* Fleet Status Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <FleetStatusCard technicalData={technicalData} />
-        <CriticalItemsCard 
-          expiringDocuments={expiringDocuments}
-          holdItems={holdItems}
-        />
+        <UpcomingMaintenanceCard upcomingMaintenances={upcomingMaintenances} />
       </div>
 
-      {/* Upcoming Maintenance Schedule */}
-      <UpcomingMaintenanceCard upcomingMaintenances={upcomingMaintenances} />
-
-      {/* Recent Oil Consumption Trend */}
-      <OilConsumptionCard recentOilRecords={recentOilRecords} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <CriticalItemsCard
+          expiredDocuments={expiredDocuments}
+          activeHoldItems={activeHoldItems}
+        />
+        <OilConsumptionCard recentOilRecords={recentOilRecords} />
+      </div>
     </div>
   );
 };
