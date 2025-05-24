@@ -3,85 +3,111 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { 
+  Shield, 
   Plus, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock, 
-  Edit, 
-  Trash2,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
   FileText,
-  Calendar
+  Settings
 } from "lucide-react";
+import { useAircraft } from "@/hooks/useAircraft";
+import { useAircraftHoldItems, useCreateAircraftHoldItem, useUpdateAircraftHoldItem } from "@/hooks/useAircraftHoldItems";
+import { format, parseISO } from "date-fns";
 
 export const HoldItemsList = () => {
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [selectedAircraft, setSelectedAircraft] = useState("D-JANF");
+  const [selectedAircraft, setSelectedAircraft] = useState<string>("");
+  const [isAddingItem, setIsAddingItem] = useState(false);
+  const [newItem, setNewItem] = useState({
+    aircraft_id: "",
+    item_reference: "",
+    item_description: "",
+    limitation_description: "",
+    date_applied: new Date().toISOString().split('T')[0],
+    applied_by: "",
+    status: "active" as "active" | "resolved" | "deferred",
+    ata_chapter: "",
+    mel_reference: ""
+  });
 
-  // Mock hold items data based on the image
-  const holdItems = [
-    {
-      id: "01-04",
-      melItemNo: "-",
-      acft: "D-JANA",
-      date: "",
-      hilItemNo: "02 16",
-      melItemNoAlt: "AMM",
-      dateAlt: "17 Apr 2023",
-      foundBy: "MXX",
-      discrepancyDescription: "LH WINDSHIELD DELAMINATION - IN LIMIT - REPLACEMENT NEEDED IF THE DAMAGE IMPAIRS",
-      flightLimit: "Yes",
-      status: "Closed",
-      limitExtension: "CLOSE TO ORDER, DUE TO BBD LETTER 45-590- MSG ITEM 26 HAVE BEEN REPLACED TO P/N MS35842- INSP (FH) INTERV WITHIN 12 MO OR 240 FL, WHICHEVER COMES"
-    },
-    {
-      id: "01-17",
-      melItemNo: "05-14-00-800-80",
-      acft: "D-JANB",
-      hilItemNo: "",
-      discrepancyDescription: "",
-      flightLimit: "Yes",
-      status: "Open"
-    },
-    {
-      id: "01-05",
-      melItemNo: "05-14-00-800-80",
-      acft: "D-JANC",
-      discrepancyDescription: "",
-      flightLimit: "Yes",
-      status: "Closed"
-    }
-  ];
+  const { data: aircraft = [] } = useAircraft();
+  const { data: holdItems = [] } = useAircraftHoldItems();
+  const createHoldItem = useCreateAircraftHoldItem();
+  const updateHoldItem = useUpdateAircraftHoldItem();
+
+  // Filter hold items by selected aircraft
+  const filteredItems = holdItems.filter(item => 
+    !selectedAircraft || item.aircraft_id === selectedAircraft
+  );
+
+  // Hold items statistics
+  const activeItems = filteredItems.filter(item => item.status === 'active').length;
+  const resolvedItems = filteredItems.filter(item => item.status === 'resolved').length;
+  const deferredItems = filteredItems.filter(item => item.status === 'deferred').length;
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Open": return "bg-red-100 text-red-800";
-      case "Closed": return "bg-green-100 text-green-800";
-      case "Pending": return "bg-yellow-100 text-yellow-800";
-      default: return "bg-gray-100 text-gray-800";
+      case 'active': return 'bg-red-100 text-red-800';
+      case 'resolved': return 'bg-green-100 text-green-800';
+      case 'deferred': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "Open": return <AlertTriangle className="w-4 h-4" />;
-      case "Closed": return <CheckCircle className="w-4 h-4" />;
-      case "Pending": return <Clock className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
+      case 'active': return <AlertTriangle className="w-4 h-4" />;
+      case 'resolved': return <CheckCircle className="w-4 h-4" />;
+      case 'deferred': return <Clock className="w-4 h-4" />;
+      default: return <Shield className="w-4 h-4" />;
     }
+  };
+
+  const handleCreateItem = async () => {
+    if (!newItem.aircraft_id || !newItem.item_reference || !newItem.item_description) {
+      return;
+    }
+
+    await createHoldItem.mutateAsync(newItem);
+
+    setIsAddingItem(false);
+    setNewItem({
+      aircraft_id: "",
+      item_reference: "",
+      item_description: "",
+      limitation_description: "",
+      date_applied: new Date().toISOString().split('T')[0],
+      applied_by: "",
+      status: "active",
+      ata_chapter: "",
+      mel_reference: ""
+    });
+  };
+
+  const handleStatusChange = async (itemId: string, newStatus: "active" | "resolved" | "deferred") => {
+    const updateData: any = { 
+      id: itemId, 
+      status: newStatus 
+    };
+
+    if (newStatus === 'resolved') {
+      updateData.resolution_date = new Date().toISOString().split('T')[0];
+    }
+
+    await updateHoldItem.mutateAsync(updateData);
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Hold Item List (HIL)</h2>
-          <p className="text-gray-600">Aircraft limitations and maintenance deferrals</p>
+          <h2 className="text-2xl font-bold">Hold Items List</h2>
+          <p className="text-gray-600">Track aircraft limitations and maintenance deferrals</p>
         </div>
         <div className="flex items-center space-x-3">
           <select 
@@ -90,17 +116,16 @@ export const HoldItemsList = () => {
             onChange={(e) => setSelectedAircraft(e.target.value)}
           >
             <option value="">All Aircraft</option>
-            <option value="D-JANF">D-JANF</option>
-            <option value="D-JANA">D-JANA</option>
-            <option value="D-JANB">D-JANB</option>
-            <option value="D-JANC">D-JANC</option>
+            {aircraft.map(plane => (
+              <option key={plane.id} value={plane.id}>{plane.tail_number}</option>
+            ))}
           </select>
-          
-          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+
+          <Dialog open={isAddingItem} onOpenChange={setIsAddingItem}>
             <DialogTrigger asChild>
               <Button className="bg-green-600 hover:bg-green-700">
                 <Plus className="w-4 h-4 mr-2" />
-                Add New HIL
+                Add Hold Item
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
@@ -110,72 +135,87 @@ export const HoldItemsList = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="aircraft">Aircraft</Label>
-                  <select id="aircraft" className="w-full border rounded p-2">
-                    <option value="D-JANF">D-JANF</option>
-                    <option value="D-JANA">D-JANA</option>
-                    <option value="D-JANB">D-JANB</option>
+                  <select 
+                    id="aircraft" 
+                    className="w-full border rounded p-2"
+                    value={newItem.aircraft_id}
+                    onChange={(e) => setNewItem({...newItem, aircraft_id: e.target.value})}
+                  >
+                    <option value="">Select Aircraft</option>
+                    {aircraft.map(plane => (
+                      <option key={plane.id} value={plane.id}>{plane.tail_number}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
-                  <Label htmlFor="hilItemNo">HIL Item No.</Label>
-                  <Input id="hilItemNo" placeholder="02 16" />
-                </div>
-                <div>
-                  <Label htmlFor="melItemNo">MEL Item No.</Label>
-                  <Input id="melItemNo" placeholder="AMM" />
-                </div>
-                <div>
-                  <Label htmlFor="date">Date</Label>
-                  <Input id="date" type="date" />
-                </div>
-                <div>
-                  <Label htmlFor="foundBy">Found by</Label>
-                  <Input id="foundBy" placeholder="MXX" />
-                </div>
-                <div>
-                  <Label htmlFor="dueDate">Due date</Label>
-                  <Input id="dueDate" type="date" />
-                </div>
-                <div className="col-span-2">
-                  <Label htmlFor="discrepancy">Discrepancy Description</Label>
-                  <Textarea 
-                    id="discrepancy" 
-                    placeholder="Enter detailed description of the discrepancy"
-                    rows={3}
+                  <Label htmlFor="reference">Item Reference</Label>
+                  <Input 
+                    id="reference" 
+                    placeholder="e.g., MEL-32-001"
+                    value={newItem.item_reference}
+                    onChange={(e) => setNewItem({...newItem, item_reference: e.target.value})}
                   />
                 </div>
                 <div className="col-span-2">
-                  <Label htmlFor="limitations">Flight Limitations</Label>
-                  <Textarea 
-                    id="limitations" 
-                    placeholder="Enter flight limitations if any"
-                    rows={2}
+                  <Label htmlFor="description">Item Description</Label>
+                  <Input 
+                    id="description" 
+                    placeholder="Brief description of the issue"
+                    value={newItem.item_description}
+                    onChange={(e) => setNewItem({...newItem, item_description: e.target.value})}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <Label htmlFor="limitation">Limitation Description</Label>
+                  <textarea 
+                    id="limitation" 
+                    className="w-full border rounded p-2 h-20"
+                    placeholder="Detailed limitation or operational restriction"
+                    value={newItem.limitation_description}
+                    onChange={(e) => setNewItem({...newItem, limitation_description: e.target.value})}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="entryType">Entry Type</Label>
-                  <select id="entryType" className="w-full border rounded p-2">
-                    <option value="WORK_DEFERRED">WORK DEFERRED</option>
-                    <option value="MEL_ITEM">MEL ITEM</option>
-                    <option value="CDL_ITEM">CDL ITEM</option>
-                  </select>
+                  <Label htmlFor="ataChapter">ATA Chapter</Label>
+                  <Input 
+                    id="ataChapter" 
+                    placeholder="e.g., 32"
+                    value={newItem.ata_chapter}
+                    onChange={(e) => setNewItem({...newItem, ata_chapter: e.target.value})}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="category">Category</Label>
-                  <select id="category" className="w-full border rounded p-2">
-                    <option value="NONE">NONE</option>
-                    <option value="A">Category A</option>
-                    <option value="B">Category B</option>
-                    <option value="C">Category C</option>
-                  </select>
+                  <Label htmlFor="melRef">MEL Reference</Label>
+                  <Input 
+                    id="melRef" 
+                    placeholder="e.g., MEL 32-11-01"
+                    value={newItem.mel_reference}
+                    onChange={(e) => setNewItem({...newItem, mel_reference: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="dateApplied">Date Applied</Label>
+                  <Input 
+                    id="dateApplied" 
+                    type="date"
+                    value={newItem.date_applied}
+                    onChange={(e) => setNewItem({...newItem, date_applied: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="appliedBy">Applied By</Label>
+                  <Input 
+                    id="appliedBy" 
+                    placeholder="Person/Department"
+                    value={newItem.applied_by}
+                    onChange={(e) => setNewItem({...newItem, applied_by: e.target.value})}
+                  />
                 </div>
               </div>
               <div className="flex justify-end space-x-2 mt-4">
-                <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={() => setIsAddModalOpen(false)}>
-                  Save HIL Item
+                <Button variant="outline" onClick={() => setIsAddingItem(false)}>Cancel</Button>
+                <Button onClick={handleCreateItem} disabled={createHoldItem.isPending}>
+                  {createHoldItem.isPending ? 'Saving...' : 'Save Hold Item'}
                 </Button>
               </div>
             </DialogContent>
@@ -183,58 +223,118 @@ export const HoldItemsList = () => {
         </div>
       </div>
 
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Active Items</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{activeItems}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Deferred Items</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">{deferredItems}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Resolved Items</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{resolvedItems}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Total Items</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">{filteredItems.length}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Hold Items Table */}
       <Card>
+        <CardHeader>
+          <CardTitle>Hold Items</CardTitle>
+        </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>HIL Item No.</TableHead>
-                  <TableHead>MEL Item No.</TableHead>
-                  <TableHead>ACFT</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Extension Due Date</TableHead>
-                  <TableHead>Discrepancy Description</TableHead>
-                  <TableHead>Flight Limit.</TableHead>
+                  <TableHead>Aircraft</TableHead>
+                  <TableHead>Reference</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Limitation</TableHead>
+                  <TableHead>ATA Chapter</TableHead>
+                  <TableHead>MEL Reference</TableHead>
+                  <TableHead>Date Applied</TableHead>
+                  <TableHead>Applied By</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Action</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {holdItems.map((item) => (
+                {filteredItems.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.id}</TableCell>
-                    <TableCell className="font-mono text-sm">{item.melItemNo || "-"}</TableCell>
-                    <TableCell className="font-mono">{item.acft}</TableCell>
-                    <TableCell>{item.dateAlt || item.date || "-"}</TableCell>
-                    <TableCell>{item.limitExtension ? "30 Apr 2023" : "-"}</TableCell>
-                    <TableCell>
-                      <div className="max-w-xs truncate" title={item.discrepancyDescription}>
-                        {item.discrepancyDescription || "-"}
-                      </div>
+                    <TableCell className="font-mono">{item.aircraft?.tail_number}</TableCell>
+                    <TableCell className="font-medium">{item.item_reference}</TableCell>
+                    <TableCell>{item.item_description}</TableCell>
+                    <TableCell className="max-w-xs truncate" title={item.limitation_description}>
+                      {item.limitation_description}
                     </TableCell>
+                    <TableCell>{item.ata_chapter || '-'}</TableCell>
+                    <TableCell className="font-mono">{item.mel_reference || '-'}</TableCell>
                     <TableCell>
-                      {item.flightLimit === "Yes" ? (
-                        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                          Yes
-                        </Badge>
-                      ) : (
-                        <span>No</span>
-                      )}
+                      {format(parseISO(item.date_applied), 'dd/MM/yyyy')}
                     </TableCell>
+                    <TableCell>{item.applied_by || '-'}</TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(item.status)}>
-                        {getStatusIcon(item.status)}
-                        <span className="ml-1">{item.status}</span>
+                        <span className="flex items-center">
+                          {getStatusIcon(item.status)}
+                          <span className="ml-1">{item.status}</span>
+                        </span>
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex space-x-1">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="w-4 h-4" />
+                      <div className="flex items-center space-x-1">
+                        {item.status === 'active' && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleStatusChange(item.id, 'resolved')}
+                            >
+                              Resolve
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleStatusChange(item.id, 'deferred')}
+                            >
+                              Defer
+                            </Button>
+                          </>
+                        )}
+                        {item.status === 'deferred' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleStatusChange(item.id, 'resolved')}
+                          >
+                            Resolve
+                          </Button>
+                        )}
+                        <Button variant="outline" size="sm">
+                          <Settings className="w-3 h-3" />
                         </Button>
                       </div>
                     </TableCell>
@@ -245,48 +345,6 @@ export const HoldItemsList = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total HIL Items</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{holdItems.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Open Items</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {holdItems.filter(item => item.status === 'Open').length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Closed Items</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {holdItems.filter(item => item.status === 'Closed').length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">With Flight Limits</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {holdItems.filter(item => item.flightLimit === 'Yes').length}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 };

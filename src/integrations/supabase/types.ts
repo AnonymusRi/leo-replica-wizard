@@ -51,6 +51,62 @@ export type Database = {
         }
         Relationships: []
       }
+      aircraft_documents: {
+        Row: {
+          aircraft_id: string | null
+          created_at: string | null
+          document_name: string
+          document_number: string | null
+          document_type: string
+          expiry_date: string | null
+          file_path: string | null
+          id: string
+          is_required_for_dispatch: boolean | null
+          issue_date: string | null
+          issuing_authority: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          aircraft_id?: string | null
+          created_at?: string | null
+          document_name: string
+          document_number?: string | null
+          document_type: string
+          expiry_date?: string | null
+          file_path?: string | null
+          id?: string
+          is_required_for_dispatch?: boolean | null
+          issue_date?: string | null
+          issuing_authority?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          aircraft_id?: string | null
+          created_at?: string | null
+          document_name?: string
+          document_number?: string | null
+          document_type?: string
+          expiry_date?: string | null
+          file_path?: string | null
+          id?: string
+          is_required_for_dispatch?: boolean | null
+          issue_date?: string | null
+          issuing_authority?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aircraft_documents_aircraft_id_fkey"
+            columns: ["aircraft_id"]
+            isOneToOne: false
+            referencedRelation: "aircraft"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       aircraft_fees: {
         Row: {
           aircraft_type: string
@@ -95,6 +151,204 @@ export type Database = {
           valid_until?: string | null
         }
         Relationships: []
+      }
+      aircraft_hold_items: {
+        Row: {
+          aircraft_id: string | null
+          applied_by: string | null
+          ata_chapter: string | null
+          created_at: string | null
+          date_applied: string | null
+          id: string
+          item_description: string
+          item_reference: string
+          limitation_description: string | null
+          mel_reference: string | null
+          resolution_date: string | null
+          resolution_description: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          aircraft_id?: string | null
+          applied_by?: string | null
+          ata_chapter?: string | null
+          created_at?: string | null
+          date_applied?: string | null
+          id?: string
+          item_description: string
+          item_reference: string
+          limitation_description?: string | null
+          mel_reference?: string | null
+          resolution_date?: string | null
+          resolution_description?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          aircraft_id?: string | null
+          applied_by?: string | null
+          ata_chapter?: string | null
+          created_at?: string | null
+          date_applied?: string | null
+          id?: string
+          item_description?: string
+          item_reference?: string
+          limitation_description?: string | null
+          mel_reference?: string | null
+          resolution_date?: string | null
+          resolution_description?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aircraft_hold_items_aircraft_id_fkey"
+            columns: ["aircraft_id"]
+            isOneToOne: false
+            referencedRelation: "aircraft"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aircraft_maintenance_limits: {
+        Row: {
+          aircraft_id: string | null
+          calendar_limit_date: string | null
+          created_at: string | null
+          flight_cycles_limit: number | null
+          flight_hours_limit: number | null
+          id: string
+          inspection_type: string | null
+          next_inspection_cycles: number | null
+          next_inspection_date: string | null
+          next_inspection_hours: number | null
+          updated_at: string | null
+          warning_threshold_days: number | null
+        }
+        Insert: {
+          aircraft_id?: string | null
+          calendar_limit_date?: string | null
+          created_at?: string | null
+          flight_cycles_limit?: number | null
+          flight_hours_limit?: number | null
+          id?: string
+          inspection_type?: string | null
+          next_inspection_cycles?: number | null
+          next_inspection_date?: string | null
+          next_inspection_hours?: number | null
+          updated_at?: string | null
+          warning_threshold_days?: number | null
+        }
+        Update: {
+          aircraft_id?: string | null
+          calendar_limit_date?: string | null
+          created_at?: string | null
+          flight_cycles_limit?: number | null
+          flight_hours_limit?: number | null
+          id?: string
+          inspection_type?: string | null
+          next_inspection_cycles?: number | null
+          next_inspection_date?: string | null
+          next_inspection_hours?: number | null
+          updated_at?: string | null
+          warning_threshold_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aircraft_maintenance_limits_aircraft_id_fkey"
+            columns: ["aircraft_id"]
+            isOneToOne: false
+            referencedRelation: "aircraft"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aircraft_technical_data: {
+        Row: {
+          aircraft_id: string | null
+          airframe_tac: number | null
+          airframe_tah_hours: number | null
+          airframe_tah_minutes: number | null
+          apu_serial_number: string | null
+          apu_start_date: string | null
+          apu_tac: number | null
+          apu_tah_hours: number | null
+          apu_tah_minutes: number | null
+          created_at: string | null
+          engine_1_serial_number: string | null
+          engine_1_start_date: string | null
+          engine_1_tac: number | null
+          engine_1_tah_hours: number | null
+          engine_1_tah_minutes: number | null
+          engine_2_serial_number: string | null
+          engine_2_start_date: string | null
+          engine_2_tac: number | null
+          engine_2_tah_hours: number | null
+          engine_2_tah_minutes: number | null
+          id: string
+          last_updated: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          aircraft_id?: string | null
+          airframe_tac?: number | null
+          airframe_tah_hours?: number | null
+          airframe_tah_minutes?: number | null
+          apu_serial_number?: string | null
+          apu_start_date?: string | null
+          apu_tac?: number | null
+          apu_tah_hours?: number | null
+          apu_tah_minutes?: number | null
+          created_at?: string | null
+          engine_1_serial_number?: string | null
+          engine_1_start_date?: string | null
+          engine_1_tac?: number | null
+          engine_1_tah_hours?: number | null
+          engine_1_tah_minutes?: number | null
+          engine_2_serial_number?: string | null
+          engine_2_start_date?: string | null
+          engine_2_tac?: number | null
+          engine_2_tah_hours?: number | null
+          engine_2_tah_minutes?: number | null
+          id?: string
+          last_updated?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          aircraft_id?: string | null
+          airframe_tac?: number | null
+          airframe_tah_hours?: number | null
+          airframe_tah_minutes?: number | null
+          apu_serial_number?: string | null
+          apu_start_date?: string | null
+          apu_tac?: number | null
+          apu_tah_hours?: number | null
+          apu_tah_minutes?: number | null
+          created_at?: string | null
+          engine_1_serial_number?: string | null
+          engine_1_start_date?: string | null
+          engine_1_tac?: number | null
+          engine_1_tah_hours?: number | null
+          engine_1_tah_minutes?: number | null
+          engine_2_serial_number?: string | null
+          engine_2_start_date?: string | null
+          engine_2_tac?: number | null
+          engine_2_tah_hours?: number | null
+          engine_2_tah_minutes?: number | null
+          id?: string
+          last_updated?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aircraft_technical_data_aircraft_id_fkey"
+            columns: ["aircraft_id"]
+            isOneToOne: false
+            referencedRelation: "aircraft"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       airport_directory: {
         Row: {
@@ -1252,6 +1506,59 @@ export type Database = {
             columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oil_consumption_records: {
+        Row: {
+          aircraft_id: string | null
+          consumption_rate: number | null
+          created_at: string | null
+          engine_position: string
+          flight_date: string
+          flight_hours: number | null
+          id: string
+          notes: string | null
+          oil_added_liters: number | null
+          oil_level_after: number | null
+          oil_level_before: number | null
+          recorded_by: string | null
+        }
+        Insert: {
+          aircraft_id?: string | null
+          consumption_rate?: number | null
+          created_at?: string | null
+          engine_position: string
+          flight_date: string
+          flight_hours?: number | null
+          id?: string
+          notes?: string | null
+          oil_added_liters?: number | null
+          oil_level_after?: number | null
+          oil_level_before?: number | null
+          recorded_by?: string | null
+        }
+        Update: {
+          aircraft_id?: string | null
+          consumption_rate?: number | null
+          created_at?: string | null
+          engine_position?: string
+          flight_date?: string
+          flight_hours?: number | null
+          id?: string
+          notes?: string | null
+          oil_added_liters?: number | null
+          oil_level_after?: number | null
+          oil_level_before?: number | null
+          recorded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oil_consumption_records_aircraft_id_fkey"
+            columns: ["aircraft_id"]
+            isOneToOne: false
+            referencedRelation: "aircraft"
             referencedColumns: ["id"]
           },
         ]

@@ -3,156 +3,113 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { 
   FileText, 
-  Upload, 
+  Plus, 
   Download, 
-  Eye, 
-  AlertTriangle, 
-  CheckCircle, 
+  Upload, 
+  AlertTriangle,
+  CheckCircle,
   Clock,
-  Filter,
-  Search,
-  Calendar
+  Eye
 } from "lucide-react";
-import { format } from "date-fns";
+import { useAircraft } from "@/hooks/useAircraft";
+import { useAircraftDocuments, useCreateAircraftDocument } from "@/hooks/useAircraftDocuments";
+import { format, differenceInDays, parseISO } from "date-fns";
 
 export const DocumentsManager = () => {
-  const [selectedAircraft, setSelectedAircraft] = useState("All");
-  const [documentTypeFilter, setDocumentTypeFilter] = useState("All");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedAircraft, setSelectedAircraft] = useState<string>("");
+  const [isAddingDocument, setIsAddingDocument] = useState(false);
+  const [newDocument, setNewDocument] = useState({
+    aircraft_id: "",
+    document_name: "",
+    document_type: "",
+    document_number: "",
+    issue_date: "",
+    expiry_date: "",
+    issuing_authority: "",
+    is_required_for_dispatch: false,
+    status: "valid" as "valid" | "expired" | "expiring_soon"
+  });
 
-  // Mock documents data based on the image
-  const documents = [
-    {
-      id: "1",
-      aircraft: "H-ELMT",
-      name: "Air Operator Certificate",
-      number: "A3255653442",
-      expiryDate: "01-09-2020",
-      remains: "-----",
-      notes: "",
-      status: "expired",
-      type: "Certificate",
-      isRequired: true
-    },
-    {
-      id: "2",
-      aircraft: "H-ELMT",
-      name: "FMS",
-      number: "FMS123534542",
-      expiryDate: "30-09-2020",
-      remains: "-----",
-      notes: "",
-      status: "expired",
-      type: "Technical",
-      isRequired: false
-    },
-    {
-      id: "3",
-      aircraft: "H-ELMT",
-      name: "Aircraft Operator's Certificate",
-      number: "AOC235563",
-      expiryDate: "24-02-2021",
-      remains: "-----",
-      notes: "",
-      status: "expired",
-      type: "Certificate",
-      isRequired: true
-    },
-    {
-      id: "4",
-      aircraft: "H-ELMT",
-      name: "Certificate of Airworthiness",
-      number: "C23437567634",
-      expiryDate: "02-03-2022",
-      remains: "3 mo",
-      notes: "",
-      status: "warning",
-      type: "Airworthiness",
-      isRequired: true
-    },
-    {
-      id: "5",
-      aircraft: "B-ARTI",
-      name: "Certificate of Registration",
-      number: "123",
-      expiryDate: "09-07-2023",
-      status: "valid",
-      type: "Registration",
-      isRequired: true
-    },
-    {
-      id: "6",
-      aircraft: "A-BCDE",
-      name: "WB",
-      number: "123456",
-      expiryDate: "09-12-2023",
-      remains: "3 month(s)",
-      notes: "note",
-      status: "valid",
-      type: "Weight & Balance",
-      isRequired: false
-    }
-  ];
+  const { data: aircraft = [] } = useAircraft();
+  const { data: documents = [] } = useAircraftDocuments();
+  const createDocument = useCreateAircraftDocument();
+
+  // Filter documents by selected aircraft
+  const filteredDocuments = documents.filter(doc => 
+    !selectedAircraft || doc.aircraft_id === selectedAircraft
+  );
+
+  // Document statistics
+  const validDocs = filteredDocuments.filter(doc => doc.status === 'valid').length;
+  const expiredDocs = filteredDocuments.filter(doc => doc.status === 'expired').length;
+  const expiringSoonDocs = filteredDocuments.filter(doc => doc.status === 'expiring_soon').length;
+  const dispatchRequiredDocs = filteredDocuments.filter(doc => doc.is_required_for_dispatch).length;
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "valid": return "bg-green-100 text-green-800";
-      case "warning": return "bg-yellow-100 text-yellow-800";
-      case "expired": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
+      case 'valid': return 'bg-green-100 text-green-800';
+      case 'expired': return 'bg-red-100 text-red-800';
+      case 'expiring_soon': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "valid": return <CheckCircle className="w-4 h-4" />;
-      case "warning": return <Clock className="w-4 h-4" />;
-      case "expired": return <AlertTriangle className="w-4 h-4" />;
-      default: return <Clock className="w-4 h-4" />;
+      case 'valid': return <CheckCircle className="w-4 h-4" />;
+      case 'expired': return <AlertTriangle className="w-4 h-4" />;
+      case 'expiring_soon': return <Clock className="w-4 h-4" />;
+      default: return <FileText className="w-4 h-4" />;
     }
   };
 
-  const isExpiringWithin30Days = (expiryDate: string) => {
-    try {
-      const expiry = new Date(expiryDate.split('-').reverse().join('-'));
-      const today = new Date();
-      const diffTime = expiry.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays <= 30 && diffDays > 0;
-    } catch (e) {
-      return false;
+  const getDaysToExpiry = (expiryDate: string) => {
+    if (!expiryDate) return null;
+    return differenceInDays(parseISO(expiryDate), new Date());
+  };
+
+  const handleCreateDocument = async () => {
+    if (!newDocument.aircraft_id || !newDocument.document_name || !newDocument.document_type) {
+      return;
     }
-  };
 
-  const isExpired = (expiryDate: string) => {
-    try {
-      const expiry = new Date(expiryDate.split('-').reverse().join('-'));
-      const today = new Date();
-      return expiry < today;
-    } catch (e) {
-      return false;
+    // Determine status based on expiry date
+    let status: "valid" | "expired" | "expiring_soon" = "valid";
+    if (newDocument.expiry_date) {
+      const daysToExpiry = getDaysToExpiry(newDocument.expiry_date);
+      if (daysToExpiry !== null) {
+        if (daysToExpiry < 0) {
+          status = "expired";
+        } else if (daysToExpiry <= 30) {
+          status = "expiring_soon";
+        }
+      }
     }
-  };
 
-  const getDocumentStatus = (doc: any) => {
-    if (isExpired(doc.expiryDate)) return "expired";
-    if (isExpiringWithin30Days(doc.expiryDate)) return "warning";
-    return "valid";
-  };
+    await createDocument.mutateAsync({
+      ...newDocument,
+      status
+    });
 
-  const filteredDocuments = documents.filter(doc => {
-    const matchesAircraft = selectedAircraft === "All" || doc.aircraft === selectedAircraft;
-    const matchesType = documentTypeFilter === "All" || doc.type === documentTypeFilter;
-    const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         doc.number.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesAircraft && matchesType && matchesSearch;
-  });
+    setIsAddingDocument(false);
+    setNewDocument({
+      aircraft_id: "",
+      document_name: "",
+      document_type: "",
+      document_number: "",
+      issue_date: "",
+      expiry_date: "",
+      issuing_authority: "",
+      is_required_for_dispatch: false,
+      status: "valid"
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -161,171 +118,238 @@ export const DocumentsManager = () => {
           <h2 className="text-2xl font-bold">Documents Manager</h2>
           <p className="text-gray-600">Manage aircraft documents and track expiry dates</p>
         </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="bg-green-600 hover:bg-green-700">
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Document
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Upload New Document</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="aircraft">Aircraft</Label>
-                <select id="aircraft" className="w-full border rounded p-2">
-                  <option value="H-ELMT">H-ELMT</option>
-                  <option value="B-ARTI">B-ARTI</option>
-                  <option value="A-BCDE">A-BCDE</option>
-                </select>
+        <div className="flex items-center space-x-3">
+          <select 
+            className="border rounded p-2"
+            value={selectedAircraft}
+            onChange={(e) => setSelectedAircraft(e.target.value)}
+          >
+            <option value="">All Aircraft</option>
+            {aircraft.map(plane => (
+              <option key={plane.id} value={plane.id}>{plane.tail_number}</option>
+            ))}
+          </select>
+
+          <Dialog open={isAddingDocument} onOpenChange={setIsAddingDocument}>
+            <DialogTrigger asChild>
+              <Button className="bg-green-600 hover:bg-green-700">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Document
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Add New Document</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="aircraft">Aircraft</Label>
+                  <select 
+                    id="aircraft" 
+                    className="w-full border rounded p-2"
+                    value={newDocument.aircraft_id}
+                    onChange={(e) => setNewDocument({...newDocument, aircraft_id: e.target.value})}
+                  >
+                    <option value="">Select Aircraft</option>
+                    {aircraft.map(plane => (
+                      <option key={plane.id} value={plane.id}>{plane.tail_number}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="docType">Document Type</Label>
+                  <select 
+                    id="docType" 
+                    className="w-full border rounded p-2"
+                    value={newDocument.document_type}
+                    onChange={(e) => setNewDocument({...newDocument, document_type: e.target.value})}
+                  >
+                    <option value="">Select Type</option>
+                    <option value="CoA">Certificate of Airworthiness</option>
+                    <option value="Radio">Radio License</option>
+                    <option value="Insurance">Insurance</option>
+                    <option value="Registration">Registration</option>
+                    <option value="Manual">Manual</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <Label htmlFor="docName">Document Name</Label>
+                  <Input 
+                    id="docName" 
+                    placeholder="Enter document name"
+                    value={newDocument.document_name}
+                    onChange={(e) => setNewDocument({...newDocument, document_name: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="docNumber">Document Number</Label>
+                  <Input 
+                    id="docNumber" 
+                    placeholder="Document number"
+                    value={newDocument.document_number}
+                    onChange={(e) => setNewDocument({...newDocument, document_number: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="authority">Issuing Authority</Label>
+                  <Input 
+                    id="authority" 
+                    placeholder="Issuing authority"
+                    value={newDocument.issuing_authority}
+                    onChange={(e) => setNewDocument({...newDocument, issuing_authority: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="issueDate">Issue Date</Label>
+                  <Input 
+                    id="issueDate" 
+                    type="date"
+                    value={newDocument.issue_date}
+                    onChange={(e) => setNewDocument({...newDocument, issue_date: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="expiryDate">Expiry Date</Label>
+                  <Input 
+                    id="expiryDate" 
+                    type="date"
+                    value={newDocument.expiry_date}
+                    onChange={(e) => setNewDocument({...newDocument, expiry_date: e.target.value})}
+                  />
+                </div>
+                <div className="col-span-2">
+                  <label className="flex items-center space-x-2">
+                    <input 
+                      type="checkbox"
+                      checked={newDocument.is_required_for_dispatch}
+                      onChange={(e) => setNewDocument({...newDocument, is_required_for_dispatch: e.target.checked})}
+                    />
+                    <span className="text-sm">Required for dispatch</span>
+                  </label>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="docType">Document Type</Label>
-                <select id="docType" className="w-full border rounded p-2">
-                  <option value="Certificate">Certificate</option>
-                  <option value="Technical">Technical</option>
-                  <option value="Airworthiness">Airworthiness</option>
-                  <option value="Registration">Registration</option>
-                  <option value="Weight & Balance">Weight & Balance</option>
-                </select>
+              <div className="flex justify-end space-x-2 mt-4">
+                <Button variant="outline" onClick={() => setIsAddingDocument(false)}>Cancel</Button>
+                <Button onClick={handleCreateDocument} disabled={createDocument.isPending}>
+                  {createDocument.isPending ? 'Saving...' : 'Save Document'}
+                </Button>
               </div>
-              <div>
-                <Label htmlFor="docName">Document Name</Label>
-                <Input id="docName" placeholder="Enter document name" />
-              </div>
-              <div>
-                <Label htmlFor="docNumber">Document Number</Label>
-                <Input id="docNumber" placeholder="Enter document number" />
-              </div>
-              <div>
-                <Label htmlFor="expiryDate">Expiry Date</Label>
-                <Input id="expiryDate" type="date" />
-              </div>
-              <div className="flex items-center space-x-2">
-                <input type="checkbox" id="required" />
-                <Label htmlFor="required">Required for dispatch</Label>
-              </div>
-              <div>
-                <Label htmlFor="file">Upload File</Label>
-                <Input id="file" type="file" />
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline">Cancel</Button>
-              <Button>Upload Document</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+
+          <Button variant="outline">
+            <Download className="w-4 h-4 mr-2" />
+            Export List
+          </Button>
+        </div>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex-1 min-w-64">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search documents..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            
-            <select 
-              className="border rounded p-2"
-              value={selectedAircraft}
-              onChange={(e) => setSelectedAircraft(e.target.value)}
-            >
-              <option value="All">All Aircraft</option>
-              <option value="H-ELMT">H-ELMT</option>
-              <option value="B-ARTI">B-ARTI</option>
-              <option value="A-BCDE">A-BCDE</option>
-            </select>
-
-            <select 
-              className="border rounded p-2"
-              value={documentTypeFilter}
-              onChange={(e) => setDocumentTypeFilter(e.target.value)}
-            >
-              <option value="All">All Types</option>
-              <option value="Certificate">Certificate</option>
-              <option value="Technical">Technical</option>
-              <option value="Airworthiness">Airworthiness</option>
-              <option value="Registration">Registration</option>
-              <option value="Weight & Balance">Weight & Balance</option>
-            </select>
-
-            <div className="flex items-center space-x-2">
-              <input type="checkbox" id="showExpired" />
-              <Label htmlFor="showExpired" className="text-sm">Show expired only</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <input type="checkbox" id="showRequired" />
-              <Label htmlFor="showRequired" className="text-sm">Required for dispatch</Label>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Valid Documents</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{validDocs}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Expiring Soon</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">{expiringSoonDocs}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Expired</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">{expiredDocs}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Dispatch Required</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">{dispatchRequiredDocs}</div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Documents Table */}
       <Card>
+        <CardHeader>
+          <CardTitle>Documents List</CardTitle>
+        </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Aircraft</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Number</TableHead>
+                  <TableHead>Document Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Document Number</TableHead>
+                  <TableHead>Authority</TableHead>
+                  <TableHead>Issue Date</TableHead>
                   <TableHead>Expiry Date</TableHead>
-                  <TableHead>Remains</TableHead>
-                  <TableHead>Notes</TableHead>
+                  <TableHead>Days to Expiry</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Required</TableHead>
+                  <TableHead>Dispatch</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredDocuments.map((doc) => {
-                  const status = getDocumentStatus(doc);
+                  const daysToExpiry = doc.expiry_date ? getDaysToExpiry(doc.expiry_date) : null;
+                  
                   return (
-                    <TableRow key={doc.id} className={status === 'expired' ? 'bg-red-50' : status === 'warning' ? 'bg-yellow-50' : ''}>
-                      <TableCell className="font-mono font-medium">{doc.aircraft}</TableCell>
-                      <TableCell>{doc.name}</TableCell>
-                      <TableCell className="font-mono">{doc.number}</TableCell>
-                      <TableCell>{doc.expiryDate}</TableCell>
-                      <TableCell>{doc.remains || "-----"}</TableCell>
-                      <TableCell>{doc.notes || "-----"}</TableCell>
+                    <TableRow key={doc.id}>
+                      <TableCell className="font-mono">{doc.aircraft?.tail_number}</TableCell>
+                      <TableCell className="font-medium">{doc.document_name}</TableCell>
+                      <TableCell>{doc.document_type}</TableCell>
+                      <TableCell className="font-mono">{doc.document_number || '-'}</TableCell>
+                      <TableCell>{doc.issuing_authority || '-'}</TableCell>
                       <TableCell>
-                        <Badge className={getStatusColor(status)}>
-                          {getStatusIcon(status)}
-                          <span className="ml-1 capitalize">{status}</span>
+                        {doc.issue_date ? format(parseISO(doc.issue_date), 'dd/MM/yyyy') : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {doc.expiry_date ? format(parseISO(doc.expiry_date), 'dd/MM/yyyy') : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {daysToExpiry !== null ? (
+                          <span className={daysToExpiry < 0 ? 'text-red-600 font-semibold' : daysToExpiry <= 30 ? 'text-yellow-600 font-semibold' : ''}>
+                            {daysToExpiry < 0 ? `${Math.abs(daysToExpiry)} days ago` : `${daysToExpiry} days`}
+                          </span>
+                        ) : '-'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(doc.status)}>
+                          <span className="flex items-center">
+                            {getStatusIcon(doc.status)}
+                            <span className="ml-1">{doc.status.replace('_', ' ')}</span>
+                          </span>
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {doc.isRequired ? (
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                            Required
-                          </Badge>
+                        {doc.is_required_for_dispatch ? (
+                          <Badge className="bg-red-100 text-red-800">Required</Badge>
                         ) : (
-                          <span className="text-gray-400">Optional</span>
+                          <Badge className="bg-gray-100 text-gray-800">Optional</Badge>
                         )}
                       </TableCell>
                       <TableCell>
-                        <div className="flex space-x-1">
-                          <Button variant="ghost" size="sm" title="View">
-                            <Eye className="w-4 h-4" />
+                        <div className="flex items-center space-x-2">
+                          <Button variant="outline" size="sm">
+                            <Eye className="w-3 h-3" />
                           </Button>
-                          <Button variant="ghost" size="sm" title="Download">
-                            <Download className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" title="History">
-                            <FileText className="w-4 h-4" />
+                          <Button variant="outline" size="sm">
+                            <Upload className="w-3 h-3" />
                           </Button>
                         </div>
                       </TableCell>
@@ -337,48 +361,6 @@ export const DocumentsManager = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Documents</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{documents.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Expired</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {documents.filter(doc => getDocumentStatus(doc) === 'expired').length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Expiring Soon</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {documents.filter(doc => getDocumentStatus(doc) === 'warning').length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Required for Dispatch</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {documents.filter(doc => doc.isRequired).length}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 };
