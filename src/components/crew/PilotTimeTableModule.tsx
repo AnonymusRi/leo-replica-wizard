@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,17 +22,19 @@ import {
   Briefcase,
   Coffee,
   GraduationCap,
-  Plane
+  Plane,
+  CalendarDays
 } from "lucide-react";
 import { useCrewMembers } from "@/hooks/useCrewMembers";
 import { usePilotFlightHours, usePilotSchedule, useFlightTimeLimits } from "@/hooks/usePilotFlightHours";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, differenceInHours } from "date-fns";
 import { PilotTimeModal } from "./PilotTimeModal";
+import { TimeTableView } from "./TimeTableView";
 
 export const PilotTimeTableModule = () => {
   const [selectedPilot, setSelectedPilot] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("schedule");
+  const [activeTab, setActiveTab] = useState("timetable");
 
   const { data: crewMembers = [], isLoading: crewLoading } = useCrewMembers();
   const { data: flightHours = [], isLoading: hoursLoading } = usePilotFlightHours(selectedPilot);
@@ -254,12 +255,17 @@ export const PilotTimeTableModule = () => {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="timetable">Time Table</TabsTrigger>
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
           <TabsTrigger value="hours">Ore di Volo</TabsTrigger>
           <TabsTrigger value="compliance">Compliance FTL</TabsTrigger>
           <TabsTrigger value="trading">Trading</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="timetable" className="space-y-4">
+          <TimeTableView />
+        </TabsContent>
 
         <TabsContent value="schedule" className="space-y-4">
           <Card>
