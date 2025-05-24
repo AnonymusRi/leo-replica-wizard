@@ -8,7 +8,6 @@ export interface OpsChecklist {
   name: string;
   description?: string;
   checklist_type: string;
-  flight_id?: string;
   is_default: boolean;
   created_at: string;
   updated_at: string;
@@ -18,8 +17,6 @@ export interface OpsChecklistItem {
   id: string;
   checklist_id?: string;
   item_text: string;
-  is_required: boolean;
-  sort_order: number;
   checklist_section: string;
   attach_to: string;
   sales_ops: string;
@@ -28,6 +25,8 @@ export interface OpsChecklistItem {
   cql_condition?: string;
   due_dates?: string;
   email_template_id?: string;
+  is_required: boolean;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 }
@@ -40,6 +39,8 @@ export interface FlightChecklistProgress {
   completed_at?: string;
   completed_by?: string;
   notes?: string;
+  status: string;
+  color_code?: string;
   created_at: string;
 }
 
@@ -54,7 +55,7 @@ export const useOpsChecklists = () => {
         .order('name');
       
       if (error) throw error;
-      return data as OpsChecklist[];
+      return data || [];
     }
   });
 };
@@ -64,7 +65,7 @@ export const useOpsChecklistItems = (checklistId?: string) => {
     queryKey: ['ops-checklist-items', checklistId],
     queryFn: async () => {
       let query = supabase
-        .from('checklist_items')
+        .from('ops_checklist_items')
         .select('*')
         .order('sort_order');
       
@@ -75,7 +76,7 @@ export const useOpsChecklistItems = (checklistId?: string) => {
       const { data, error } = await query;
       
       if (error) throw error;
-      return data as OpsChecklistItem[];
+      return data || [];
     },
     enabled: !!checklistId
   });
@@ -86,16 +87,16 @@ export const useFlightChecklistProgress = (flightId?: string) => {
     queryKey: ['flight-checklist-progress', flightId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('quote_checklist_progress')
+        .from('flight_checklist_progress')
         .select(`
           *,
-          checklist_items:checklist_item_id(*)
+          ops_checklist_items(*)
         `)
-        .eq('quote_id', flightId)
+        .eq('flight_id', flightId)
         .order('created_at');
       
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!flightId
   });
@@ -111,15 +112,19 @@ export const useUpdateOpsChecklistProgress = () => {
       is_completed: boolean;
       completed_by?: string;
       notes?: string;
+      status?: string;
+      color_code?: string;
     }) => {
       const { data, error } = await supabase
-        .from('quote_checklist_progress')
+        .from('flight_checklist_progress')
         .upsert({
-          quote_id: progressData.flight_id,
+          flight_id: progressData.flight_id,
           checklist_item_id: progressData.checklist_item_id,
           is_completed: progressData.is_completed,
           completed_by: progressData.completed_by,
           notes: progressData.notes,
+          status: progressData.status || (progressData.is_completed ? 'completed' : 'pending'),
+          color_code: progressData.color_code || (progressData.is_completed ? 'green' : 'gray'),
           completed_at: progressData.is_completed ? new Date().toISOString() : null
         })
         .select()
@@ -134,6 +139,40 @@ export const useUpdateOpsChecklistProgress = () => {
     },
     onError: (error) => {
       toast.error('Errore aggiornamento checklist: ' + error.message);
+    }
+  });
+};
+
+export const useCreateOpsChecklistItem = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (itemData: {
+      checklist_id: string;
+      item_text: string;
+      checklist_section: string;
+      attach_to: string;
+      sales_ops: string;
+      visible_on_crew_app: boolean;
+      auto_add_to_log: boolean;
+      is_required: boolean;
+      sort_order: number;
+    }) => {
+      const { data, error } = await supabase
+        .from('ops_checklist_items')
+        .insert(itemData)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ops-checklist-items'] });
+      toast.success('Item checklist creato');
+    },
+    onError: (error) => {
+      toast.error('Errore creazione item: ' + error.message);
     }
   });
 };

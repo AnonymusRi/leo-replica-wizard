@@ -14,7 +14,7 @@ import {
   Mail,
   Settings
 } from "lucide-react";
-import { useGenerateDocument } from "@/hooks/useFlightDocuments";
+import { useGenerateDocument, useFlightDocuments } from "@/hooks/useFlightDocuments";
 
 interface DocumentGenerationModalProps {
   isOpen: boolean;
@@ -27,6 +27,7 @@ export const DocumentGenerationModal = ({ isOpen, onClose, flight }: DocumentGen
   const [selectedFormat, setSelectedFormat] = useState("PDF");
   
   const generateDocument = useGenerateDocument();
+  const { data: existingDocuments = [] } = useFlightDocuments(flight?.id);
 
   if (!flight) return null;
 
@@ -50,6 +51,7 @@ export const DocumentGenerationModal = ({ isOpen, onClose, flight }: DocumentGen
     generateDocument.mutate({
       flightId: flight.id,
       documentType: selectedDocumentType,
+      documentName: selectedDoc?.label || selectedDocumentType,
       templateContent: `Template for ${selectedDoc?.label}`
     });
   };
@@ -214,10 +216,38 @@ export const DocumentGenerationModal = ({ isOpen, onClose, flight }: DocumentGen
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4">
-            <div className="text-center text-gray-500 py-8">
-              <Download className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg font-medium">Generated Documents</h3>
-              <p>I documenti generati per questo volo appariranno qui</p>
+            <div className="space-y-2">
+              {existingDocuments.length > 0 ? (
+                existingDocuments.map((doc) => (
+                  <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <FileText className="w-5 h-5 text-blue-500" />
+                      <div>
+                        <div className="font-medium">{doc.document_name}</div>
+                        <div className="text-sm text-gray-500">
+                          {doc.document_type} • {doc.is_generated ? 'Generated' : 'Template'} • {new Date(doc.created_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm">
+                        <Eye className="w-4 h-4 mr-2" />
+                        View
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <Download className="w-4 h-4 mr-2" />
+                        Download
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  <Download className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <h3 className="text-lg font-medium">No Generated Documents</h3>
+                  <p>I documenti generati per questo volo appariranno qui</p>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>

@@ -96,6 +96,57 @@ export type Database = {
         }
         Relationships: []
       }
+      airport_directory: {
+        Row: {
+          airport_code: string
+          airport_name: string
+          available_services: Json | null
+          catering_suppliers: Json | null
+          contact_info: Json | null
+          created_at: string
+          customs_hours: Json | null
+          fuel_suppliers: Json | null
+          handling_companies: Json | null
+          id: string
+          immigration_hours: Json | null
+          last_updated: string
+          notes: string | null
+          opening_hours: Json | null
+        }
+        Insert: {
+          airport_code: string
+          airport_name: string
+          available_services?: Json | null
+          catering_suppliers?: Json | null
+          contact_info?: Json | null
+          created_at?: string
+          customs_hours?: Json | null
+          fuel_suppliers?: Json | null
+          handling_companies?: Json | null
+          id?: string
+          immigration_hours?: Json | null
+          last_updated?: string
+          notes?: string | null
+          opening_hours?: Json | null
+        }
+        Update: {
+          airport_code?: string
+          airport_name?: string
+          available_services?: Json | null
+          catering_suppliers?: Json | null
+          contact_info?: Json | null
+          created_at?: string
+          customs_hours?: Json | null
+          fuel_suppliers?: Json | null
+          handling_companies?: Json | null
+          id?: string
+          immigration_hours?: Json | null
+          last_updated?: string
+          notes?: string | null
+          opening_hours?: Json | null
+        }
+        Relationships: []
+      }
       airport_fees: {
         Row: {
           aircraft_category: string | null
@@ -186,6 +237,48 @@ export type Database = {
         }
         Relationships: []
       }
+      checklist_email_templates: {
+        Row: {
+          auto_send: boolean
+          checklist_item_id: string | null
+          created_at: string
+          email_template_id: string | null
+          id: string
+          trigger_condition: string | null
+        }
+        Insert: {
+          auto_send?: boolean
+          checklist_item_id?: string | null
+          created_at?: string
+          email_template_id?: string | null
+          id?: string
+          trigger_condition?: string | null
+        }
+        Update: {
+          auto_send?: boolean
+          checklist_item_id?: string | null
+          created_at?: string
+          email_template_id?: string | null
+          id?: string
+          trigger_condition?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_email_templates_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "ops_checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_email_templates_email_template_id_fkey"
+            columns: ["email_template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checklist_items: {
         Row: {
           checklist_id: string | null
@@ -265,6 +358,90 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      crew_flight_assignments: {
+        Row: {
+          airport_recency_valid: boolean | null
+          assigned_at: string
+          assigned_by: string | null
+          certificates_valid: boolean | null
+          crew_member_id: string | null
+          currency_valid: boolean | null
+          duty_end_time: string | null
+          duty_start_time: string | null
+          duty_time_hours: number | null
+          flight_id: string | null
+          flight_time_hours: number | null
+          ftl_compliant: boolean | null
+          ftl_notes: string | null
+          id: string
+          notes: string | null
+          passport_valid: boolean | null
+          position: string
+          reporting_time: string | null
+          rest_time_hours: number | null
+          visa_valid: boolean | null
+        }
+        Insert: {
+          airport_recency_valid?: boolean | null
+          assigned_at?: string
+          assigned_by?: string | null
+          certificates_valid?: boolean | null
+          crew_member_id?: string | null
+          currency_valid?: boolean | null
+          duty_end_time?: string | null
+          duty_start_time?: string | null
+          duty_time_hours?: number | null
+          flight_id?: string | null
+          flight_time_hours?: number | null
+          ftl_compliant?: boolean | null
+          ftl_notes?: string | null
+          id?: string
+          notes?: string | null
+          passport_valid?: boolean | null
+          position: string
+          reporting_time?: string | null
+          rest_time_hours?: number | null
+          visa_valid?: boolean | null
+        }
+        Update: {
+          airport_recency_valid?: boolean | null
+          assigned_at?: string
+          assigned_by?: string | null
+          certificates_valid?: boolean | null
+          crew_member_id?: string | null
+          currency_valid?: boolean | null
+          duty_end_time?: string | null
+          duty_start_time?: string | null
+          duty_time_hours?: number | null
+          flight_id?: string | null
+          flight_time_hours?: number | null
+          ftl_compliant?: boolean | null
+          ftl_notes?: string | null
+          id?: string
+          notes?: string | null
+          passport_valid?: boolean | null
+          position?: string
+          reporting_time?: string | null
+          rest_time_hours?: number | null
+          visa_valid?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_flight_assignments_crew_member_id_fkey"
+            columns: ["crew_member_id"]
+            isOneToOne: false
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crew_flight_assignments_flight_id_fkey"
+            columns: ["flight_id"]
+            isOneToOne: false
+            referencedRelation: "flights"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       crew_members: {
         Row: {
@@ -445,6 +622,110 @@ export type Database = {
           },
         ]
       }
+      flight_changes_log: {
+        Row: {
+          change_reason: string | null
+          change_type: string
+          changed_at: string
+          changed_by: string
+          color_code: string | null
+          field_changed: string
+          flight_id: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          requires_attention: boolean
+        }
+        Insert: {
+          change_reason?: string | null
+          change_type: string
+          changed_at?: string
+          changed_by: string
+          color_code?: string | null
+          field_changed: string
+          flight_id?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          requires_attention?: boolean
+        }
+        Update: {
+          change_reason?: string | null
+          change_type?: string
+          changed_at?: string
+          changed_by?: string
+          color_code?: string | null
+          field_changed?: string
+          flight_id?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          requires_attention?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flight_changes_log_flight_id_fkey"
+            columns: ["flight_id"]
+            isOneToOne: false
+            referencedRelation: "flights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flight_checklist_progress: {
+        Row: {
+          checklist_item_id: string | null
+          color_code: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          flight_id: string | null
+          id: string
+          is_completed: boolean
+          notes: string | null
+          status: string
+        }
+        Insert: {
+          checklist_item_id?: string | null
+          color_code?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          flight_id?: string | null
+          id?: string
+          is_completed?: boolean
+          notes?: string | null
+          status?: string
+        }
+        Update: {
+          checklist_item_id?: string | null
+          color_code?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          flight_id?: string | null
+          id?: string
+          is_completed?: boolean
+          notes?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flight_checklist_progress_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "ops_checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flight_checklist_progress_flight_id_fkey"
+            columns: ["flight_id"]
+            isOneToOne: false
+            referencedRelation: "flights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flight_crew: {
         Row: {
           created_at: string
@@ -477,6 +758,62 @@ export type Database = {
           },
           {
             foreignKeyName: "flight_crew_flight_id_fkey"
+            columns: ["flight_id"]
+            isOneToOne: false
+            referencedRelation: "flights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flight_documents: {
+        Row: {
+          created_at: string
+          document_name: string
+          document_type: string
+          file_path: string | null
+          flight_id: string | null
+          generated_at: string | null
+          generated_by: string | null
+          generated_content: string | null
+          id: string
+          is_active: boolean
+          is_generated: boolean
+          template_content: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document_name: string
+          document_type: string
+          file_path?: string | null
+          flight_id?: string | null
+          generated_at?: string | null
+          generated_by?: string | null
+          generated_content?: string | null
+          id?: string
+          is_active?: boolean
+          is_generated?: boolean
+          template_content?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document_name?: string
+          document_type?: string
+          file_path?: string | null
+          flight_id?: string | null
+          generated_at?: string | null
+          generated_by?: string | null
+          generated_content?: string | null
+          id?: string
+          is_active?: boolean
+          is_generated?: boolean
+          template_content?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flight_documents_flight_id_fkey"
             columns: ["flight_id"]
             isOneToOne: false
             referencedRelation: "flights"
@@ -681,6 +1018,56 @@ export type Database = {
           },
         ]
       }
+      handling_requests: {
+        Row: {
+          airport_code: string
+          created_at: string
+          flight_id: string | null
+          id: string
+          notes: string | null
+          request_details: string
+          requested_at: string
+          requested_by: string | null
+          response_received_at: string | null
+          service_type: string
+          status: string
+        }
+        Insert: {
+          airport_code: string
+          created_at?: string
+          flight_id?: string | null
+          id?: string
+          notes?: string | null
+          request_details: string
+          requested_at?: string
+          requested_by?: string | null
+          response_received_at?: string | null
+          service_type: string
+          status?: string
+        }
+        Update: {
+          airport_code?: string
+          created_at?: string
+          flight_id?: string | null
+          id?: string
+          notes?: string | null
+          request_details?: string
+          requested_at?: string
+          requested_by?: string | null
+          response_received_at?: string | null
+          service_type?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handling_requests_flight_id_fkey"
+            columns: ["flight_id"]
+            isOneToOne: false
+            referencedRelation: "flights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_records: {
         Row: {
           aircraft_id: string | null
@@ -832,6 +1219,75 @@ export type Database = {
             columns: ["quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ops_checklist_items: {
+        Row: {
+          attach_to: string
+          auto_add_to_log: boolean
+          checklist_id: string | null
+          checklist_section: string
+          cql_condition: string | null
+          created_at: string
+          due_dates: string | null
+          email_template_id: string | null
+          id: string
+          is_required: boolean
+          item_text: string
+          sales_ops: string
+          sort_order: number
+          updated_at: string
+          visible_on_crew_app: boolean
+        }
+        Insert: {
+          attach_to?: string
+          auto_add_to_log?: boolean
+          checklist_id?: string | null
+          checklist_section?: string
+          cql_condition?: string | null
+          created_at?: string
+          due_dates?: string | null
+          email_template_id?: string | null
+          id?: string
+          is_required?: boolean
+          item_text: string
+          sales_ops?: string
+          sort_order?: number
+          updated_at?: string
+          visible_on_crew_app?: boolean
+        }
+        Update: {
+          attach_to?: string
+          auto_add_to_log?: boolean
+          checklist_id?: string | null
+          checklist_section?: string
+          cql_condition?: string | null
+          created_at?: string
+          due_dates?: string | null
+          email_template_id?: string | null
+          id?: string
+          is_required?: boolean
+          item_text?: string
+          sales_ops?: string
+          sort_order?: number
+          updated_at?: string
+          visible_on_crew_app?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ops_checklist_items_checklist_id_fkey"
+            columns: ["checklist_id"]
+            isOneToOne: false
+            referencedRelation: "sales_checklists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ops_checklist_items_email_template_id_fkey"
+            columns: ["email_template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -1267,6 +1723,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      schedule_exports: {
+        Row: {
+          created_at: string
+          date_range_end: string
+          date_range_start: string
+          export_format: string
+          export_name: string
+          exported_by: string
+          file_path: string | null
+          filters: Json | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          date_range_end: string
+          date_range_start: string
+          export_format: string
+          export_name: string
+          exported_by: string
+          file_path?: string | null
+          filters?: Json | null
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          date_range_end?: string
+          date_range_start?: string
+          export_format?: string
+          export_name?: string
+          exported_by?: string
+          file_path?: string | null
+          filters?: Json | null
+          id?: string
+        }
+        Relationships: []
       }
       schedule_versions: {
         Row: {

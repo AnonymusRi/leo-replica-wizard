@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   CheckCircle, 
@@ -16,7 +15,7 @@ import {
   Settings,
   Plus
 } from "lucide-react";
-import { useOpsChecklists, useFlightChecklistProgress, useUpdateOpsChecklistProgress } from "@/hooks/useOpsChecklists";
+import { useFlightChecklistProgress, useUpdateOpsChecklistProgress } from "@/hooks/useOpsChecklists";
 
 interface FlightChecklistModalProps {
   isOpen: boolean;
@@ -28,13 +27,12 @@ export const FlightChecklistModal = ({ isOpen, onClose, flight }: FlightChecklis
   const [selectedSection, setSelectedSection] = useState("ops");
   const [notes, setNotes] = useState("");
 
-  const { data: checklists = [] } = useOpsChecklists();
   const { data: progress = [] } = useFlightChecklistProgress(flight?.id);
   const updateProgress = useUpdateOpsChecklistProgress();
 
   if (!flight) return null;
 
-  // Mock checklist items based on the images
+  // Mock checklist items basati sulle immagini
   const checklistItems = [
     { id: '1', section: 'ops', name: 'ATC FLIGHT PLAN', status: 'REQUEST', color: 'orange' },
     { id: '2', section: 'ops', name: 'OPERATIONAL FLIGHT PLAN', status: 'Yes', color: 'green' },
@@ -67,7 +65,9 @@ export const FlightChecklistModal = ({ isOpen, onClose, flight }: FlightChecklis
       checklist_item_id: itemId,
       is_completed: completed,
       completed_by: 'Current User',
-      notes: notes
+      notes: notes,
+      status: completed ? 'completed' : 'pending',
+      color_code: completed ? 'green' : 'gray'
     });
   };
 
