@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SalesModule } from "@/components/sales/SalesModule";
+import { ScheduleModule } from "@/components/schedule/ScheduleModule";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("SCHED");
