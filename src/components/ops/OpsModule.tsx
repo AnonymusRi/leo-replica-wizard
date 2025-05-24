@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,13 +35,14 @@ import { it } from "date-fns/locale";
 import { OpsTableView } from "./OpsTableView";
 import { OpsCalendarView } from "./OpsCalendarView";
 import { OpsTimelineView } from "./OpsTimelineView";
+import { OpsDetailedTableView } from "./OpsDetailedTableView";
 import { AirportDirectoryModal } from "./AirportDirectoryModal";
 import { FlightChecklistModal } from "./FlightChecklistModal";
 import { HandlingRequestModal } from "./HandlingRequestModal";
 import { DocumentGenerationModal } from "./DocumentGenerationModal";
 
 export const OpsModule = () => {
-  const [activeView, setActiveView] = useState("table");
+  const [activeView, setActiveView] = useState("detailed");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedAircraft, setSelectedAircraft] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,7 +65,6 @@ export const OpsModule = () => {
   const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  // Filter flights based on search and filters
   const filteredFlights = flights.filter(flight => {
     const matchesSearch = flight.flight_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          flight.departure_airport.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -232,10 +231,14 @@ export const OpsModule = () => {
 
       {/* View Toggle */}
       <Tabs value={activeView} onValueChange={setActiveView}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="detailed">
+            <TableIcon className="w-4 h-4 mr-2" />
+            Detailed Table
+          </TabsTrigger>
           <TabsTrigger value="table">
             <TableIcon className="w-4 h-4 mr-2" />
-            Table View
+            Simple Table
           </TabsTrigger>
           <TabsTrigger value="calendar">
             <Calendar className="w-4 h-4 mr-2" />
@@ -246,6 +249,13 @@ export const OpsModule = () => {
             Timeline View
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="detailed" className="space-y-4">
+          <OpsDetailedTableView 
+            flights={filteredFlights}
+            onFlightSelect={handleFlightSelect}
+          />
+        </TabsContent>
 
         <TabsContent value="table" className="space-y-4">
           <OpsTableView 
