@@ -7,10 +7,11 @@ export interface FlightDocument {
   id: string;
   flight_id?: string;
   document_type: string;
-  document_name: string;
+  name: string;
   template_content: string;
   generated_content?: string;
-  is_generated: boolean;
+  is_generated?: boolean;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -45,7 +46,20 @@ export const useFlightDocuments = (flightId?: string) => {
       const { data, error } = await query;
       
       if (error) throw error;
-      return data as FlightDocument[];
+      
+      // Transform the data to match our interface
+      return (data || []).map(doc => ({
+        id: doc.id,
+        flight_id: flightId,
+        document_type: doc.document_type,
+        name: doc.name,
+        template_content: doc.template_content,
+        generated_content: undefined,
+        is_generated: false,
+        is_active: doc.is_active,
+        created_at: doc.created_at,
+        updated_at: doc.updated_at
+      })) as FlightDocument[];
     }
   });
 };
@@ -77,9 +91,14 @@ export const useGenerateDocument = () => {
         id: crypto.randomUUID(),
         flight_id: data.flightId,
         document_type: data.documentType,
+        name: `Generated ${data.documentType}`,
+        template_content: data.templateContent,
         generated_content: generatedContent,
-        is_generated: true
-      };
+        is_generated: true,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as FlightDocument;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['flight-documents', variables.flightId] });
@@ -109,7 +128,7 @@ export const useSendHandlingRequest = () => {
         status: 'sent' as const,
         requested_at: new Date().toISOString(),
         created_at: new Date().toISOString()
-      };
+      } as HandlingRequest;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['handling-requests', variables.flight_id] });
