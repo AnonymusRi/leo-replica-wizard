@@ -52,7 +52,7 @@ const Index = () => {
           <div className="flex items-center space-x-1">
             <div className="flex items-center space-x-2 mr-6">
               <Plane className="w-6 h-6 text-blue-400" />
-              <span className="font-bold text-lg">LeoSoft</span>
+              <span className="font-bold text-lg">AlidaSoft</span>
             </div>
             
             {modules.map((module) => {
@@ -85,7 +85,7 @@ const Index = () => {
             </Badge>
             <Badge variant="outline" className="text-xs bg-slate-700 border-slate-600">
               <Clock className="w-3 h-3 mr-1" />
-              LEON SUPPORT
+              ALIDA SUPPORT
             </Badge>
             <Badge variant="outline" className="text-xs bg-slate-700 border-slate-600">
               <User className="w-3 h-3 mr-1" />
