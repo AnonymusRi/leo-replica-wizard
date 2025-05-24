@@ -13,7 +13,6 @@ import {
   User,
   Globe,
   Clock,
-  Filter,
   Timer
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,6 +25,7 @@ import { PhonebookModule } from "@/components/phonebook/PhonebookModule";
 import { OwnerBoardModule } from "@/components/owner/OwnerBoardModule";
 import { AircraftModule } from "@/components/aircraft/AircraftModule";
 import { PilotTimeTableModule } from "@/components/crew/PilotTimeTableModule";
+import { OpsModule } from "@/components/ops/OpsModule";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("SCHED");
@@ -111,35 +111,6 @@ const Index = () => {
         {activeModule === "PHONEBOOK" && <PhonebookModule />}
         {activeModule === "OWNER BOARD" && <OwnerBoardModule />}
       </main>
-    </div>
-  );
-};
-
-// OPS Module Component
-const OpsModule = () => {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-4 border-b bg-gray-50">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Flight Operations</h2>
-          <div className="flex items-center space-x-2">
-            <Button size="sm" variant="outline">
-              <Filter className="w-4 h-4 mr-1" />
-              FILTER
-            </Button>
-            <Button size="sm" className="bg-green-600 hover:bg-green-700">
-              NEW TRIP
-            </Button>
-          </div>
-        </div>
-      </div>
-      <div className="p-6">
-        <div className="text-center text-gray-500 py-12">
-          <Settings className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium mb-2">Operations Management</h3>
-          <p className="text-sm">Track flights, manage checklists, and coordinate operations</p>
-        </div>
-      </div>
     </div>
   );
 };
