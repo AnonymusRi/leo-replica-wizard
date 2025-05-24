@@ -57,7 +57,7 @@ export const usePilotFlightHours = (pilotId?: string) => {
           return [];
         }
         
-        return (data as PilotFlightHour[]) || [];
+        return (data as unknown as PilotFlightHour[]) || [];
       } catch (error) {
         console.log('Tables not yet created, returning empty array');
         return [];
@@ -85,7 +85,7 @@ export const usePilotSchedule = (pilotId?: string) => {
           return [];
         }
         
-        return (data as PilotSchedule[]) || [];
+        return (data as unknown as PilotSchedule[]) || [];
       } catch (error) {
         console.log('Tables not yet created, returning empty array');
         return [];
@@ -110,7 +110,7 @@ export const useFlightTimeLimits = () => {
           return [];
         }
         
-        return (data as FlightTimeLimit[]) || [];
+        return (data as unknown as FlightTimeLimit[]) || [];
       } catch (error) {
         console.log('Tables not yet created, returning empty array');
         return [];
@@ -139,7 +139,7 @@ export const useCreatePilotFlightHour = () => {
           .single();
         
         if (error) throw error;
-        return data as PilotFlightHour;
+        return data as unknown as PilotFlightHour;
       } catch (error) {
         console.error('Error creating pilot flight hour:', error);
         throw error;
@@ -171,7 +171,7 @@ export const useCreatePilotSchedule = () => {
           .single();
         
         if (error) throw error;
-        return data as PilotSchedule;
+        return data as unknown as PilotSchedule;
       } catch (error) {
         console.error('Error creating pilot schedule:', error);
         throw error;
