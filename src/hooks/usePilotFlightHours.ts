@@ -41,29 +41,22 @@ export const usePilotFlightHours = (pilotId?: string) => {
   return useQuery({
     queryKey: ['pilot_flight_hours', pilotId],
     queryFn: async () => {
-      // Temporary implementation using raw query until tables are created
-      let query = `SELECT * FROM pilot_flight_hours`;
-      const params: any[] = [];
-      
-      if (pilotId) {
-        query += ` WHERE pilot_id = $1`;
-        params.push(pilotId);
-      }
-      
-      query += ` ORDER BY flight_date DESC`;
-      
       try {
-        const { data, error } = await supabase.rpc('execute_sql', { 
-          query, 
-          params 
-        });
+        // Try to query the table directly first
+        let query = supabase.from('pilot_flight_hours' as any).select('*');
+        
+        if (pilotId) {
+          query = query.eq('pilot_id', pilotId);
+        }
+        
+        const { data, error } = await query.order('flight_date', { ascending: false });
         
         if (error) {
           console.log('Tables not yet created, returning empty array');
           return [];
         }
         
-        return data as PilotFlightHour[];
+        return (data || []) as PilotFlightHour[];
       } catch (error) {
         console.log('Tables not yet created, returning empty array');
         return [];
@@ -77,27 +70,20 @@ export const usePilotSchedule = (pilotId?: string) => {
     queryKey: ['pilot_schedule', pilotId],
     queryFn: async () => {
       try {
-        let query = `SELECT * FROM pilot_schedule`;
-        const params: any[] = [];
+        let query = supabase.from('pilot_schedule' as any).select('*');
         
         if (pilotId) {
-          query += ` WHERE pilot_id = $1`;
-          params.push(pilotId);
+          query = query.eq('pilot_id', pilotId);
         }
         
-        query += ` ORDER BY start_date ASC`;
-        
-        const { data, error } = await supabase.rpc('execute_sql', { 
-          query, 
-          params 
-        });
+        const { data, error } = await query.order('start_date', { ascending: true });
         
         if (error) {
           console.log('Tables not yet created, returning empty array');
           return [];
         }
         
-        return data as PilotSchedule[];
+        return (data || []) as PilotSchedule[];
       } catch (error) {
         console.log('Tables not yet created, returning empty array');
         return [];
@@ -111,17 +97,17 @@ export const useFlightTimeLimits = () => {
     queryKey: ['flight_time_limits'],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase.rpc('execute_sql', { 
-          query: 'SELECT * FROM flight_time_limits ORDER BY regulation_name',
-          params: []
-        });
+        const { data, error } = await supabase
+          .from('flight_time_limits' as any)
+          .select('*')
+          .order('regulation_name');
         
         if (error) {
           console.log('Tables not yet created, returning empty array');
           return [];
         }
         
-        return data as FlightTimeLimit[];
+        return (data || []) as FlightTimeLimit[];
       } catch (error) {
         console.log('Tables not yet created, returning empty array');
         return [];
@@ -136,23 +122,20 @@ export const useCreatePilotFlightHour = () => {
   return useMutation({
     mutationFn: async (flightHour: Omit<PilotFlightHour, 'id' | 'created_at' | 'updated_at'>) => {
       try {
-        const { data, error } = await supabase.rpc('execute_sql', {
-          query: `
-            INSERT INTO pilot_flight_hours (pilot_id, flight_id, flight_date, flight_hours, flight_type)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING *
-          `,
-          params: [
-            flightHour.pilot_id,
-            flightHour.flight_id || null,
-            flightHour.flight_date,
-            flightHour.flight_hours,
-            flightHour.flight_type
-          ]
-        });
+        const { data, error } = await supabase
+          .from('pilot_flight_hours' as any)
+          .insert([{
+            pilot_id: flightHour.pilot_id,
+            flight_id: flightHour.flight_id || null,
+            flight_date: flightHour.flight_date,
+            flight_hours: flightHour.flight_hours,
+            flight_type: flightHour.flight_type
+          }])
+          .select()
+          .single();
         
         if (error) throw error;
-        return data[0];
+        return data;
       } catch (error) {
         console.error('Error creating pilot flight hour:', error);
         throw error;
@@ -170,23 +153,20 @@ export const useCreatePilotSchedule = () => {
   return useMutation({
     mutationFn: async (schedule: Omit<PilotSchedule, 'id' | 'created_at' | 'updated_at'>) => {
       try {
-        const { data, error } = await supabase.rpc('execute_sql', {
-          query: `
-            INSERT INTO pilot_schedule (pilot_id, start_date, end_date, schedule_type, notes)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING *
-          `,
-          params: [
-            schedule.pilot_id,
-            schedule.start_date,
-            schedule.end_date,
-            schedule.schedule_type,
-            schedule.notes || null
-          ]
-        });
+        const { data, error } = await supabase
+          .from('pilot_schedule' as any)
+          .insert([{
+            pilot_id: schedule.pilot_id,
+            start_date: schedule.start_date,
+            end_date: schedule.end_date,
+            schedule_type: schedule.schedule_type,
+            notes: schedule.notes || null
+          }])
+          .select()
+          .single();
         
         if (error) throw error;
-        return data[0];
+        return data;
       } catch (error) {
         console.error('Error creating pilot schedule:', error);
         throw error;
