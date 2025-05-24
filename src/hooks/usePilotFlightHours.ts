@@ -40,10 +40,11 @@ export interface FlightTimeLimit {
 export const usePilotFlightHours = (pilotId?: string) => {
   return useQuery({
     queryKey: ['pilot_flight_hours', pilotId],
-    queryFn: async () => {
+    queryFn: async (): Promise<PilotFlightHour[]> => {
       try {
-        // Try to query the table directly first
-        let query = supabase.from('pilot_flight_hours' as any).select('*');
+        // Use the raw SQL approach to query tables that may not exist in the schema
+        const tableName = 'pilot_flight_hours';
+        let query = supabase.from(tableName as any).select('*');
         
         if (pilotId) {
           query = query.eq('pilot_id', pilotId);
@@ -52,11 +53,11 @@ export const usePilotFlightHours = (pilotId?: string) => {
         const { data, error } = await query.order('flight_date', { ascending: false });
         
         if (error) {
-          console.log('Tables not yet created, returning empty array');
+          console.log('pilot_flight_hours table not yet created, returning empty array');
           return [];
         }
         
-        return (data || []) as PilotFlightHour[];
+        return (data as PilotFlightHour[]) || [];
       } catch (error) {
         console.log('Tables not yet created, returning empty array');
         return [];
@@ -68,9 +69,10 @@ export const usePilotFlightHours = (pilotId?: string) => {
 export const usePilotSchedule = (pilotId?: string) => {
   return useQuery({
     queryKey: ['pilot_schedule', pilotId],
-    queryFn: async () => {
+    queryFn: async (): Promise<PilotSchedule[]> => {
       try {
-        let query = supabase.from('pilot_schedule' as any).select('*');
+        const tableName = 'pilot_schedule';
+        let query = supabase.from(tableName as any).select('*');
         
         if (pilotId) {
           query = query.eq('pilot_id', pilotId);
@@ -79,11 +81,11 @@ export const usePilotSchedule = (pilotId?: string) => {
         const { data, error } = await query.order('start_date', { ascending: true });
         
         if (error) {
-          console.log('Tables not yet created, returning empty array');
+          console.log('pilot_schedule table not yet created, returning empty array');
           return [];
         }
         
-        return (data || []) as PilotSchedule[];
+        return (data as PilotSchedule[]) || [];
       } catch (error) {
         console.log('Tables not yet created, returning empty array');
         return [];
@@ -95,19 +97,20 @@ export const usePilotSchedule = (pilotId?: string) => {
 export const useFlightTimeLimits = () => {
   return useQuery({
     queryKey: ['flight_time_limits'],
-    queryFn: async () => {
+    queryFn: async (): Promise<FlightTimeLimit[]> => {
       try {
+        const tableName = 'flight_time_limits';
         const { data, error } = await supabase
-          .from('flight_time_limits' as any)
+          .from(tableName as any)
           .select('*')
           .order('regulation_name');
         
         if (error) {
-          console.log('Tables not yet created, returning empty array');
+          console.log('flight_time_limits table not yet created, returning empty array');
           return [];
         }
         
-        return (data || []) as FlightTimeLimit[];
+        return (data as FlightTimeLimit[]) || [];
       } catch (error) {
         console.log('Tables not yet created, returning empty array');
         return [];
@@ -122,8 +125,9 @@ export const useCreatePilotFlightHour = () => {
   return useMutation({
     mutationFn: async (flightHour: Omit<PilotFlightHour, 'id' | 'created_at' | 'updated_at'>) => {
       try {
+        const tableName = 'pilot_flight_hours';
         const { data, error } = await supabase
-          .from('pilot_flight_hours' as any)
+          .from(tableName as any)
           .insert([{
             pilot_id: flightHour.pilot_id,
             flight_id: flightHour.flight_id || null,
@@ -135,7 +139,7 @@ export const useCreatePilotFlightHour = () => {
           .single();
         
         if (error) throw error;
-        return data;
+        return data as PilotFlightHour;
       } catch (error) {
         console.error('Error creating pilot flight hour:', error);
         throw error;
@@ -153,8 +157,9 @@ export const useCreatePilotSchedule = () => {
   return useMutation({
     mutationFn: async (schedule: Omit<PilotSchedule, 'id' | 'created_at' | 'updated_at'>) => {
       try {
+        const tableName = 'pilot_schedule';
         const { data, error } = await supabase
-          .from('pilot_schedule' as any)
+          .from(tableName as any)
           .insert([{
             pilot_id: schedule.pilot_id,
             start_date: schedule.start_date,
@@ -166,7 +171,7 @@ export const useCreatePilotSchedule = () => {
           .single();
         
         if (error) throw error;
-        return data;
+        return data as PilotSchedule;
       } catch (error) {
         console.error('Error creating pilot schedule:', error);
         throw error;
