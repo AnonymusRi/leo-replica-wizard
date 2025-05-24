@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import {
   Wrench, 
   Filter, 
   Plus, 
-  Clock, 
+  Clock,
   Calendar,
   AlertTriangle,
   CheckCircle,
@@ -27,6 +28,7 @@ import { HoldItemsList } from "./HoldItemsList";
 import { DocumentsManager } from "./DocumentsManager";
 import { OilConsumptionTracker } from "./OilConsumptionTracker";
 import { MaintenanceSettingsModal } from "./MaintenanceSettingsModal";
+import { MaintenanceOverview } from "./MaintenanceOverview";
 
 export const MaintenanceModule = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -148,19 +150,7 @@ export const MaintenanceModule = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Wrench className="w-5 h-5 mr-2" />
-                Registro Manutenzioni
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                Seleziona una tab per visualizzare i dettagli
-              </div>
-            </CardContent>
-          </Card>
+          <MaintenanceOverview />
         </TabsContent>
 
         <TabsContent value="fleet" className="space-y-4">
