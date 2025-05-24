@@ -26,7 +26,7 @@ export const useCreateFlight = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (flight: Partial<Flight>) => {
+    mutationFn: async (flight: Omit<Flight, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
         .from('flights')
         .insert([flight])

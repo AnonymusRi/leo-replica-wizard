@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +17,8 @@ import {
 import { cn } from "@/lib/utils";
 import { SalesModule } from "@/components/sales/SalesModule";
 import { ScheduleModule } from "@/components/schedule/ScheduleModule";
+import { CrewModule } from "@/components/crew/CrewModule";
+import { MaintenanceModule } from "@/components/maintenance/MaintenanceModule";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("SCHED");
