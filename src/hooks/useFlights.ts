@@ -13,7 +13,13 @@ export const useFlights = () => {
         .select(`
           *,
           aircraft:aircraft(*),
-          client:clients(*)
+          client:clients(*),
+          flight_assignments:flight_assignments(
+            *,
+            crew_member:crew_members(*)
+          ),
+          flight_legs:flight_legs(*),
+          schedule_changes:schedule_changes(*)
         `)
         .order('departure_time', { ascending: false });
       
@@ -32,7 +38,13 @@ export const useFlightById = (id: string) => {
         .select(`
           *,
           aircraft:aircraft(*),
-          client:clients(*)
+          client:clients(*),
+          flight_assignments:flight_assignments(
+            *,
+            crew_member:crew_members(*)
+          ),
+          flight_legs:flight_legs(*),
+          schedule_changes:schedule_changes(*)
         `)
         .eq('id', id)
         .single();
@@ -53,7 +65,11 @@ export const useFlightsByDateRange = (startDate: string, endDate: string) => {
         .select(`
           *,
           aircraft:aircraft(*),
-          client:clients(*)
+          client:clients(*),
+          flight_assignments:flight_assignments(
+            *,
+            crew_member:crew_members(*)
+          )
         `)
         .gte('departure_time', startDate)
         .lte('departure_time', endDate)
@@ -63,6 +79,27 @@ export const useFlightsByDateRange = (startDate: string, endDate: string) => {
       return data as Flight[];
     },
     enabled: !!startDate && !!endDate
+  });
+};
+
+export const useFlightsByAircraft = (aircraftId: string) => {
+  return useQuery({
+    queryKey: ['flights', 'aircraft', aircraftId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('flights')
+        .select(`
+          *,
+          aircraft:aircraft(*),
+          client:clients(*)
+        `)
+        .eq('aircraft_id', aircraftId)
+        .order('departure_time', { ascending: false });
+      
+      if (error) throw error;
+      return data as Flight[];
+    },
+    enabled: !!aircraftId
   });
 };
 
@@ -101,6 +138,57 @@ export const useCreateFlight = () => {
     },
     onError: (error) => {
       toast.error('Failed to create flight: ' + error.message);
+    }
+  });
+};
+
+export const useUpdateFlight = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...flightData }: Partial<Flight> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('flights')
+        .update(flightData)
+        .eq('id', id)
+        .select(`
+          *,
+          aircraft:aircraft(*),
+          client:clients(*)
+        `)
+        .single();
+      
+      if (error) throw error;
+      return data as Flight;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['flights'] });
+      toast.success('Flight updated successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to update flight: ' + error.message);
+    }
+  });
+};
+
+export const useDeleteFlight = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('flights')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['flights'] });
+      toast.success('Flight deleted successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to delete flight: ' + error.message);
     }
   });
 };
