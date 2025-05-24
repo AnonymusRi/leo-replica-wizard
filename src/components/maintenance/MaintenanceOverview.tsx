@@ -8,7 +8,7 @@ import { useAircraftTechnicalData } from "@/hooks/useAircraftTechnicalData";
 import { useMaintenanceRecords } from "@/hooks/useMaintenanceRecords";
 import { useAircraftDocuments } from "@/hooks/useAircraftDocuments";
 import { useAircraftHoldItems } from "@/hooks/useAircraftHoldItems";
-import { useOilConsumptionRecords } from "@/hooks/useOilConsumptionRecords";
+import { useOilConsumptionRecords } from "@/hooks/useOilConsumption";
 import { HelicopterSimulation } from "./HelicopterSimulation";
 
 export const MaintenanceOverview = () => {
@@ -75,6 +75,11 @@ export const MaintenanceOverview = () => {
     )
     .slice(0, 5);
 
+  // Get expiring documents for CriticalItemsCard
+  const expiringDocuments = documents.filter(
+    (doc) => doc.status === "expired" || doc.status === "expiring_soon"
+  );
+
   return (
     <div className="space-y-6">
       {/* Helicopter Simulation Section */}
@@ -96,8 +101,8 @@ export const MaintenanceOverview = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <CriticalItemsCard
-          expiredDocuments={expiredDocuments}
-          activeHoldItems={activeHoldItems}
+          expiringDocuments={expiringDocuments}
+          holdItems={holdItems}
         />
         <OilConsumptionCard recentOilRecords={recentOilRecords} />
       </div>
