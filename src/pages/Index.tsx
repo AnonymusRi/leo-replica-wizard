@@ -20,6 +20,9 @@ import { SalesModule } from "@/components/sales/SalesModule";
 import { ScheduleModule } from "@/components/schedule/ScheduleModule";
 import { CrewModule } from "@/components/crew/CrewModule";
 import { MaintenanceModule } from "@/components/maintenance/MaintenanceModule";
+import { ReportsModule } from "@/components/reports/ReportsModule";
+import { PhonebookModule } from "@/components/phonebook/PhonebookModule";
+import { OwnerBoardModule } from "@/components/owner/OwnerBoardModule";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("SCHED");
@@ -128,90 +131,6 @@ const OpsModule = () => {
           <Settings className="w-16 h-16 mx-auto mb-4 text-gray-300" />
           <h3 className="text-lg font-medium mb-2">Operations Management</h3>
           <p className="text-sm">Track flights, manage checklists, and coordinate operations</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Reports Module Component
-const ReportsModule = () => {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-4 border-b bg-gray-50">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Reports & Analytics</h2>
-          <div className="flex items-center space-x-2">
-            <Button size="sm" variant="outline">
-              <Filter className="w-4 h-4 mr-1" />
-              FILTER
-            </Button>
-            <Button size="sm" className="bg-green-600 hover:bg-green-700">
-              ADD REPORT
-            </Button>
-          </div>
-        </div>
-      </div>
-      <div className="p-6">
-        <div className="text-center text-gray-500 py-12">
-          <BarChart3 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium mb-2">Reports & Analytics</h3>
-          <p className="text-sm">Generate reports and analyze flight operations data</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Phonebook Module Component
-const PhonebookModule = () => {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-4 border-b bg-gray-50">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Phonebook</h2>
-          <div className="flex items-center space-x-2">
-            <Button size="sm" variant="outline">
-              <Filter className="w-4 h-4 mr-1" />
-              FILTER
-            </Button>
-            <Button size="sm" className="bg-green-600 hover:bg-green-700">
-              ADD CONTACT
-            </Button>
-          </div>
-        </div>
-      </div>
-      <div className="p-6">
-        <div className="text-center text-gray-500 py-12">
-          <Phone className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium mb-2">Contact Management</h3>
-          <p className="text-sm">Manage client database and contact information</p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Owner Board Module Component
-const OwnerBoardModule = () => {
-  return (
-    <div className="bg-white rounded-lg shadow-sm border">
-      <div className="p-4 border-b bg-gray-50">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Owner Board</h2>
-          <div className="flex items-center space-x-2">
-            <Button size="sm" variant="outline">
-              <Filter className="w-4 h-4 mr-1" />
-              FILTER
-            </Button>
-          </div>
-        </div>
-      </div>
-      <div className="p-6">
-        <div className="text-center text-gray-500 py-12">
-          <User className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium mb-2">Owner Dashboard</h3>
-          <p className="text-sm">Owner portal for aircraft management and oversight</p>
         </div>
       </div>
     </div>
