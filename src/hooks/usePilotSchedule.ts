@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { PilotSchedule } from '@/types/crew';
@@ -24,6 +23,39 @@ export const usePilotSchedule = (pilotId?: string, dateRange?: { start: string; 
       
       if (error) {
         console.error('Error fetching pilot schedule:', error);
+        throw error;
+      }
+      
+      return data || [];
+    }
+  });
+};
+
+// Hook per ottenere le ore di training che impattano sui limiti FTL
+export const usePilotTrainingHours = (pilotId?: string, dateRange?: { start: string; end: string }) => {
+  return useQuery({
+    queryKey: ['pilot_training_hours', pilotId, dateRange],
+    queryFn: async () => {
+      let query = supabase.from('training_records').select('*');
+      
+      if (pilotId) {
+        query = query.eq('pilot_id', pilotId);
+      }
+
+      // Filtra solo i training che impattano sui limiti FTL
+      query = query.eq('ftl_applicable', true);
+      query = query.eq('status', 'completed');
+
+      if (dateRange) {
+        query = query
+          .gte('training_date', dateRange.start)
+          .lte('training_date', dateRange.end);
+      }
+      
+      const { data, error } = await query.order('training_date', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching training hours:', error);
         throw error;
       }
       
