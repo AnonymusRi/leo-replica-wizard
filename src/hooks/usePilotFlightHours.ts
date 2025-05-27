@@ -29,6 +29,7 @@ export const usePilotTrainingHours = (pilotId?: string) => {
   return useQuery({
     queryKey: ['pilot_training_hours', pilotId],
     queryFn: async () => {
+      console.log('Fetching training hours for pilot:', pilotId);
       let query = supabase.from('training_records').select('*');
       
       if (pilotId) {
@@ -46,6 +47,7 @@ export const usePilotTrainingHours = (pilotId?: string) => {
         return [];
       }
       
+      console.log('Training hours fetched:', data?.length || 0, 'records');
       return data || [];
     }
   });
@@ -53,12 +55,16 @@ export const usePilotTrainingHours = (pilotId?: string) => {
 
 // Hook combinato per ottenere tutte le ore (volo + addestramento) per il calcolo FTL
 export const useCombinedPilotHours = (pilotId?: string) => {
-  const { data: flightHours = [] } = usePilotFlightHours(pilotId);
-  const { data: trainingHours = [] } = usePilotTrainingHours(pilotId);
+  const { data: flightHours = [], isLoading: flightLoading } = usePilotFlightHours(pilotId);
+  const { data: trainingHours = [], isLoading: trainingLoading } = usePilotTrainingHours(pilotId);
   
   return useQuery({
     queryKey: ['combined_pilot_hours', pilotId, flightHours, trainingHours],
     queryFn: async () => {
+      console.log('Combining hours for pilot:', pilotId);
+      console.log('Flight hours:', flightHours.length);
+      console.log('Training hours:', trainingHours.length);
+      
       // Combina ore di volo e addestramento per il calcolo FTL
       const combinedHours = [
         ...flightHours.map(h => ({
@@ -83,9 +89,10 @@ export const useCombinedPilotHours = (pilotId?: string) => {
         }))
       ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
+      console.log('Combined hours result:', combinedHours.length, 'total records');
       return combinedHours;
     },
-    enabled: flightHours.length > 0 || trainingHours.length > 0
+    enabled: !flightLoading && !trainingLoading
   });
 };
 

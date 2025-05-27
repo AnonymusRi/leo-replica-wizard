@@ -54,14 +54,23 @@ export const FTLCompliancePage = () => {
 
   // Calcola compliance per ogni pilota
   const calculatePilotCompliance = (pilotId: string, combinedHours: any[]) => {
+    console.log(`Calculating compliance for pilot ${pilotId} with ${combinedHours.length} records`);
+    
     const pilotHours = combinedHours.filter(h => h.pilot_id === pilotId);
+    console.log(`Pilot ${pilotId} has ${pilotHours.length} hour records`);
+    
     const now = new Date();
     
     const calculateHoursForPeriod = (hours: typeof pilotHours, startDate: Date) => {
       const filteredHours = hours.filter(h => new Date(h.date) >= startDate);
+      console.log(`Period from ${startDate.toISOString()}: ${filteredHours.length} records`);
+      
       return filteredHours
         .filter(h => h.counts_as_duty_time)
-        .reduce((sum, h) => sum + h.hours, 0);
+        .reduce((sum, h) => {
+          console.log(`Adding ${h.hours}h from ${h.type} (${h.date})`);
+          return sum + h.hours;
+        }, 0);
     };
     
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -74,6 +83,8 @@ export const FTLCompliancePage = () => {
     const weeklyHours = calculateHoursForPeriod(pilotHours, weekStart);
     const monthlyHours = calculateHoursForPeriod(pilotHours, monthStart);
     const yearlyHours = calculateHoursForPeriod(pilotHours, yearStart);
+
+    console.log(`Pilot ${pilotId} totals: daily=${dailyHours}, weekly=${weeklyHours}, monthly=${monthlyHours}, yearly=${yearlyHours}`);
 
     const warnings = [];
     if (dailyHours > activeLimits.daily_limit) warnings.push(`Limite giornaliero superato: ${dailyHours.toFixed(1)}h`);
@@ -95,7 +106,19 @@ export const FTLCompliancePage = () => {
 
   // Hook per ottenere ore combinate per tutti i piloti
   const PilotComplianceRow = ({ pilot }: { pilot: any }) => {
-    const { data: combinedHours = [] } = useCombinedPilotHours(pilot.id);
+    const { data: combinedHours = [], isLoading } = useCombinedPilotHours(pilot.id);
+    
+    if (isLoading) {
+      return (
+        <div className="p-4 border rounded-lg">
+          <div className="flex items-center space-x-3">
+            <RefreshCw className="w-4 h-4 animate-spin" />
+            <span>Caricamento dati per {pilot.first_name} {pilot.last_name}...</span>
+          </div>
+        </div>
+      );
+    }
+    
     const compliance = calculatePilotCompliance(pilot.id, combinedHours);
     
     return (
@@ -111,6 +134,9 @@ export const FTLCompliancePage = () => {
             <div>
               <div className="font-medium">{pilot.first_name} {pilot.last_name}</div>
               <div className="text-sm text-gray-500">{pilot.position}</div>
+              <div className="text-xs text-gray-400">
+                {combinedHours.length} attività totali
+              </div>
             </div>
           </div>
           
@@ -147,6 +173,28 @@ export const FTLCompliancePage = () => {
         
         {selectedPilot === pilot.id && (
           <div className="mt-4 pt-4 border-t">
+            <div className="mb-4">
+              <h4 className="font-medium mb-2">Dettaglio Attività</h4>
+              <div className="max-h-40 overflow-y-auto space-y-2">
+                {combinedHours.slice(0, 10).map((hour, index) => (
+                  <div key={index} className="text-sm bg-gray-50 p-2 rounded">
+                    <div className="flex justify-between">
+                      <span>{hour.type === 'flight' ? '✈️ Volo' : '🎓 Addestramento'}</span>
+                      <span>{hour.hours}h</span>
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {new Date(hour.date).toLocaleDateString('it-IT')}
+                    </div>
+                  </div>
+                ))}
+                {combinedHours.length > 10 && (
+                  <div className="text-xs text-gray-500 text-center">
+                    ... e altre {combinedHours.length - 10} attività
+                  </div>
+                )}
+              </div>
+            </div>
+            
             <FTLComplianceCard 
               pilotName={`${pilot.first_name} ${pilot.last_name}`}
               compliance={compliance}
