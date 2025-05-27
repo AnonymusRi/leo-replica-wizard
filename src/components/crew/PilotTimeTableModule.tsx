@@ -51,17 +51,26 @@ export const PilotTimeTableModule = () => {
           <FTLComplianceCard 
             pilotName="Tutti i Piloti" 
             compliance={{
-              daily: { current: 0, limit: 8, status: 'ok' },
-              weekly: { current: 0, limit: 40, status: 'ok' },
-              monthly: { current: 0, limit: 100, status: 'ok' }
+              compliant: true,
+              warnings: [],
+              hours: {
+                dailyHours: 0,
+                weeklyHours: 0,
+                monthlyHours: 0,
+                yearlyHours: 0
+              }
             }}
             limits={{
+              id: "default-limit",
+              regulation_name: "EASA FTL",
               daily_limit: 8,
               weekly_limit: 40,
               monthly_limit: 100,
               yearly_limit: 1000,
               min_rest_between_duties: 12,
-              min_weekly_rest: 36
+              min_weekly_rest: 36,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
             }}
           />
         </TabsContent>
