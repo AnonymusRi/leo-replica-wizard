@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -49,6 +48,32 @@ export const useTrainingRecords = (pilotId?: string) => {
   });
 };
 
+// Helper function to clean form data for database insertion
+const cleanFormDataForDatabase = (record: any) => {
+  const cleanedRecord = { ...record };
+  
+  // Convert empty strings to null for UUID fields
+  if (cleanedRecord.instructor_id === '') {
+    cleanedRecord.instructor_id = null;
+  }
+  
+  // Convert empty strings to null for optional text fields
+  if (cleanedRecord.certification_achieved === '') {
+    cleanedRecord.certification_achieved = null;
+  }
+  
+  if (cleanedRecord.notes === '') {
+    cleanedRecord.notes = null;
+  }
+  
+  // Handle expiry_date - convert empty string to null
+  if (cleanedRecord.expiry_date === '') {
+    cleanedRecord.expiry_date = null;
+  }
+  
+  return cleanedRecord;
+};
+
 export const useCreateTrainingRecord = () => {
   const queryClient = useQueryClient();
   
@@ -60,16 +85,20 @@ export const useCreateTrainingRecord = () => {
       if (!record.pilot_id) {
         throw new Error('Pilota obbligatorio');
       }
-      if (!record.training_description) {
+      if (!record.training_description?.trim()) {
         throw new Error('Descrizione addestramento obbligatoria');
       }
-      if (!record.training_organization) {
+      if (!record.training_organization?.trim()) {
         throw new Error('Organizzazione obbligatoria');
       }
       
+      // Clean the data before sending to database
+      const cleanedRecord = cleanFormDataForDatabase(record);
+      console.log('Cleaned record for database:', cleanedRecord);
+      
       const { data, error } = await supabase
         .from('training_records')
-        .insert([record])
+        .insert([cleanedRecord])
         .select()
         .single();
       
@@ -103,9 +132,13 @@ export const useUpdateTrainingRecord = () => {
     mutationFn: async ({ id, ...record }: Partial<TrainingRecord> & { id: string }) => {
       console.log('Updating training record:', id, record);
       
+      // Clean the data before sending to database
+      const cleanedRecord = cleanFormDataForDatabase(record);
+      console.log('Cleaned record for update:', cleanedRecord);
+      
       const { data, error } = await supabase
         .from('training_records')
-        .update(record)
+        .update(cleanedRecord)
         .eq('id', id)
         .select()
         .single();
