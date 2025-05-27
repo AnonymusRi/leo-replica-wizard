@@ -40,7 +40,7 @@ export const useTrainingRecords = (pilotId?: string) => {
         throw error;
       }
       
-      return data || [];
+      return (data || []) as TrainingRecord[];
     }
   });
 };

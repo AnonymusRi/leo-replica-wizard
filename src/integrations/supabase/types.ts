@@ -2282,6 +2282,81 @@ export type Database = {
         }
         Relationships: []
       }
+      training_records: {
+        Row: {
+          certification_achieved: string | null
+          counts_as_duty_time: boolean
+          counts_as_flight_time: boolean
+          created_at: string
+          duration_hours: number
+          expiry_date: string | null
+          ftl_applicable: boolean
+          id: string
+          instructor_id: string | null
+          notes: string | null
+          pilot_id: string
+          status: string
+          training_date: string
+          training_description: string
+          training_organization: string
+          training_type: string
+          updated_at: string
+        }
+        Insert: {
+          certification_achieved?: string | null
+          counts_as_duty_time?: boolean
+          counts_as_flight_time?: boolean
+          created_at?: string
+          duration_hours: number
+          expiry_date?: string | null
+          ftl_applicable?: boolean
+          id?: string
+          instructor_id?: string | null
+          notes?: string | null
+          pilot_id: string
+          status?: string
+          training_date: string
+          training_description: string
+          training_organization: string
+          training_type: string
+          updated_at?: string
+        }
+        Update: {
+          certification_achieved?: string | null
+          counts_as_duty_time?: boolean
+          counts_as_flight_time?: boolean
+          created_at?: string
+          duration_hours?: number
+          expiry_date?: string | null
+          ftl_applicable?: boolean
+          id?: string
+          instructor_id?: string | null
+          notes?: string | null
+          pilot_id?: string
+          status?: string
+          training_date?: string
+          training_description?: string
+          training_organization?: string
+          training_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_records_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_records_pilot_id_fkey"
+            columns: ["pilot_id"]
+            isOneToOne: false
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_permissions: {
         Row: {
           expires_at: string | null

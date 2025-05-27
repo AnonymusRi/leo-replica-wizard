@@ -29,7 +29,7 @@ export const TrainingModal = ({
 }: TrainingModalProps) => {
   const [formData, setFormData] = useState({
     pilot_id: selectedPilot || '',
-    training_type: 'simulator' as const,
+    training_type: 'simulator' as 'simulator' | 'aircraft' | 'ground_school' | 'recurrent' | 'type_rating' | 'proficiency_check',
     training_date: format(new Date(), 'yyyy-MM-dd'),
     duration_hours: 2,
     instructor_id: '',
@@ -40,7 +40,7 @@ export const TrainingModal = ({
     counts_as_duty_time: true,
     counts_as_flight_time: false,
     ftl_applicable: true,
-    status: 'scheduled' as const,
+    status: 'scheduled' as 'scheduled' | 'in_progress' | 'completed' | 'cancelled',
     notes: ''
   });
 
@@ -139,7 +139,7 @@ export const TrainingModal = ({
 
             <div>
               <Label htmlFor="training_type">Tipo Addestramento *</Label>
-              <Select value={formData.training_type} onValueChange={(value: any) => setFormData(prev => ({ ...prev, training_type: value }))}>
+              <Select value={formData.training_type} onValueChange={(value: typeof formData.training_type) => setFormData(prev => ({ ...prev, training_type: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -191,7 +191,7 @@ export const TrainingModal = ({
 
             <div>
               <Label htmlFor="status">Stato</Label>
-              <Select value={formData.status} onValueChange={(value: any) => setFormData(prev => ({ ...prev, status: value }))}>
+              <Select value={formData.status} onValueChange={(value: typeof formData.status) => setFormData(prev => ({ ...prev, status: value }))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>

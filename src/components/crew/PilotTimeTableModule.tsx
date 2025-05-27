@@ -48,7 +48,22 @@ export const PilotTimeTableModule = () => {
         </TabsContent>
 
         <TabsContent value="compliance" className="mt-6">
-          <FTLComplianceCard />
+          <FTLComplianceCard 
+            pilotName="Tutti i Piloti" 
+            compliance={{
+              daily: { current: 0, limit: 8, status: 'ok' },
+              weekly: { current: 0, limit: 40, status: 'ok' },
+              monthly: { current: 0, limit: 100, status: 'ok' }
+            }}
+            limits={{
+              daily_limit: 8,
+              weekly_limit: 40,
+              monthly_limit: 100,
+              yearly_limit: 1000,
+              min_rest_between_duties: 12,
+              min_weekly_rest: 36
+            }}
+          />
         </TabsContent>
       </Tabs>
     </div>
