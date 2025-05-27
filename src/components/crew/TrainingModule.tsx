@@ -91,7 +91,7 @@ export const TrainingModule = () => {
     return types[type as keyof typeof types] || type;
   };
 
-  const isExpiringS oon = (expiryDate?: string) => {
+  const isExpiringSoon = (expiryDate?: string) => {
     if (!expiryDate) return false;
     const expiry = new Date(expiryDate);
     const thirtyDaysFromNow = addDays(new Date(), 30);
@@ -211,11 +211,11 @@ export const TrainingModule = () => {
       <div className="grid gap-4">
         {filteredRecords.map((record) => {
           const pilot = pilots.find(p => p.id === record.pilot_id);
-          const expiringS oon = isExpiringS oon(record.expiry_date);
+          const expiringSoon = isExpiringSoon(record.expiry_date);
           const expired = isExpired(record.expiry_date);
           
           return (
-            <Card key={record.id} className={`${expired ? 'border-red-200 bg-red-50' : expiringS oon ? 'border-yellow-200 bg-yellow-50' : ''}`}>
+            <Card key={record.id} className={`${expired ? 'border-red-200 bg-red-50' : expiringSoon ? 'border-yellow-200 bg-yellow-50' : ''}`}>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -276,15 +276,15 @@ export const TrainingModule = () => {
                     </div>
 
                     {record.expiry_date && (
-                      <div className={`mt-2 text-sm flex items-center ${expired ? 'text-red-600' : expiringS oon ? 'text-yellow-600' : 'text-gray-600'}`}>
-                        {expired || expiringS oon ? (
+                      <div className={`mt-2 text-sm flex items-center ${expired ? 'text-red-600' : expiringSoon ? 'text-yellow-600' : 'text-gray-600'}`}>
+                        {expired || expiringSoon ? (
                           <AlertTriangle className="w-4 h-4 mr-2" />
                         ) : (
                           <Calendar className="w-4 h-4 mr-2" />
                         )}
                         Scadenza: {format(new Date(record.expiry_date), "dd MMM yyyy", { locale: it })}
                         {expired && <span className="ml-2 font-medium">(SCADUTO)</span>}
-                        {expiringS oon && <span className="ml-2 font-medium">(IN SCADENZA)</span>}
+                        {expiringSoon && <span className="ml-2 font-medium">(IN SCADENZA)</span>}
                       </div>
                     )}
 
