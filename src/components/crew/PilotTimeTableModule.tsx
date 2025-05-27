@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TimeTableView } from "./TimeTableView";
 import { FTLComplianceCard } from "./FTLComplianceCard";
 import { TrainingModule } from "./TrainingModule";
+import { FlightHoursModule } from "./FlightHoursModule";
 import { Calendar, Clock, Shield, GraduationCap } from "lucide-react";
 
 export const PilotTimeTableModule = () => {
@@ -36,11 +37,7 @@ export const PilotTimeTableModule = () => {
         </TabsContent>
 
         <TabsContent value="hours" className="mt-6">
-          <div className="text-center py-8">
-            <Clock className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <h3 className="text-lg font-medium mb-2">Modulo Ore di Volo</h3>
-            <p className="text-gray-500">Gestione del registro ore di volo piloti</p>
-          </div>
+          <FlightHoursModule />
         </TabsContent>
 
         <TabsContent value="training" className="mt-6">
