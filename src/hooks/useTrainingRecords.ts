@@ -27,6 +27,8 @@ export const useTrainingRecords = (pilotId?: string) => {
   return useQuery({
     queryKey: ['training_records', pilotId],
     queryFn: async (): Promise<TrainingRecord[]> => {
+      console.log('Fetching training records for pilot:', pilotId);
+      
       let query = supabase.from('training_records').select('*');
       
       if (pilotId) {
@@ -37,9 +39,11 @@ export const useTrainingRecords = (pilotId?: string) => {
       
       if (error) {
         console.error('Error fetching training records:', error);
+        toast.error('Errore nel caricamento degli addestramenti: ' + error.message);
         throw error;
       }
       
+      console.log('Training records fetched:', data?.length || 0);
       return (data || []) as TrainingRecord[];
     }
   });
@@ -50,21 +54,44 @@ export const useCreateTrainingRecord = () => {
   
   return useMutation({
     mutationFn: async (record: Omit<TrainingRecord, 'id' | 'created_at' | 'updated_at'>) => {
+      console.log('Creating training record:', record);
+      
+      // Validazione dei campi obbligatori
+      if (!record.pilot_id) {
+        throw new Error('Pilota obbligatorio');
+      }
+      if (!record.training_description) {
+        throw new Error('Descrizione addestramento obbligatoria');
+      }
+      if (!record.training_organization) {
+        throw new Error('Organizzazione obbligatoria');
+      }
+      
       const { data, error } = await supabase
         .from('training_records')
         .insert([record])
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating training record:', error);
+        throw error;
+      }
+      
+      console.log('Training record created successfully:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Training record creation successful, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['training_records'] });
       queryClient.invalidateQueries({ queryKey: ['pilot_flight_hours'] });
       queryClient.invalidateQueries({ queryKey: ['pilot_training_hours'] });
       queryClient.invalidateQueries({ queryKey: ['combined_pilot_hours'] });
       toast.success('Record di addestramento creato con successo');
+    },
+    onError: (error: any) => {
+      console.error('Training record creation failed:', error);
+      toast.error('Errore nella creazione dell\'addestramento: ' + (error.message || 'Errore sconosciuto'));
     }
   });
 };
@@ -74,6 +101,8 @@ export const useUpdateTrainingRecord = () => {
   
   return useMutation({
     mutationFn: async ({ id, ...record }: Partial<TrainingRecord> & { id: string }) => {
+      console.log('Updating training record:', id, record);
+      
       const { data, error } = await supabase
         .from('training_records')
         .update(record)
@@ -81,15 +110,25 @@ export const useUpdateTrainingRecord = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating training record:', error);
+        throw error;
+      }
+      
+      console.log('Training record updated successfully:', data);
       return data;
     },
     onSuccess: () => {
+      console.log('Training record update successful, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['training_records'] });
       queryClient.invalidateQueries({ queryKey: ['pilot_flight_hours'] });
       queryClient.invalidateQueries({ queryKey: ['pilot_training_hours'] });
       queryClient.invalidateQueries({ queryKey: ['combined_pilot_hours'] });
       toast.success('Record di addestramento aggiornato');
+    },
+    onError: (error: any) => {
+      console.error('Training record update failed:', error);
+      toast.error('Errore nell\'aggiornamento dell\'addestramento: ' + (error.message || 'Errore sconosciuto'));
     }
   });
 };
@@ -99,19 +138,31 @@ export const useDeleteTrainingRecord = () => {
   
   return useMutation({
     mutationFn: async (id: string) => {
+      console.log('Deleting training record:', id);
+      
       const { error } = await supabase
         .from('training_records')
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting training record:', error);
+        throw error;
+      }
+      
+      console.log('Training record deleted successfully');
     },
     onSuccess: () => {
+      console.log('Training record deletion successful, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['training_records'] });
       queryClient.invalidateQueries({ queryKey: ['pilot_flight_hours'] });
       queryClient.invalidateQueries({ queryKey: ['pilot_training_hours'] });
       queryClient.invalidateQueries({ queryKey: ['combined_pilot_hours'] });
       toast.success('Record di addestramento eliminato');
+    },
+    onError: (error: any) => {
+      console.error('Training record deletion failed:', error);
+      toast.error('Errore nell\'eliminazione dell\'addestramento: ' + (error.message || 'Errore sconosciuto'));
     }
   });
 };

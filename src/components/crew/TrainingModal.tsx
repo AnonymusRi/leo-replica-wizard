@@ -73,25 +73,51 @@ export const TrainingModal = ({
     }
   }, [existingRecord, mode, selectedPilot]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const submitData = {
-      ...formData,
-      training_date: new Date(formData.training_date).toISOString(),
-      expiry_date: formData.expiry_date ? new Date(formData.expiry_date).toISOString() : undefined
-    };
-
-    if (mode === 'edit' && existingRecord) {
-      updateMutation.mutate({ 
-        id: existingRecord.id, 
-        ...submitData 
-      });
-    } else {
-      createMutation.mutate(submitData);
+    console.log('Form submitted with data:', formData);
+    
+    // Validazione client-side
+    if (!formData.pilot_id) {
+      console.error('Validation error: Pilot ID missing');
+      return;
     }
+    if (!formData.training_description.trim()) {
+      console.error('Validation error: Training description missing');
+      return;
+    }
+    if (!formData.training_organization.trim()) {
+      console.error('Validation error: Training organization missing');
+      return;
+    }
+    
+    try {
+      const submitData = {
+        ...formData,
+        training_date: new Date(formData.training_date).toISOString(),
+        expiry_date: formData.expiry_date ? new Date(formData.expiry_date).toISOString() : undefined
+      };
 
-    onClose();
+      console.log('Submitting data:', submitData);
+
+      if (mode === 'edit' && existingRecord) {
+        console.log('Updating existing record');
+        await updateMutation.mutateAsync({ 
+          id: existingRecord.id, 
+          ...submitData 
+        });
+      } else {
+        console.log('Creating new record');
+        await createMutation.mutateAsync(submitData);
+      }
+
+      console.log('Operation successful, closing modal');
+      onClose();
+    } catch (error) {
+      console.error('Submit error:', error);
+      // L'errore viene già gestito nelle mutazioni
+    }
   };
 
   const trainingTypes = [
@@ -109,6 +135,8 @@ export const TrainingModal = ({
     { value: 'completed', label: 'Completato' },
     { value: 'cancelled', label: 'Annullato' }
   ];
+
+  const isLoading = createMutation.isPending || updateMutation.isPending;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -274,11 +302,11 @@ export const TrainingModal = ({
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Annulla
             </Button>
-            <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-              {mode === 'edit' ? 'Aggiorna' : 'Crea'}
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Salvataggio...' : (mode === 'edit' ? 'Aggiorna' : 'Crea')}
             </Button>
           </div>
         </form>
