@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { PilotFlightHour } from '@/types/crew';
@@ -25,6 +24,71 @@ export const usePilotFlightHours = (pilotId?: string) => {
   });
 };
 
+// Hook per ottenere le ore di addestramento che impattano sui limiti FTL
+export const usePilotTrainingHours = (pilotId?: string) => {
+  return useQuery({
+    queryKey: ['pilot_training_hours', pilotId],
+    queryFn: async () => {
+      let query = supabase.from('training_records').select('*');
+      
+      if (pilotId) {
+        query = query.eq('pilot_id', pilotId);
+      }
+      
+      // Filtra solo i training che impattano sui limiti FTL e sono completati
+      query = query.eq('ftl_applicable', true);
+      query = query.in('status', ['completed', 'in_progress']);
+      
+      const { data, error } = await query.order('training_date', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching training hours:', error);
+        return [];
+      }
+      
+      return data || [];
+    }
+  });
+};
+
+// Hook combinato per ottenere tutte le ore (volo + addestramento) per il calcolo FTL
+export const useCombinedPilotHours = (pilotId?: string) => {
+  const { data: flightHours = [] } = usePilotFlightHours(pilotId);
+  const { data: trainingHours = [] } = usePilotTrainingHours(pilotId);
+  
+  return useQuery({
+    queryKey: ['combined_pilot_hours', pilotId, flightHours, trainingHours],
+    queryFn: async () => {
+      // Combina ore di volo e addestramento per il calcolo FTL
+      const combinedHours = [
+        ...flightHours.map(h => ({
+          id: h.id,
+          pilot_id: h.pilot_id,
+          date: h.flight_date,
+          hours: Number(h.flight_hours),
+          type: 'flight',
+          source: 'flight_hours',
+          counts_as_duty_time: true,
+          counts_as_flight_time: true
+        })),
+        ...trainingHours.map(t => ({
+          id: t.id,
+          pilot_id: t.pilot_id,
+          date: t.training_date,
+          hours: Number(t.duration_hours),
+          type: 'training',
+          source: 'training',
+          counts_as_duty_time: t.counts_as_duty_time,
+          counts_as_flight_time: t.counts_as_flight_time
+        }))
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
+      return combinedHours;
+    },
+    enabled: flightHours.length > 0 || trainingHours.length > 0
+  });
+};
+
 export const useCreatePilotFlightHour = () => {
   const queryClient = useQueryClient();
   
@@ -47,6 +111,7 @@ export const useCreatePilotFlightHour = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pilot_flight_hours'] });
+      queryClient.invalidateQueries({ queryKey: ['combined_pilot_hours'] });
     }
   });
 };
@@ -74,6 +139,7 @@ export const useUpdatePilotFlightHour = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pilot_flight_hours'] });
+      queryClient.invalidateQueries({ queryKey: ['combined_pilot_hours'] });
     }
   });
 };
@@ -92,6 +158,7 @@ export const useDeletePilotFlightHour = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pilot_flight_hours'] });
+      queryClient.invalidateQueries({ queryKey: ['combined_pilot_hours'] });
     }
   });
 };

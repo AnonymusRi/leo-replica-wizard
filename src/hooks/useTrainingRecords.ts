@@ -62,6 +62,8 @@ export const useCreateTrainingRecord = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['training_records'] });
       queryClient.invalidateQueries({ queryKey: ['pilot_flight_hours'] });
+      queryClient.invalidateQueries({ queryKey: ['pilot_training_hours'] });
+      queryClient.invalidateQueries({ queryKey: ['combined_pilot_hours'] });
       toast.success('Record di addestramento creato con successo');
     }
   });
@@ -85,6 +87,8 @@ export const useUpdateTrainingRecord = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['training_records'] });
       queryClient.invalidateQueries({ queryKey: ['pilot_flight_hours'] });
+      queryClient.invalidateQueries({ queryKey: ['pilot_training_hours'] });
+      queryClient.invalidateQueries({ queryKey: ['combined_pilot_hours'] });
       toast.success('Record di addestramento aggiornato');
     }
   });
@@ -105,6 +109,8 @@ export const useDeleteTrainingRecord = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['training_records'] });
       queryClient.invalidateQueries({ queryKey: ['pilot_flight_hours'] });
+      queryClient.invalidateQueries({ queryKey: ['pilot_training_hours'] });
+      queryClient.invalidateQueries({ queryKey: ['combined_pilot_hours'] });
       toast.success('Record di addestramento eliminato');
     }
   });
