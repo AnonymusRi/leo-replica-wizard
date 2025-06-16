@@ -7,3 +7,4 @@ export * from './flight';
 export * from './quote';
 export * from './schedule';
 export * from './airport';
+export * from './certification';
