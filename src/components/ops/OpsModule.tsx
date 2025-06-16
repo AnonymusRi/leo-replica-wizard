@@ -40,6 +40,7 @@ import { AirportDirectoryModal } from "./AirportDirectoryModal";
 import { FlightChecklistModal } from "./FlightChecklistModal";
 import { HandlingRequestModal } from "./HandlingRequestModal";
 import { DocumentGenerationModal } from "./DocumentGenerationModal";
+import { CrewAssignmentModal } from "./CrewAssignmentModal";
 import { NotificationCenter } from "./NotificationCenter";
 import { useSystemNotifications, useCreateNotification } from "@/hooks/useSystemNotifications";
 import { useWorkflowRules, useExecuteWorkflow } from "@/hooks/useWorkflowRules";
@@ -58,6 +59,7 @@ export const OpsModule = () => {
   const [isChecklistModalOpen, setIsChecklistModalOpen] = useState(false);
   const [isHandlingRequestOpen, setIsHandlingRequestOpen] = useState(false);
   const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
+  const [isCrewAssignmentOpen, setIsCrewAssignmentOpen] = useState(false);
 
   const { data: flights = [], isLoading: flightsLoading } = useFlights();
   const { data: aircraft = [] } = useAircraft();
@@ -106,6 +108,26 @@ export const OpsModule = () => {
       entityType: 'flight',
       data: { flightNumber: flight.flight_number }
     });
+  };
+
+  const handleCrewAssignmentClick = () => {
+    if (!selectedFlight) {
+      // Se non c'è un volo selezionato, seleziona il primo volo disponibile
+      if (filteredFlights.length > 0) {
+        setSelectedFlight(filteredFlights[0]);
+      } else {
+        createNotification.mutate({
+          module_source: 'ops',
+          module_target: 'ops',
+          notification_type: 'warning',
+          title: 'Nessun Volo Disponibile',
+          message: 'Seleziona un volo per assegnare l\'equipaggio',
+          priority: 'medium'
+        });
+        return;
+      }
+    }
+    setIsCrewAssignmentOpen(true);
   };
 
   // Function to create cross-module notifications
@@ -339,7 +361,10 @@ export const OpsModule = () => {
           <Mail className="w-4 h-4 mr-2" />
           Handling Request
         </Button>
-        <Button variant="outline">
+        <Button 
+          variant="outline"
+          onClick={handleCrewAssignmentClick}
+        >
           <Users className="w-4 h-4 mr-2" />
           Crew Assignment
         </Button>
@@ -370,6 +395,12 @@ export const OpsModule = () => {
       <DocumentGenerationModal
         isOpen={isDocumentModalOpen}
         onClose={() => setIsDocumentModalOpen(false)}
+        flight={selectedFlight}
+      />
+
+      <CrewAssignmentModal
+        isOpen={isCrewAssignmentOpen}
+        onClose={() => setIsCrewAssignmentOpen(false)}
         flight={selectedFlight}
       />
     </div>
