@@ -47,61 +47,66 @@ export const AirportDirectoryModal = ({ isOpen, onClose }: AirportDirectoryModal
             <div className="text-center py-8">Caricamento...</div>
           ) : (
             <div className="grid gap-4 max-h-96 overflow-y-auto">
-              {filteredAirports.map((airport) => (
-                <Card key={airport.id}>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">{airport.airport_code}</Badge>
-                        <span className="text-lg">{airport.airport_name}</span>
-                      </div>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {airport.contact_info && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm">{airport.contact_info.phone || 'N/A'}</span>
-                      </div>
-                    )}
-                    
-                    {airport.opening_hours && (
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm">
-                          Operativo: {airport.opening_hours.general || 'H24'}
-                        </span>
-                      </div>
-                    )}
+              {filteredAirports.map((airport) => {
+                const contactInfo = airport.contact_info as { phone?: string } | null;
+                const openingHours = airport.opening_hours as { general?: string } | null;
+                const fuelSuppliers = airport.fuel_suppliers as string[] | null;
+                const cateringSuppliers = airport.catering_suppliers as string[] | null;
 
-                    {airport.fuel_suppliers && (
-                      <div className="flex items-center gap-2">
-                        <Fuel className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm">
-                          Carburante: {Array.isArray(airport.fuel_suppliers) ? 
-                            airport.fuel_suppliers.join(', ') : 'Disponibile'}
-                        </span>
-                      </div>
-                    )}
+                return (
+                  <Card key={airport.id}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">{airport.airport_code}</Badge>
+                          <span className="text-lg">{airport.airport_name}</span>
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {contactInfo?.phone && (
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm">{contactInfo.phone}</span>
+                        </div>
+                      )}
+                      
+                      {openingHours && (
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm">
+                            Operativo: {openingHours.general || 'H24'}
+                          </span>
+                        </div>
+                      )}
 
-                    {airport.catering_suppliers && (
-                      <div className="flex items-center gap-2">
-                        <Utensils className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm">
-                          Catering: {Array.isArray(airport.catering_suppliers) ? 
-                            airport.catering_suppliers.join(', ') : 'Disponibile'}
-                        </span>
-                      </div>
-                    )}
+                      {fuelSuppliers && fuelSuppliers.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Fuel className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm">
+                            Carburante: {fuelSuppliers.join(', ')}
+                          </span>
+                        </div>
+                      )}
 
-                    {airport.notes && (
-                      <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                        {airport.notes}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+                      {cateringSuppliers && cateringSuppliers.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Utensils className="w-4 h-4 text-gray-500" />
+                          <span className="text-sm">
+                            Catering: {cateringSuppliers.join(', ')}
+                          </span>
+                        </div>
+                      )}
+
+                      {airport.notes && (
+                        <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                          {airport.notes}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>

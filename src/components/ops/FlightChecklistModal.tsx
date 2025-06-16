@@ -16,6 +16,19 @@ interface FlightChecklistModalProps {
   flight: any;
 }
 
+interface ChecklistItem {
+  id: string;
+  item_text: string;
+  is_required: boolean;
+  sort_order: number;
+}
+
+interface Checklist {
+  id: string;
+  name: string;
+  items: ChecklistItem[];
+}
+
 export const FlightChecklistModal = ({ isOpen, onClose, flight }: FlightChecklistModalProps) => {
   const [notes, setNotes] = useState("");
   const { data: checklists = [] } = useOpsChecklists();
@@ -23,8 +36,7 @@ export const FlightChecklistModal = ({ isOpen, onClose, flight }: FlightChecklis
 
   const handleChecklistItemToggle = async (itemId: string, completed: boolean) => {
     try {
-      // Qui dovresti implementare la logica per aggiornare il progresso
-      toast.success(completed ? "Item completato" : "Item marcato come da completare");
+      updateProgress({ itemId, completed, notes });
     } catch (error) {
       toast.error("Errore nell'aggiornamento");
     }
@@ -85,7 +97,7 @@ export const FlightChecklistModal = ({ isOpen, onClose, flight }: FlightChecklis
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Checklist Operativa</h3>
             
-            {checklists.map((checklist) => (
+            {(checklists as Checklist[]).map((checklist) => (
               <Card key={checklist.id}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
@@ -94,7 +106,7 @@ export const FlightChecklistModal = ({ isOpen, onClose, flight }: FlightChecklis
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {checklist.items?.map((item: any) => (
+                  {checklist.items?.map((item: ChecklistItem) => (
                     <div key={item.id} className="flex items-start gap-3 p-2 border rounded">
                       <Checkbox
                         id={item.id}
