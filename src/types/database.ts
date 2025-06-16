@@ -6,6 +6,7 @@ export * from './flight';
 export * from './quote';
 export * from './schedule';
 export * from './airport';
+export * from './certification';
 
 // Keep legacy exports for backward compatibility
 export type {
@@ -25,5 +26,9 @@ export type {
   FlightAssignment,
   ScheduleChange,
   MaintenanceType,
-  FlightLeg
+  FlightLeg,
+  CrewCertification,
+  AircraftCertificationRequirement,
+  EnacNotification,
+  CrewValidationResult
 } from './index';

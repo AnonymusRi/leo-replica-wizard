@@ -51,6 +51,38 @@ export type Database = {
         }
         Relationships: []
       }
+      aircraft_certification_requirements: {
+        Row: {
+          aircraft_id: string | null
+          created_at: string | null
+          id: string
+          is_mandatory: boolean | null
+          required_certification_type: string
+        }
+        Insert: {
+          aircraft_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_mandatory?: boolean | null
+          required_certification_type: string
+        }
+        Update: {
+          aircraft_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_mandatory?: boolean | null
+          required_certification_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aircraft_certification_requirements_aircraft_id_fkey"
+            columns: ["aircraft_id"]
+            isOneToOne: false
+            referencedRelation: "aircraft"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       aircraft_documents: {
         Row: {
           aircraft_id: string | null
@@ -613,6 +645,56 @@ export type Database = {
         }
         Relationships: []
       }
+      crew_certifications: {
+        Row: {
+          aircraft_type: string | null
+          certificate_number: string | null
+          certification_type: string
+          created_at: string | null
+          crew_member_id: string | null
+          expiry_date: string | null
+          id: string
+          is_active: boolean | null
+          issue_date: string
+          issuing_authority: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          aircraft_type?: string | null
+          certificate_number?: string | null
+          certification_type: string
+          created_at?: string | null
+          crew_member_id?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          issue_date: string
+          issuing_authority?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          aircraft_type?: string | null
+          certificate_number?: string | null
+          certification_type?: string
+          created_at?: string | null
+          crew_member_id?: string | null
+          expiry_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          issue_date?: string
+          issuing_authority?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_certifications_crew_member_id_fkey"
+            columns: ["crew_member_id"]
+            isOneToOne: false
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crew_flight_assignments: {
         Row: {
           airport_recency_valid: boolean | null
@@ -860,6 +942,60 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      enac_notifications: {
+        Row: {
+          created_at: string | null
+          crew_member_id: string | null
+          enac_response: string | null
+          expired_certification_type: string
+          flight_id: string | null
+          id: string
+          justification: string
+          notification_date: string | null
+          sent_by: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          crew_member_id?: string | null
+          enac_response?: string | null
+          expired_certification_type: string
+          flight_id?: string | null
+          id?: string
+          justification: string
+          notification_date?: string | null
+          sent_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          crew_member_id?: string | null
+          enac_response?: string | null
+          expired_certification_type?: string
+          flight_id?: string | null
+          id?: string
+          justification?: string
+          notification_date?: string | null
+          sent_by?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enac_notifications_crew_member_id_fkey"
+            columns: ["crew_member_id"]
+            isOneToOne: false
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enac_notifications_flight_id_fkey"
+            columns: ["flight_id"]
+            isOneToOne: false
+            referencedRelation: "flights"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       flight_assignments: {
         Row: {
