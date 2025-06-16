@@ -1,6 +1,8 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { PilotSchedule } from '@/types/crew';
+import { toast } from 'sonner';
 
 export const usePilotSchedule = (pilotId?: string, dateRange?: { start: string; end: string }) => {
   return useQuery({
@@ -86,6 +88,10 @@ export const useCreatePilotSchedule = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pilot_schedule'] });
+      toast.success('Orario creato con successo');
+    },
+    onError: (error) => {
+      toast.error('Errore nella creazione dell\'orario: ' + error.message);
     }
   });
 };
@@ -113,6 +119,10 @@ export const useUpdatePilotSchedule = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pilot_schedule'] });
+      toast.success('Orario aggiornato con successo');
+    },
+    onError: (error) => {
+      toast.error('Errore nell\'aggiornamento dell\'orario: ' + error.message);
     }
   });
 };
@@ -131,6 +141,10 @@ export const useDeletePilotSchedule = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pilot_schedule'] });
+      toast.success('Orario eliminato con successo');
+    },
+    onError: (error) => {
+      toast.error('Errore nell\'eliminazione dell\'orario: ' + error.message);
     }
   });
 };

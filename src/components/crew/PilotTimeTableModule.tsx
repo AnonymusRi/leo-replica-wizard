@@ -5,7 +5,8 @@ import { TimeTableView } from "./TimeTableView";
 import { TrainingModule } from "./TrainingModule";
 import { FlightHoursModule } from "./FlightHoursModule";
 import { FTLCompliancePage } from "./FTLCompliancePage";
-import { Calendar, Clock, Shield, GraduationCap } from "lucide-react";
+import { CrewScheduleManager } from "./CrewScheduleManager";
+import { Calendar, Clock, Shield, GraduationCap, Users } from "lucide-react";
 
 export const PilotTimeTableModule = () => {
   const [activeTab, setActiveTab] = useState("schedule");
@@ -13,10 +14,14 @@ export const PilotTimeTableModule = () => {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="schedule" className="flex items-center space-x-2">
             <Calendar className="w-4 h-4" />
             <span>Schedule</span>
+          </TabsTrigger>
+          <TabsTrigger value="crew-schedules" className="flex items-center space-x-2">
+            <Users className="w-4 h-4" />
+            <span>Orari Crew</span>
           </TabsTrigger>
           <TabsTrigger value="hours" className="flex items-center space-x-2">
             <Clock className="w-4 h-4" />
@@ -34,6 +39,10 @@ export const PilotTimeTableModule = () => {
 
         <TabsContent value="schedule" className="mt-6">
           <TimeTableView />
+        </TabsContent>
+
+        <TabsContent value="crew-schedules" className="mt-6">
+          <CrewScheduleManager />
         </TabsContent>
 
         <TabsContent value="hours" className="mt-6">
