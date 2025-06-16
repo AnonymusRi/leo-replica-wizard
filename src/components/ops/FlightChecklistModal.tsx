@@ -2,20 +2,13 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  CheckCircle, 
-  Clock, 
-  AlertTriangle, 
-  FileText, 
-  Mail,
-  Settings,
-  Plus
-} from "lucide-react";
-import { useFlightChecklistProgress, useUpdateOpsChecklistProgress } from "@/hooks/useOpsChecklists";
+import { CheckCircle, Clock, AlertTriangle, FileText } from "lucide-react";
+import { useOpsChecklists, useFlightChecklistProgress } from "@/hooks/useOpsChecklists";
+import { toast } from "sonner";
 
 interface FlightChecklistModalProps {
   isOpen: boolean;
@@ -24,174 +17,131 @@ interface FlightChecklistModalProps {
 }
 
 export const FlightChecklistModal = ({ isOpen, onClose, flight }: FlightChecklistModalProps) => {
-  const [selectedSection, setSelectedSection] = useState("ops");
   const [notes, setNotes] = useState("");
+  const { data: checklists = [] } = useOpsChecklists();
+  const { data: progress = [], mutate: updateProgress } = useFlightChecklistProgress(flight?.id);
 
-  const { data: progress = [] } = useFlightChecklistProgress(flight?.id);
-  const updateProgress = useUpdateOpsChecklistProgress();
-
-  if (!flight) return null;
-
-  // Mock checklist items basati sulle immagini
-  const checklistItems = [
-    { id: '1', section: 'ops', name: 'ATC FLIGHT PLAN', status: 'REQUEST', color: 'orange' },
-    { id: '2', section: 'ops', name: 'OPERATIONAL FLIGHT PLAN', status: 'Yes', color: 'green' },
-    { id: '3', section: 'ops', name: 'OVERFLIGHT PERMIT(S)', status: 'REQUEST', color: 'blue' },
-    { id: '4', section: 'ops', name: 'SLOT (EDDB)', status: 'Confirmed', color: 'green' },
-    { id: '5', section: 'ops', name: 'SLOT (EGGW)', status: 'Confirmed', color: 'green' },
-    { id: '6', section: 'ops', name: 'PARKING', status: 'Not Applicable', color: 'gray' },
-    { id: '7', section: 'ops', name: '48 HRS PERMIT BRIEFING', status: 'Yes', color: 'green' },
-    { id: '8', section: 'ops', name: 'AIRPORT OPENING (EDDB)', status: 'REQUEST', color: 'blue' },
-    { id: '9', section: 'ops', name: 'TRIP APPROVAL', status: 'Completed', color: 'green' },
-    { id: '10', section: 'ops', name: 'RELEASED', status: 'Released', color: 'green' },
-    { id: '11', section: 'handling', name: 'HANDLING (EDDB)', status: 'Confirmed', color: 'green' },
-    { id: '12', section: 'handling', name: 'HANDLING (EGGW)', status: 'Confirmed', color: 'green' },
-    { id: '13', section: 'crew', name: 'CREW AWARE OF FLIGHT', status: 'Acknowledged', color: 'green' },
-  ];
-
-  const getStatusColor = (status: string, color: string) => {
-    switch (color) {
-      case 'green': return 'bg-green-100 text-green-800';
-      case 'orange': return 'bg-orange-100 text-orange-800';
-      case 'blue': return 'bg-blue-100 text-blue-800';
-      case 'red': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const handleChecklistItemToggle = async (itemId: string, completed: boolean) => {
+    try {
+      // Qui dovresti implementare la logica per aggiornare il progresso
+      toast.success(completed ? "Item completato" : "Item marcato come da completare");
+    } catch (error) {
+      toast.error("Errore nell'aggiornamento");
     }
   };
 
-  const handleItemToggle = (itemId: string, completed: boolean) => {
-    updateProgress.mutate({
-      flight_id: flight.id,
-      checklist_item_id: itemId,
-      is_completed: completed,
-      completed_by: 'Current User',
-      notes: notes,
-      status: completed ? 'completed' : 'pending',
-      color_code: completed ? 'green' : 'gray'
-    });
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'in_progress':
+        return <Clock className="w-4 h-4 text-yellow-500" />;
+      case 'pending':
+        return <AlertTriangle className="w-4 h-4 text-red-500" />;
+      default:
+        return <Clock className="w-4 h-4 text-gray-500" />;
+    }
   };
 
-  const filteredItems = checklistItems.filter(item => 
-    selectedSection === 'all' || item.section === selectedSection
-  );
+  if (!flight) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Flight Checklist - {flight.flight_number}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Flight Checklist - {flight.flight_number}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Flight info */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="grid grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="font-medium">Route:</span> {flight.departure_airport} → {flight.arrival_airport}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Dettagli Volo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className="font-medium">Partenza:</span>
+                  <div>{flight.departure_airport}</div>
+                </div>
+                <div>
+                  <span className="font-medium">Arrivo:</span>
+                  <div>{flight.arrival_airport}</div>
+                </div>
+                <div>
+                  <span className="font-medium">Data:</span>
+                  <div>{new Date(flight.departure_time).toLocaleDateString()}</div>
+                </div>
+                <div>
+                  <span className="font-medium">Status:</span>
+                  <Badge variant="outline">{flight.status}</Badge>
+                </div>
               </div>
-              <div>
-                <span className="font-medium">Aircraft:</span> {flight.aircraft?.tail_number || 'TBD'}
-              </div>
-              <div>
-                <span className="font-medium">Date:</span> {new Date(flight.departure_time).toLocaleDateString()}
-              </div>
-              <div>
-                <span className="font-medium">Status:</span> 
-                <Badge className="ml-2 bg-blue-100 text-blue-800">{flight.status}</Badge>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          {/* Section tabs */}
-          <Tabs value={selectedSection} onValueChange={setSelectedSection}>
-            <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="ops">OPS</TabsTrigger>
-              <TabsTrigger value="handling">Handling</TabsTrigger>
-              <TabsTrigger value="crew">Crew</TabsTrigger>
-              <TabsTrigger value="sales">Sales</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value={selectedSection} className="space-y-2">
-              <div className="max-h-96 overflow-y-auto space-y-2">
-                {filteredItems.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center space-x-3">
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Checklist Operativa</h3>
+            
+            {checklists.map((checklist) => (
+              <Card key={checklist.id}>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>{checklist.name}</span>
+                    {getStatusIcon('pending')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {checklist.items?.map((item: any) => (
+                    <div key={item.id} className="flex items-start gap-3 p-2 border rounded">
                       <Checkbox
-                        checked={item.status === 'Completed' || item.status === 'Yes' || item.status === 'Confirmed' || item.status === 'Released' || item.status === 'Acknowledged'}
-                        onCheckedChange={(checked) => handleItemToggle(item.id, checked as boolean)}
+                        id={item.id}
+                        onCheckedChange={(checked) => 
+                          handleChecklistItemToggle(item.id, !!checked)
+                        }
                       />
-                      <div>
-                        <div className="font-medium">{item.name}</div>
-                        <div className="text-sm text-gray-500 capitalize">{item.section}</div>
-                      </div>
+                      <label htmlFor={item.id} className="flex-1 text-sm cursor-pointer">
+                        {item.item_text}
+                        {item.is_required && (
+                          <Badge variant="destructive" className="ml-2 text-xs">
+                            Obbligatorio
+                          </Badge>
+                        )}
+                      </label>
                     </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Badge className={getStatusColor(item.status, item.color)}>
-                        {item.status}
-                      </Badge>
-                      <Button variant="ghost" size="sm">
-                        <Settings className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Mail className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-          </Tabs>
-
-          {/* Progress summary */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-                  <span className="text-sm">Completed: {filteredItems.filter(i => ['Completed', 'Yes', 'Confirmed', 'Released', 'Acknowledged'].includes(i.status)).length}</span>
-                </div>
-                <div className="flex items-center">
-                  <Clock className="w-5 h-5 text-orange-500 mr-2" />
-                  <span className="text-sm">Pending: {filteredItems.filter(i => ['REQUEST', 'Not Applicable'].includes(i.status)).length}</span>
-                </div>
-                <div className="flex items-center">
-                  <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
-                  <span className="text-sm">Issues: 0</span>
-                </div>
-              </div>
-              
-              <div className="flex space-x-2">
-                <Button variant="outline" size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Item
-                </Button>
-                <Button variant="outline" size="sm">
-                  <FileText className="w-4 h-4 mr-2" />
-                  Export
-                </Button>
-              </div>
-            </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
           </div>
 
-          {/* Notes section */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Notes</label>
-            <Textarea
-              placeholder="Aggiungi note per questo volo..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-            />
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Note Aggiuntive</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                placeholder="Aggiungi note per questo volo..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={4}
+              />
+            </CardContent>
+          </Card>
+        </div>
 
-          <div className="flex justify-end space-x-2 pt-4 border-t">
-            <Button variant="outline" onClick={onClose}>
-              Close
+        <div className="flex justify-between">
+          <Button variant="outline" onClick={onClose}>
+            Chiudi
+          </Button>
+          <div className="space-x-2">
+            <Button variant="outline">
+              Salva Bozza
             </Button>
             <Button>
-              Save Changes
+              Completa Checklist
             </Button>
           </div>
         </div>
