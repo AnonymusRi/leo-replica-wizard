@@ -14,7 +14,6 @@ export const usePilotSchedule = (pilotId?: string, dateRange?: { start: string; 
         query = query.eq('pilot_id', pilotId);
       }
 
-      // Aggiungi filtro per intervallo di date se specificato
       if (dateRange) {
         query = query
           .gte('start_date', dateRange.start)
@@ -33,7 +32,6 @@ export const usePilotSchedule = (pilotId?: string, dateRange?: { start: string; 
   });
 };
 
-// Hook per ottenere le ore di training che impattano sui limiti FTL
 export const usePilotTrainingHours = (pilotId?: string, dateRange?: { start: string; end: string }) => {
   return useQuery({
     queryKey: ['pilot_training_hours', pilotId, dateRange],
@@ -44,8 +42,6 @@ export const usePilotTrainingHours = (pilotId?: string, dateRange?: { start: str
         query = query.eq('pilot_id', pilotId);
       }
 
-      // Filtra solo i training che impattano sui limiti FTL
-      query = query.eq('ftl_applicable', true);
       query = query.eq('status', 'completed');
 
       if (dateRange) {
@@ -71,6 +67,8 @@ export const useCreatePilotSchedule = () => {
   
   return useMutation({
     mutationFn: async (schedule: Omit<PilotSchedule, 'id' | 'created_at' | 'updated_at'>) => {
+      console.log('Creating pilot schedule:', schedule);
+      
       const { data, error } = await supabase
         .from('pilot_schedule')
         .insert([{
@@ -83,14 +81,20 @@ export const useCreatePilotSchedule = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Database error creating schedule:', error);
+        throw error;
+      }
+      
+      console.log('Schedule created successfully:', data);
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pilot_schedule'] });
       toast.success('Orario creato con successo');
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Error in mutation:', error);
       toast.error('Errore nella creazione dell\'orario: ' + error.message);
     }
   });
@@ -101,6 +105,8 @@ export const useUpdatePilotSchedule = () => {
   
   return useMutation({
     mutationFn: async ({ id, ...schedule }: Partial<PilotSchedule> & { id: string }) => {
+      console.log('Updating pilot schedule:', { id, ...schedule });
+      
       const { data, error } = await supabase
         .from('pilot_schedule')
         .update({
@@ -114,14 +120,20 @@ export const useUpdatePilotSchedule = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Database error updating schedule:', error);
+        throw error;
+      }
+      
+      console.log('Schedule updated successfully:', data);
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pilot_schedule'] });
       toast.success('Orario aggiornato con successo');
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Error in update mutation:', error);
       toast.error('Errore nell\'aggiornamento dell\'orario: ' + error.message);
     }
   });
@@ -132,18 +144,26 @@ export const useDeletePilotSchedule = () => {
   
   return useMutation({
     mutationFn: async (id: string) => {
+      console.log('Deleting pilot schedule:', id);
+      
       const { error } = await supabase
         .from('pilot_schedule')
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Database error deleting schedule:', error);
+        throw error;
+      }
+      
+      console.log('Schedule deleted successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pilot_schedule'] });
       toast.success('Orario eliminato con successo');
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Error in delete mutation:', error);
       toast.error('Errore nell\'eliminazione dell\'orario: ' + error.message);
     }
   });

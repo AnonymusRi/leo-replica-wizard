@@ -40,7 +40,10 @@ export const useCrewFlightAssignments = (flightId?: string) => {
         .eq('flight_id', flightId)
         .order('assigned_at');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching crew assignments:', error);
+        throw error;
+      }
       return data || [];
     },
     enabled: !!flightId
@@ -61,28 +64,43 @@ export const useAssignCrewToFlight = () => {
       assigned_by?: string;
       notes?: string;
     }) => {
+      console.log('Assigning crew to flight:', assignmentData);
+      
       const { data, error } = await supabase
         .from('crew_flight_assignments')
-        .insert({
-          ...assignmentData,
+        .insert([{
+          flight_id: assignmentData.flight_id,
+          crew_member_id: assignmentData.crew_member_id,
+          position: assignmentData.position,
+          reporting_time: assignmentData.reporting_time,
+          duty_start_time: assignmentData.duty_start_time,
+          duty_end_time: assignmentData.duty_end_time,
+          assigned_by: assignmentData.assigned_by,
+          notes: assignmentData.notes,
           ftl_compliant: true,
           airport_recency_valid: true,
           currency_valid: true,
           certificates_valid: true,
           passport_valid: true,
           visa_valid: true
-        })
+        }])
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Database error assigning crew:', error);
+        throw error;
+      }
+      
+      console.log('Crew assigned successfully:', data);
       return data;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['crew-flight-assignments', variables.flight_id] });
       toast.success('Crew assegnato al volo');
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Error in crew assignment mutation:', error);
       toast.error('Errore assegnazione crew: ' + error.message);
     }
   });
@@ -101,21 +119,36 @@ export const useUpdateCrewAssignment = () => {
       ftl_notes?: string;
       notes?: string;
     }) => {
+      console.log('Updating crew assignment:', updateData);
+      
       const { data, error } = await supabase
         .from('crew_flight_assignments')
-        .update(updateData)
+        .update({
+          flight_time_hours: updateData.flight_time_hours,
+          duty_time_hours: updateData.duty_time_hours,
+          rest_time_hours: updateData.rest_time_hours,
+          ftl_compliant: updateData.ftl_compliant,
+          ftl_notes: updateData.ftl_notes,
+          notes: updateData.notes
+        })
         .eq('id', updateData.id)
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Database error updating crew assignment:', error);
+        throw error;
+      }
+      
+      console.log('Crew assignment updated successfully:', data);
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['crew-flight-assignments'] });
       toast.success('Assegnazione crew aggiornata');
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Error in crew assignment update mutation:', error);
       toast.error('Errore aggiornamento: ' + error.message);
     }
   });

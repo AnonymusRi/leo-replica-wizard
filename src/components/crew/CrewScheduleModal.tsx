@@ -37,6 +37,7 @@ export const CrewScheduleModal = ({
   preselectedCrewMember 
 }: CrewScheduleModalProps) => {
   const [ftlWarnings, setFtlWarnings] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { data: crewMembers = [] } = useCrewMembers();
   const pilots = crewMembers.filter(crew => ['captain', 'first_officer'].includes(crew.position));
@@ -106,20 +107,50 @@ export const CrewScheduleModal = ({
   };
 
   const onSubmit = async (data: ScheduleFormData) => {
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    console.log('Submitting schedule data:', data);
+
     try {
-      if (schedule) {
+      // Validate required fields
+      if (!data.pilot_id) {
+        toast.error('Seleziona un pilota');
+        return;
+      }
+      
+      if (!data.start_date || !data.end_date) {
+        toast.error('Inserisci data e ora di inizio e fine');
+        return;
+      }
+
+      // Convert to ISO format for database
+      const scheduleData = {
+        pilot_id: data.pilot_id,
+        start_date: new Date(data.start_date).toISOString(),
+        end_date: new Date(data.end_date).toISOString(),
+        schedule_type: data.schedule_type,
+        notes: data.notes || null
+      };
+
+      if (schedule?.id) {
+        console.log('Updating existing schedule:', schedule.id);
         await updateSchedule.mutateAsync({
           id: schedule.id,
-          ...data
+          ...scheduleData
         });
-        toast.success('Orario aggiornato con successo');
       } else {
-        await createSchedule.mutateAsync(data);
-        toast.success('Orario creato con successo');
+        console.log('Creating new schedule');
+        await createSchedule.mutateAsync(scheduleData);
       }
+      
       onClose();
-    } catch (error) {
-      toast.error('Errore nel salvare l\'orario');
+      reset();
+    } catch (error: any) {
+      console.error('Error saving schedule:', error);
+      toast.error('Errore nel salvare l\'orario: ' + (error.message || 'Errore sconosciuto'));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -149,7 +180,7 @@ export const CrewScheduleModal = ({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Pilot Selection */}
           <div className="space-y-2">
-            <Label htmlFor="pilot_id">Pilota</Label>
+            <Label htmlFor="pilot_id">Pilota *</Label>
             <Select value={watchedValues.pilot_id} onValueChange={(value) => setValue('pilot_id', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Seleziona pilota" />
@@ -170,7 +201,7 @@ export const CrewScheduleModal = ({
 
           {/* Schedule Type */}
           <div className="space-y-2">
-            <Label htmlFor="schedule_type">Tipo di Servizio</Label>
+            <Label htmlFor="schedule_type">Tipo di Servizio *</Label>
             <Select value={watchedValues.schedule_type} onValueChange={(value) => setValue('schedule_type', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Seleziona tipo" />
@@ -189,7 +220,7 @@ export const CrewScheduleModal = ({
           {/* Date and Time */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="start_date">Data/Ora Inizio</Label>
+              <Label htmlFor="start_date">Data/Ora Inizio *</Label>
               <Input
                 type="datetime-local"
                 {...register('start_date', { required: 'Data inizio obbligatoria' })}
@@ -198,7 +229,7 @@ export const CrewScheduleModal = ({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="end_date">Data/Ora Fine</Label>
+              <Label htmlFor="end_date">Data/Ora Fine *</Label>
               <Input
                 type="datetime-local"
                 {...register('end_date', { required: 'Data fine obbligatoria' })}
@@ -262,15 +293,14 @@ export const CrewScheduleModal = ({
 
           {/* Actions */}
           <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
               Annulla
             </Button>
             <Button 
               type="submit" 
-              disabled={ftlWarnings.length > 0}
-              className={ftlWarnings.length > 0 ? 'opacity-50' : ''}
+              disabled={isSubmitting}
             >
-              {schedule ? 'Aggiorna' : 'Salva'} Orario
+              {isSubmitting ? 'Salvando...' : schedule ? 'Aggiorna' : 'Salva'} Orario
             </Button>
           </div>
         </form>
