@@ -113,7 +113,7 @@ export const CrewScheduleModal = ({
     console.log('Submitting schedule data:', data);
 
     try {
-      // Validate required fields
+      // Enhanced validation
       if (!data.pilot_id) {
         toast.error('Seleziona un pilota');
         return;
@@ -124,14 +124,34 @@ export const CrewScheduleModal = ({
         return;
       }
 
-      // Convert to ISO format for database
+      // Validate that end date is after start date
+      const startDate = new Date(data.start_date);
+      const endDate = new Date(data.end_date);
+      
+      if (endDate <= startDate) {
+        toast.error('La data di fine deve essere successiva alla data di inizio');
+        return;
+      }
+
+      // Verify pilot exists
+      const selectedPilot = pilots.find(p => p.id === data.pilot_id);
+      if (!selectedPilot) {
+        toast.error('Pilota selezionato non valido');
+        return;
+      }
+
+      console.log('Validation passed, preparing schedule data');
+
+      // Prepare schedule data for database
       const scheduleData = {
         pilot_id: data.pilot_id,
-        start_date: new Date(data.start_date).toISOString(),
-        end_date: new Date(data.end_date).toISOString(),
+        start_date: data.start_date, // Will be converted to ISO in the hook
+        end_date: data.end_date, // Will be converted to ISO in the hook
         schedule_type: data.schedule_type,
-        notes: data.notes || null
+        notes: data.notes || undefined
       };
+
+      console.log('Final schedule data to be sent:', scheduleData);
 
       if (schedule?.id) {
         console.log('Updating existing schedule:', schedule.id);
@@ -144,6 +164,7 @@ export const CrewScheduleModal = ({
         await createSchedule.mutateAsync(scheduleData);
       }
       
+      console.log('Schedule operation completed successfully');
       onClose();
       reset();
     } catch (error: any) {
@@ -298,7 +319,7 @@ export const CrewScheduleModal = ({
             </Button>
             <Button 
               type="submit" 
-              disabled={isSubmitting}
+              disabled={isSubmitting || createSchedule.isPending || updateSchedule.isPending}
             >
               {isSubmitting ? 'Salvando...' : schedule ? 'Aggiorna' : 'Salva'} Orario
             </Button>

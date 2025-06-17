@@ -67,29 +67,41 @@ export const useCreatePilotSchedule = () => {
   
   return useMutation({
     mutationFn: async (schedule: Omit<PilotSchedule, 'id' | 'created_at' | 'updated_at'>) => {
-      console.log('Creating pilot schedule:', schedule);
+      console.log('Creating pilot schedule with data:', schedule);
+      
+      // Validate required fields
+      if (!schedule.pilot_id || !schedule.start_date || !schedule.end_date || !schedule.schedule_type) {
+        throw new Error('Campi obbligatori mancanti: pilot_id, start_date, end_date, schedule_type');
+      }
+
+      // Convert dates to ISO format for database
+      const scheduleData = {
+        pilot_id: schedule.pilot_id,
+        start_date: new Date(schedule.start_date).toISOString(),
+        end_date: new Date(schedule.end_date).toISOString(),
+        schedule_type: schedule.schedule_type,
+        notes: schedule.notes || null
+      };
+
+      console.log('Inserting schedule data:', scheduleData);
       
       const { data, error } = await supabase
         .from('pilot_schedule')
-        .insert([{
-          pilot_id: schedule.pilot_id,
-          start_date: schedule.start_date,
-          end_date: schedule.end_date,
-          schedule_type: schedule.schedule_type,
-          notes: schedule.notes || null
-        }])
+        .insert([scheduleData])
         .select()
         .single();
       
       if (error) {
         console.error('Database error creating schedule:', error);
-        throw error;
+        console.error('Error details:', error.details, error.hint, error.message);
+        throw new Error(`Errore database: ${error.message}`);
       }
       
       console.log('Schedule created successfully:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Schedule creation successful, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['pilot_schedule'] });
       toast.success('Orario creato con successo');
     },
@@ -107,22 +119,26 @@ export const useUpdatePilotSchedule = () => {
     mutationFn: async ({ id, ...schedule }: Partial<PilotSchedule> & { id: string }) => {
       console.log('Updating pilot schedule:', { id, ...schedule });
       
+      // Convert dates to ISO format if they exist
+      const updateData: any = {};
+      if (schedule.pilot_id) updateData.pilot_id = schedule.pilot_id;
+      if (schedule.start_date) updateData.start_date = new Date(schedule.start_date).toISOString();
+      if (schedule.end_date) updateData.end_date = new Date(schedule.end_date).toISOString();
+      if (schedule.schedule_type) updateData.schedule_type = schedule.schedule_type;
+      if (schedule.notes !== undefined) updateData.notes = schedule.notes || null;
+
+      console.log('Update data prepared:', updateData);
+      
       const { data, error } = await supabase
         .from('pilot_schedule')
-        .update({
-          pilot_id: schedule.pilot_id,
-          start_date: schedule.start_date,
-          end_date: schedule.end_date,
-          schedule_type: schedule.schedule_type,
-          notes: schedule.notes || null
-        })
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();
       
       if (error) {
         console.error('Database error updating schedule:', error);
-        throw error;
+        throw new Error(`Errore database: ${error.message}`);
       }
       
       console.log('Schedule updated successfully:', data);

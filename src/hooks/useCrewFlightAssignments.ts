@@ -64,40 +64,61 @@ export const useAssignCrewToFlight = () => {
       assigned_by?: string;
       notes?: string;
     }) => {
-      console.log('Assigning crew to flight:', assignmentData);
+      console.log('Assigning crew to flight with data:', assignmentData);
+      
+      // Validate required fields
+      if (!assignmentData.flight_id || !assignmentData.crew_member_id || !assignmentData.position) {
+        throw new Error('Campi obbligatori mancanti: flight_id, crew_member_id, position');
+      }
+
+      // Prepare data for insertion, converting dates to ISO format
+      const insertData: any = {
+        flight_id: assignmentData.flight_id,
+        crew_member_id: assignmentData.crew_member_id,
+        position: assignmentData.position,
+        assigned_by: assignmentData.assigned_by || null,
+        notes: assignmentData.notes || null,
+        ftl_compliant: true,
+        airport_recency_valid: true,
+        currency_valid: true,
+        certificates_valid: true,
+        passport_valid: true,
+        visa_valid: true
+      };
+
+      // Convert time strings to ISO format if provided
+      if (assignmentData.reporting_time) {
+        insertData.reporting_time = new Date(assignmentData.reporting_time).toISOString();
+      }
+      if (assignmentData.duty_start_time) {
+        insertData.duty_start_time = new Date(assignmentData.duty_start_time).toISOString();
+      }
+      if (assignmentData.duty_end_time) {
+        insertData.duty_end_time = new Date(assignmentData.duty_end_time).toISOString();
+      }
+
+      console.log('Prepared insert data:', insertData);
       
       const { data, error } = await supabase
         .from('crew_flight_assignments')
-        .insert([{
-          flight_id: assignmentData.flight_id,
-          crew_member_id: assignmentData.crew_member_id,
-          position: assignmentData.position,
-          reporting_time: assignmentData.reporting_time,
-          duty_start_time: assignmentData.duty_start_time,
-          duty_end_time: assignmentData.duty_end_time,
-          assigned_by: assignmentData.assigned_by,
-          notes: assignmentData.notes,
-          ftl_compliant: true,
-          airport_recency_valid: true,
-          currency_valid: true,
-          certificates_valid: true,
-          passport_valid: true,
-          visa_valid: true
-        }])
+        .insert([insertData])
         .select()
         .single();
       
       if (error) {
         console.error('Database error assigning crew:', error);
-        throw error;
+        console.error('Error details:', error.details, error.hint, error.message);
+        throw new Error(`Errore database: ${error.message}`);
       }
       
       console.log('Crew assigned successfully:', data);
       return data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
+      console.log('Crew assignment successful, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ['crew-flight-assignments', variables.flight_id] });
-      toast.success('Crew assegnato al volo');
+      queryClient.invalidateQueries({ queryKey: ['crew-flight-assignments'] });
+      toast.success('Crew assegnato al volo con successo');
     },
     onError: (error: any) => {
       console.error('Error in crew assignment mutation:', error);
