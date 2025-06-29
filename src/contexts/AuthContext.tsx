@@ -50,7 +50,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      setProfile(profileData);
+      // Ensure the organization data matches our types
+      const typedProfile: UserProfile = {
+        ...profileData,
+        organization: profileData.organization ? {
+          ...profileData.organization,
+          subscription_status: profileData.organization.subscription_status as 'trial' | 'active' | 'expired' | 'cancelled'
+        } : undefined
+      };
+
+      setProfile(typedProfile);
 
       // Fetch user role
       if (profileData?.organization_id) {
