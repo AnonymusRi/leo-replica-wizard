@@ -18,6 +18,7 @@ export type Database = {
           manufacturer: string
           max_passengers: number | null
           model: string
+          organization_id: string | null
           status: Database["public"]["Enums"]["aircraft_status"]
           tail_number: string
           updated_at: string
@@ -31,6 +32,7 @@ export type Database = {
           manufacturer: string
           max_passengers?: number | null
           model: string
+          organization_id?: string | null
           status?: Database["public"]["Enums"]["aircraft_status"]
           tail_number: string
           updated_at?: string
@@ -44,12 +46,21 @@ export type Database = {
           manufacturer?: string
           max_passengers?: number | null
           model?: string
+          organization_id?: string | null
           status?: Database["public"]["Enums"]["aircraft_status"]
           tail_number?: string
           updated_at?: string
           year_manufactured?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "aircraft_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       aircraft_certification_requirements: {
         Row: {
@@ -614,6 +625,7 @@ export type Database = {
           email: string | null
           id: string
           notes: string | null
+          organization_id: string | null
           phone: string | null
           updated_at: string
         }
@@ -627,6 +639,7 @@ export type Database = {
           email?: string | null
           id?: string
           notes?: string | null
+          organization_id?: string | null
           phone?: string | null
           updated_at?: string
         }
@@ -640,10 +653,19 @@ export type Database = {
           email?: string | null
           id?: string
           notes?: string | null
+          organization_id?: string | null
           phone?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       crew_certifications: {
         Row: {
@@ -791,6 +813,7 @@ export type Database = {
           license_expiry: string | null
           license_number: string | null
           medical_expiry: string | null
+          organization_id: string | null
           phone: string | null
           position: Database["public"]["Enums"]["crew_position"]
           updated_at: string
@@ -806,6 +829,7 @@ export type Database = {
           license_expiry?: string | null
           license_number?: string | null
           medical_expiry?: string | null
+          organization_id?: string | null
           phone?: string | null
           position: Database["public"]["Enums"]["crew_position"]
           updated_at?: string
@@ -821,11 +845,20 @@ export type Database = {
           license_expiry?: string | null
           license_number?: string | null
           medical_expiry?: string | null
+          organization_id?: string | null
           phone?: string | null
           position?: Database["public"]["Enums"]["crew_position"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "crew_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       crew_qualifications: {
         Row: {
@@ -1390,6 +1423,7 @@ export type Database = {
           flight_number: string
           id: string
           notes: string | null
+          organization_id: string | null
           passenger_count: number | null
           status: Database["public"]["Enums"]["flight_status"]
           updated_at: string
@@ -1405,6 +1439,7 @@ export type Database = {
           flight_number: string
           id?: string
           notes?: string | null
+          organization_id?: string | null
           passenger_count?: number | null
           status?: Database["public"]["Enums"]["flight_status"]
           updated_at?: string
@@ -1420,6 +1455,7 @@ export type Database = {
           flight_number?: string
           id?: string
           notes?: string | null
+          organization_id?: string | null
           passenger_count?: number | null
           status?: Database["public"]["Enums"]["flight_status"]
           updated_at?: string
@@ -1437,6 +1473,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "flights_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1768,6 +1811,57 @@ export type Database = {
           },
         ]
       }
+      organizations: {
+        Row: {
+          active_modules: Json | null
+          address: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          settings: Json | null
+          slug: string
+          subscription_end_date: string | null
+          subscription_status: string
+          updated_at: string
+        }
+        Insert: {
+          active_modules?: Json | null
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          settings?: Json | null
+          slug: string
+          subscription_end_date?: string | null
+          subscription_status?: string
+          updated_at?: string
+        }
+        Update: {
+          active_modules?: Json | null
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          settings?: Json | null
+          slug?: string
+          subscription_end_date?: string | null
+          subscription_status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       passengers: {
         Row: {
           created_at: string
@@ -1898,6 +1992,56 @@ export type Database = {
             columns: ["pilot_id"]
             isOneToOne: false
             referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          is_active: boolean
+          last_login_at: string | null
+          last_name: string | null
+          organization_id: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id: string
+          is_active?: boolean
+          last_login_at?: string | null
+          last_name?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          is_active?: boolean
+          last_login_at?: string | null
+          last_name?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -2065,6 +2209,7 @@ export type Database = {
           margin_percentage: number | null
           marketplace_source: string | null
           notes: string | null
+          organization_id: string | null
           other_costs: number | null
           passenger_count: number
           pricing_method: string | null
@@ -2092,6 +2237,7 @@ export type Database = {
           margin_percentage?: number | null
           marketplace_source?: string | null
           notes?: string | null
+          organization_id?: string | null
           other_costs?: number | null
           passenger_count: number
           pricing_method?: string | null
@@ -2119,6 +2265,7 @@ export type Database = {
           margin_percentage?: number | null
           marketplace_source?: string | null
           notes?: string | null
+          organization_id?: string | null
           other_costs?: number | null
           passenger_count?: number
           pricing_method?: string | null
@@ -2137,6 +2284,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -2529,6 +2683,44 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          module_permissions: Json | null
+          organization_id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module_permissions?: Json | null
+          organization_id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module_permissions?: Json | null
+          organization_id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vat_rates: {
         Row: {
           country_code: string
@@ -2653,7 +2845,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_organization: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_user_role: {
+        Args: { user_id: string; org_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
     }
     Enums: {
       aircraft_status: "available" | "maintenance" | "aog" | "retired"
@@ -2665,6 +2864,12 @@ export type Database = {
         | "cancelled"
         | "delayed"
       maintenance_status: "scheduled" | "in_progress" | "completed" | "overdue"
+      user_role:
+        | "super_admin"
+        | "organization_admin"
+        | "module_admin"
+        | "user"
+        | "crew_member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2790,6 +2995,13 @@ export const Constants = {
         "delayed",
       ],
       maintenance_status: ["scheduled", "in_progress", "completed", "overdue"],
+      user_role: [
+        "super_admin",
+        "organization_admin",
+        "module_admin",
+        "user",
+        "crew_member",
+      ],
     },
   },
 } as const
