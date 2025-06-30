@@ -4,89 +4,70 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, CheckCircle, Clock, XCircle, Search, Filter, RefreshCw, Eye, Settings } from "lucide-react";
+import { AlertTriangle, Bug, Server, Database, Wifi, Search, RefreshCw, Eye, Trash2 } from "lucide-react";
 
 export const SystemErrors = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterSeverity, setFilterSeverity] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
 
   const systemErrors = [
     {
       id: 1,
-      timestamp: "2024-06-30 14:32:15",
+      type: "database",
       severity: "critical",
-      component: "Database Connection",
-      error_code: "DB_CONN_001",
-      message: "Connection timeout to primary database",
-      affected_users: 45,
+      message: "Connection timeout to database server",
+      timestamp: "2024-06-30 20:45:23",
+      affected_users: 12,
+      organization: "Sky Aviation",
       status: "investigating",
-      resolution_time: null,
-      organization: "Sky Aviation"
+      details: "Database connection pool exhausted during peak hours"
     },
     {
       id: 2,
-      timestamp: "2024-06-30 13:15:42",
-      severity: "warning",
-      component: "SMS Service",
-      error_code: "SMS_001",
-      message: "OTP delivery delayed for +393933374430",
-      affected_users: 1,
+      type: "api",
+      severity: "high",
+      message: "Flight scheduling API returning 500 errors",
+      timestamp: "2024-06-30 19:30:15",
+      affected_users: 5,
+      organization: "AlidaSoft Aviation",
       status: "resolved",
-      resolution_time: "5 min",
-      organization: "SuperAdmin"
+      details: "Temporary server overload resolved with auto-scaling"
     },
     {
       id: 3,
-      timestamp: "2024-06-30 12:48:30",
-      severity: "error",
-      component: "License Validation",
-      error_code: "LIC_VAL_003",
-      message: "Expired license detected for organization",
-      affected_users: 12,
-      status: "pending",
-      resolution_time: null,
-      organization: "Meridiana Flight"
+      type: "auth",
+      severity: "medium",
+      message: "Login attempts failing for specific email domain",
+      timestamp: "2024-06-30 18:15:42",
+      affected_users: 3,
+      organization: "Eurofly",
+      status: "monitoring",
+      details: "Email provider blocking authentication emails"
     },
     {
       id: 4,
-      timestamp: "2024-06-30 11:22:18",
-      severity: "info",
-      component: "Backup System",
-      error_code: "BACKUP_INFO_001",
-      message: "Daily backup completed successfully",
-      affected_users: 0,
+      type: "network",
+      severity: "low",
+      message: "Slow response times from CDN endpoint",
+      timestamp: "2024-06-30 17:20:10",
+      affected_users: 25,
+      organization: "Multiple",
       status: "resolved",
-      resolution_time: "N/A",
-      organization: "System"
-    },
-    {
-      id: 5,
-      timestamp: "2024-06-30 10:15:33",
-      severity: "warning",
-      component: "API Rate Limit",
-      error_code: "API_RATE_002",
-      message: "Rate limit exceeded for external API calls",
-      affected_users: 8,
-      status: "monitoring",
-      resolution_time: null,
-      organization: "Alpine Aviation"
+      details: "CDN cache invalidation resolved performance issues"
     }
   ];
 
   const getSeverityBadge = (severity: string) => {
     switch (severity) {
       case "critical":
-        return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Critico</Badge>;
-      case "error":
-        return <Badge variant="destructive" className="bg-orange-600"><AlertTriangle className="w-3 h-3 mr-1" />Errore</Badge>;
-      case "warning":
-        return <Badge variant="outline" className="border-yellow-500 text-yellow-700"><Clock className="w-3 h-3 mr-1" />Warning</Badge>;
-      case "info":
-        return <Badge variant="secondary"><CheckCircle className="w-3 h-3 mr-1" />Info</Badge>;
+        return <Badge variant="destructive">Critico</Badge>;
+      case "high":
+        return <Badge className="bg-orange-100 text-orange-800">Alto</Badge>;
+      case "medium":
+        return <Badge className="bg-yellow-100 text-yellow-800">Medio</Badge>;
+      case "low":
+        return <Badge className="bg-blue-100 text-blue-800">Basso</Badge>;
       default:
         return <Badge variant="outline">Sconosciuto</Badge>;
     }
@@ -94,28 +75,34 @@ export const SystemErrors = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "resolved":
-        return <Badge variant="default" className="bg-green-600"><CheckCircle className="w-3 h-3 mr-1" />Risolto</Badge>;
       case "investigating":
-        return <Badge variant="outline" className="border-blue-500 text-blue-700"><Search className="w-3 h-3 mr-1" />Investigando</Badge>;
-      case "pending":
-        return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" />In Attesa</Badge>;
+        return <Badge className="bg-red-100 text-red-800">In Analisi</Badge>;
       case "monitoring":
-        return <Badge variant="outline" className="border-purple-500 text-purple-700"><Eye className="w-3 h-3 mr-1" />Monitoraggio</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800">Monitoraggio</Badge>;
+      case "resolved":
+        return <Badge className="bg-green-100 text-green-800">Risolto</Badge>;
       default:
         return <Badge variant="outline">Sconosciuto</Badge>;
     }
   };
 
-  const filteredErrors = systemErrors.filter(error => {
-    const matchesSearch = error.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         error.component.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         error.organization.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSeverity = filterSeverity === "all" || error.severity === filterSeverity;
-    const matchesStatus = filterStatus === "all" || error.status === filterStatus;
-    
-    return matchesSearch && matchesSeverity && matchesStatus;
-  });
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "database":
+        return <Database className="w-4 h-4" />;
+      case "api":
+        return <Server className="w-4 h-4" />;
+      case "auth":
+        return <Bug className="w-4 h-4" />;
+      case "network":
+        return <Wifi className="w-4 h-4" />;
+      default:
+        return <AlertTriangle className="w-4 h-4" />;
+    }
+  };
+
+  const criticalErrors = systemErrors.filter(e => e.severity === "critical").length;
+  const activeErrors = systemErrors.filter(e => e.status !== "resolved").length;
 
   return (
     <div className="space-y-6">
@@ -127,129 +114,138 @@ export const SystemErrors = () => {
             Aggiorna
           </Button>
           <Button variant="outline">
-            <Settings className="w-4 h-4 mr-2" />
-            Configurazioni
+            <Trash2 className="w-4 h-4 mr-2" />
+            Pulisci Risolti
           </Button>
         </div>
       </div>
 
-      <Tabs defaultValue="errors" className="space-y-4">
+      {/* Statistiche Errori */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="border-red-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-red-600">Errori Critici</p>
+                <p className="text-2xl font-bold text-red-600">{criticalErrors}</p>
+              </div>
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-orange-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-orange-600">Errori Attivi</p>
+                <p className="text-2xl font-bold text-orange-600">{activeErrors}</p>
+              </div>
+              <Bug className="w-8 h-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-blue-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600">Errori Oggi</p>
+                <p className="text-2xl font-bold text-blue-600">{systemErrors.length}</p>
+              </div>
+              <Server className="w-8 h-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-600">Tempo Medio Risoluzione</p>
+                <p className="text-2xl font-bold text-green-600">45min</p>
+              </div>
+              <RefreshCw className="w-8 h-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="all" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="errors">Log Errori</TabsTrigger>
-          <TabsTrigger value="monitoring">Monitoraggio</TabsTrigger>
-          <TabsTrigger value="alerts">Configurazione Alert</TabsTrigger>
+          <TabsTrigger value="all">Tutti gli Errori</TabsTrigger>
+          <TabsTrigger value="critical">Critici</TabsTrigger>
+          <TabsTrigger value="active">Attivi</TabsTrigger>
+          <TabsTrigger value="resolved">Risolti</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="errors">
+        <TabsContent value="all">
           <Card>
             <CardHeader>
-              <CardTitle>Sistema di Monitoraggio Errori</CardTitle>
+              <CardTitle>Log Errori di Sistema</CardTitle>
               <CardDescription>
-                Visualizza e gestisci tutti gli errori di sistema in tempo reale
+                Tutti gli errori registrati nel sistema
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Filtri */}
-              <div className="flex flex-wrap gap-4 mb-6">
-                <div className="flex items-center space-x-2">
-                  <Search className="w-4 h-4 text-gray-500" />
-                  <Input
-                    placeholder="Cerca errori, componenti, organizzazioni..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-64"
-                  />
-                </div>
-                
-                <Select value={filterSeverity} onValueChange={setFilterSeverity}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Severità" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tutte le Severità</SelectItem>
-                    <SelectItem value="critical">Critico</SelectItem>
-                    <SelectItem value="error">Errore</SelectItem>
-                    <SelectItem value="warning">Warning</SelectItem>
-                    <SelectItem value="info">Info</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Tutti gli Status</SelectItem>
-                    <SelectItem value="resolved">Risolto</SelectItem>
-                    <SelectItem value="investigating">Investigando</SelectItem>
-                    <SelectItem value="pending">In Attesa</SelectItem>
-                    <SelectItem value="monitoring">Monitoraggio</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center space-x-2 mb-4">
+                <Search className="w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Cerca errori..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="max-w-sm"
+                />
               </div>
 
-              {/* Tabella Errori */}
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Timestamp</TableHead>
+                    <TableHead>Tipo</TableHead>
                     <TableHead>Severità</TableHead>
-                    <TableHead>Componente</TableHead>
-                    <TableHead>Errore</TableHead>
+                    <TableHead>Messaggio</TableHead>
+                    <TableHead>Timestamp</TableHead>
                     <TableHead>Utenti Coinvolti</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Tempo Risoluzione</TableHead>
+                    <TableHead>Organizzazione</TableHead>
+                    <TableHead>Stato</TableHead>
                     <TableHead>Azioni</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredErrors.map((error) => (
+                  {systemErrors.map((error) => (
                     <TableRow key={error.id}>
-                      <TableCell className="font-mono text-xs">
-                        {error.timestamp}
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          {getTypeIcon(error.type)}
+                          <span className="capitalize">{error.type}</span>
+                        </div>
                       </TableCell>
                       <TableCell>
                         {getSeverityBadge(error.severity)}
                       </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{error.component}</div>
-                          <div className="text-xs text-gray-500">{error.error_code}</div>
+                      <TableCell className="max-w-xs">
+                        <div className="truncate" title={error.message}>
+                          {error.message}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium text-sm">{error.message}</div>
-                          <div className="text-xs text-gray-500">{error.organization}</div>
-                        </div>
+                      <TableCell className="text-sm">
+                        {error.timestamp}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">
-                          {error.affected_users} utenti
-                        </Badge>
+                        <Badge variant="outline">{error.affected_users} utenti</Badge>
                       </TableCell>
+                      <TableCell>{error.organization}</TableCell>
                       <TableCell>
                         {getStatusBadge(error.status)}
-                      </TableCell>
-                      <TableCell>
-                        {error.resolution_time ? (
-                          <span className="text-green-600 font-medium">
-                            {error.resolution_time}
-                          </span>
-                        ) : (
-                          <span className="text-gray-500">-</span>
-                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <Button variant="outline" size="sm">
                             <Eye className="w-3 h-3" />
                           </Button>
-                          {error.status !== 'resolved' && (
-                            <Button size="sm">
-                              Risolvi
-                            </Button>
-                          )}
+                          <Button variant="outline" size="sm">
+                            <RefreshCw className="w-3 h-3" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -260,93 +256,69 @@ export const SystemErrors = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="monitoring">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Errori Critici</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-red-600">1</div>
-                <p className="text-sm text-gray-600">Ultima ora</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Warning Attivi</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-yellow-600">2</div>
-                <p className="text-sm text-gray-600">In monitoraggio</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Uptime Sistema</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-green-600">99.8%</div>
-                <p className="text-sm text-gray-600">Ultimi 30 giorni</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Tempo Risp. Medio</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">245ms</div>
-                <p className="text-sm text-gray-600">Ultima ora</p>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="alerts">
+        <TabsContent value="critical">
           <Card>
             <CardHeader>
-              <CardTitle>Configurazione Alert</CardTitle>
+              <CardTitle>Errori Critici</CardTitle>
               <CardDescription>
-                Imposta regole di notifica per gli errori di sistema
+                Errori che richiedono attenzione immediata
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">Alert Email SuperAdmin</h4>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Invia email a riccardo.cirulli@gmail.com per errori critici
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <Badge variant="default">Attivo</Badge>
-                    <Button variant="outline" size="sm">Configura</Button>
+                {systemErrors.filter(e => e.severity === "critical").map((error) => (
+                  <div key={error.id} className="border border-red-200 rounded-lg p-4 bg-red-50">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          {getTypeIcon(error.type)}
+                          <h4 className="font-semibold text-red-800">{error.message}</h4>
+                        </div>
+                        <p className="text-sm text-red-600 mb-2">{error.details}</p>
+                        <div className="flex items-center space-x-4 text-sm text-red-600">
+                          <span>📅 {error.timestamp}</span>
+                          <span>👥 {error.affected_users} utenti coinvolti</span>
+                          <span>🏢 {error.organization}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {getStatusBadge(error.status)}
+                        <Button variant="outline" size="sm">
+                          Risolvi
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">Alert SMS</h4>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Invia SMS al +393933374430 per errori critici
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <Badge variant="default">Attivo</Badge>
-                    <Button variant="outline" size="sm">Configura</Button>
-                  </div>
-                </div>
-
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">Slack Integration</h4>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Notifiche su canale Slack #system-alerts
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <Badge variant="secondary">Non Configurato</Badge>
-                    <Button variant="outline" size="sm">Configura</Button>
-                  </div>
-                </div>
+                ))}
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="active">
+          <Card>
+            <CardHeader>
+              <CardTitle>Errori Attivi</CardTitle>
+              <CardDescription>
+                Errori non ancora risolti
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-500">Mostra solo errori con stato diverso da "risolto"</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="resolved">
+          <Card>
+            <CardHeader>
+              <CardTitle>Errori Risolti</CardTitle>
+              <CardDescription>
+                Errori che sono stati risolti
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-500">Mostra solo errori risolti</p>
             </CardContent>
           </Card>
         </TabsContent>
