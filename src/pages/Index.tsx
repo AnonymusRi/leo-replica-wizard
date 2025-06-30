@@ -13,7 +13,8 @@ import {
   User,
   Globe,
   Clock,
-  Timer
+  Timer,
+  Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SalesModule } from "@/components/sales/SalesModule";
@@ -26,6 +27,7 @@ import { OwnerBoardModule } from "@/components/owner/OwnerBoardModule";
 import { AircraftModule } from "@/components/aircraft/AircraftModule";
 import { PilotTimeTableModule } from "@/components/crew/PilotTimeTableModule";
 import { OpsModule } from "@/components/ops/OpsModule";
+import { AdminModule } from "@/components/admin/AdminModule";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("SCHED");
@@ -41,6 +43,7 @@ const Index = () => {
     { id: "REPORTS", label: "REPORTS", icon: BarChart3 },
     { id: "PHONEBOOK", label: "PHONEBOOK", icon: Phone },
     { id: "OWNER BOARD", label: "OWNER BOARD", icon: User },
+    { id: "ADMIN", label: "ADMIN", icon: Shield },
   ];
 
   return (
@@ -119,6 +122,7 @@ const Index = () => {
         {activeModule === "REPORTS" && <ReportsModule />}
         {activeModule === "PHONEBOOK" && <PhonebookModule />}
         {activeModule === "OWNER BOARD" && <OwnerBoardModule />}
+        {activeModule === "ADMIN" && <AdminModule />}
       </main>
     </div>
   );
