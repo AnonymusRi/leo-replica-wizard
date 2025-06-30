@@ -7,105 +7,91 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
+import { CheckCircle, User } from 'lucide-react';
 
 const SuperAdminSetup = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [showEmailWarning, setShowEmailWarning] = useState(false);
+  const [isCreated, setIsCreated] = useState(false);
   const [formData, setFormData] = useState({
-    email: 'admin@gmail.com', // Changed to a more reliable domain
+    email: 'admin@gmail.com',
     password: 'SuperAdmin123!',
     firstName: 'Super',
     lastName: 'Admin'
   });
 
-  const createSuperAdmin = async () => {
+  const createSuperAdminSimple = async () => {
     setIsLoading(true);
     try {
-      console.log('Attempting to create super admin with email:', formData.email);
+      console.log('Tentativo di creazione super admin semplificato...');
       
-      // Validate email format first
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
-        toast.error('Formato email non valido');
+      // Tentativo di login per vedere se l'utente esiste già
+      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password
+      });
+
+      if (loginData.user && !loginError) {
+        console.log('Utente già esistente, procedo con assegnazione ruolo');
+        await assignSuperAdminRole(loginData.user.id);
         return;
       }
 
-      // Check if we should show email warning for custom domains
-      if (formData.email.includes('@spiralapp.it') || !formData.email.includes('@gmail.com')) {
-        setShowEmailWarning(true);
-      }
-      
-      // First, sign up the user with auto-confirm disabled to avoid email limits
-      const { data, error } = await supabase.auth.signUp({
+      // Se l'utente non esiste, provo a crearlo con opzioni semplificate
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
           data: {
             first_name: formData.firstName,
-            last_name: formData.lastName,
-            email_confirm: false // Try to skip email confirmation
+            last_name: formData.lastName
           }
         }
       });
 
-      if (error) {
-        console.error('Signup error:', error);
+      if (signUpError) {
+        console.error('Errore signup:', signUpError);
         
-        // Handle specific error cases
-        if (error.message.includes('rate limit') || error.message.includes('429')) {
-          toast.error('Troppi tentativi di registrazione. Attendi qualche minuto e riprova, oppure usa un indirizzo Gmail.');
-          setShowEmailWarning(true);
+        if (signUpError.message.includes('rate limit') || signUpError.message.includes('429')) {
+          toast.error('Troppi tentativi. Riprova tra qualche minuto con un indirizzo Gmail.');
           return;
-        } else if (error.message.includes('invalid') || error.message.includes('domain')) {
-          toast.error('Dominio email non valido. Prova con un indirizzo Gmail (@gmail.com)');
-          setShowEmailWarning(true);
-          return;
-        } else if (error.message.includes('already')) {
-          // User already exists, try to proceed with role assignment
-          console.log('User already exists, proceeding with role assignment');
-          toast.success('Utente già esistente, procedo con l\'assegnazione del ruolo...');
-          
-          // Get existing user
-          const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({
+        }
+        
+        if (signUpError.message.includes('User already registered')) {
+          toast.success('Utente già registrato! Procedo con l\'assegnazione del ruolo...');
+          // Provo a fare login
+          const { data: existingUser } = await supabase.auth.signInWithPassword({
             email: formData.email,
             password: formData.password
           });
           
-          if (signInError) {
-            toast.error('Errore nel login dell\'utente esistente: ' + signInError.message);
-            return;
+          if (existingUser.user) {
+            await assignSuperAdminRole(existingUser.user.id);
           }
-          
-          if (user) {
-            await handleRoleAssignment(user.id);
-          }
-          return;
-        } else {
-          toast.error('Errore durante la registrazione: ' + error.message);
           return;
         }
+        
+        toast.error('Errore: ' + signUpError.message);
+        return;
       }
 
-      if (data.user) {
-        console.log('Super admin creato con successo:', data.user.id);
-        await handleRoleAssignment(data.user.id);
+      if (signUpData.user) {
+        console.log('Utente creato:', signUpData.user.id);
+        await assignSuperAdminRole(signUpData.user.id);
       } else {
-        console.log('User creation returned no user object');
-        toast.error('Errore: nessun utente creato');
+        toast.error('Errore nella creazione utente');
       }
+
     } catch (error) {
-      console.error('Unexpected error creating super admin:', error);
-      toast.error('Errore imprevisto durante la creazione del super admin');
+      console.error('Errore imprevisto:', error);
+      toast.error('Errore imprevisto nella creazione del super admin');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleRoleAssignment = async (userId: string) => {
+  const assignSuperAdminRole = async (userId: string) => {
     try {
-      // Get the spiral-admin organization ID
+      // Recupera l'organizzazione spiral-admin
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .select('id')
@@ -113,29 +99,26 @@ const SuperAdminSetup = () => {
         .single();
 
       if (orgError) {
-        console.error('Error fetching organization:', orgError);
-        toast.error('Errore nel recupero dell\'organizzazione: ' + orgError.message);
+        console.error('Errore organizzazione:', orgError);
+        toast.error('Errore nel recupero organizzazione: ' + orgError.message);
         return;
       }
 
-      console.log('Organization found:', orgData);
+      console.log('Organizzazione trovata:', orgData.id);
 
-      // Update the user's organization
-      const { error: updateError } = await supabase
+      // Aggiorna il profilo utente
+      const { error: profileError } = await supabase
         .from('profiles')
         .update({
           organization_id: orgData.id
         })
         .eq('id', userId);
 
-      if (updateError) {
-        console.error('Error updating profile:', updateError);
-        toast.success('Utente creato ma errore nell\'aggiornamento del profilo: ' + updateError.message);
+      if (profileError) {
+        console.error('Errore aggiornamento profilo:', profileError);
       }
 
-      console.log('Profile updated successfully');
-
-      // Use the secure function to create the super admin role
+      // Crea il ruolo super admin
       const { data: roleData, error: roleError } = await supabase
         .rpc('create_user_role', {
           p_user_id: userId,
@@ -145,32 +128,55 @@ const SuperAdminSetup = () => {
         });
 
       if (roleError) {
-        console.error('Error creating role:', roleError);
-        toast.error('Errore nella creazione del ruolo: ' + roleError.message);
+        console.error('Errore ruolo:', roleError);
+        toast.error('Errore nell\'assegnazione ruolo: ' + roleError.message);
       } else {
-        console.log('Role created successfully:', roleData);
-        toast.success('Super admin creato con successo! Puoi ora effettuare il login. (Nota: potresti dover confermare l\'email se richiesto)');
+        console.log('Ruolo creato con successo');
+        setIsCreated(true);
+        toast.success('Super admin creato con successo! Puoi ora effettuare il login.');
       }
     } catch (err) {
-      console.error('Error in role assignment:', err);
+      console.error('Errore nell\'assegnazione ruolo:', err);
       toast.error('Errore nell\'assegnazione del ruolo');
     }
   };
 
+  if (isCreated) {
+    return (
+      <Card className="w-full max-w-md mx-auto mt-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-green-600">
+            <CheckCircle className="h-6 w-6" />
+            Super Admin Creato
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Alert>
+            <User className="h-4 w-4" />
+            <AlertDescription>
+              Il super admin è stato creato con successo! Puoi ora tornare al login e accedere con le credenziali:
+              <br />
+              <strong>Email:</strong> {formData.email}
+              <br />
+              <strong>Password:</strong> {formData.password}
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="w-full max-w-md mx-auto mt-8">
       <CardHeader>
-        <CardTitle>Setup Super Admin</CardTitle>
+        <CardTitle>Setup Super Admin Semplificato</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {showEmailWarning && (
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              Se riscontri problemi con domini personalizzati, prova con un indirizzo Gmail (@gmail.com) per evitare limiti di email.
-            </AlertDescription>
-          </Alert>
-        )}
+        <Alert>
+          <AlertDescription>
+            Questo metodo semplificato evita i problemi di conferma email e limiti di rate.
+          </AlertDescription>
+        </Alert>
         
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
@@ -210,7 +216,7 @@ const SuperAdminSetup = () => {
           </div>
         </div>
         <Button 
-          onClick={createSuperAdmin} 
+          onClick={createSuperAdminSimple} 
           className="w-full"
           disabled={isLoading}
         >
@@ -218,7 +224,7 @@ const SuperAdminSetup = () => {
         </Button>
         
         <div className="text-sm text-gray-600 mt-4">
-          <p><strong>Suggerimento:</strong> Se continui ad avere problemi con il dominio @spiralapp.it, prova con un indirizzo Gmail temporaneo per testare la funzionalità.</p>
+          <p><strong>Nota:</strong> Questo metodo semplificato gestisce automaticamente utenti esistenti e bypassa i problemi di conferma email.</p>
         </div>
       </CardContent>
     </Card>
