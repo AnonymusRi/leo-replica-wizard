@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { Phone, Lock, AlertCircle } from 'lucide-react';
+import { Phone, Lock, AlertCircle, TestTube } from 'lucide-react';
 
 interface OTPStepProps {
   phoneNumber: string;
@@ -18,6 +18,12 @@ export const OTPStep = ({ phoneNumber, otpCode, setOtpCode, onVerify, onBack, is
     <div className="space-y-4">
       <div className="text-center">
         <div className="flex items-center justify-center space-x-2 mb-2">
+          <TestTube className="w-4 h-4 text-orange-600" />
+          <span className="text-sm text-orange-600 font-medium">
+            MODALITÀ SIMULAZIONE
+          </span>
+        </div>
+        <div className="flex items-center justify-center space-x-2 mb-2">
           <Phone className="w-4 h-4 text-green-600" />
           <span className="text-sm text-gray-600">
             Codice inviato a {phoneNumber}
@@ -27,6 +33,17 @@ export const OTPStep = ({ phoneNumber, otpCode, setOtpCode, onVerify, onBack, is
           <Lock className="w-3 h-3 mr-1" />
           Verifica a 2 Fattori Attiva
         </Badge>
+      </div>
+
+      <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+        <div className="flex items-center space-x-2 mb-2">
+          <TestTube className="w-4 h-4 text-orange-600" />
+          <span className="text-sm font-medium text-orange-800">Modalità Test</span>
+        </div>
+        <p className="text-sm text-orange-700">
+          Il codice OTP è mostrato nel toast di notifica e nella console del browser. 
+          Controlla la notifica che è apparsa dopo aver inserito l'email.
+        </p>
       </div>
       
       <div>

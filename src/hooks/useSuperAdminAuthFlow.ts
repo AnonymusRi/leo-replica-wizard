@@ -9,6 +9,7 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
   const [otpCode, setOtpCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [simulatedOtpCode, setSimulatedOtpCode] = useState(''); // Per la simulazione
   const { toast } = useToast();
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -75,10 +76,11 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
         return;
       }
 
-      // Genera e invia OTP
+      // SIMULAZIONE OTP - Genera codice e salvalo nel database per la verifica
       const otpCodeGenerated = Math.floor(100000 + Math.random() * 900000).toString();
+      setSimulatedOtpCode(otpCodeGenerated);
       
-      console.log('Generazione OTP per telefono:', superAdmin.phone_number);
+      console.log('🔐 CODICE OTP SIMULATO:', otpCodeGenerated);
       
       const { error: otpError } = await supabase
         .from('otp_codes')
@@ -95,13 +97,14 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
       setPhoneNumber(superAdmin.phone_number);
       setStep('otp');
       
-      // Simula invio SMS (in produzione usare servizio SMS reale)
-      console.log(`OTP Code: ${otpCodeGenerated} inviato a ${superAdmin.phone_number}`);
-      
+      // Toast con il codice OTP per la simulazione
       toast({
-        title: "Codice OTP Inviato",
-        description: `Codice di verifica inviato al numero ${superAdmin.phone_number.replace(/(\+\d{2})(\d{3})(\d{3})(\d+)/, '$1 $2 $3 $4')}`,
+        title: "🔐 Codice OTP (SIMULAZIONE)",
+        description: `Il tuo codice è: ${otpCodeGenerated}. Inseriscilo nel campo sottostante.`,
+        duration: 10000 // 10 secondi per dare tempo di copiare
       });
+      
+      console.log(`📱 SIMULAZIONE SMS: Codice OTP ${otpCodeGenerated} inviato a ${superAdmin.phone_number}`);
 
     } catch (error) {
       console.error('Errore nel processo di autenticazione:', error);
@@ -210,6 +213,7 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
     isLoading,
     phoneNumber,
     handleEmailSubmit,
-    handleOtpVerify
+    handleOtpVerify,
+    simulatedOtpCode // Aggiungi questo per debug
   };
 };
