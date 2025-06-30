@@ -22,7 +22,10 @@ export const useUserPermissions = (organizationId?: string): UserPermissionsChec
     };
 
     const hasModuleAccess = (module: SystemModule): boolean => {
-      if (!userRole || !license) return false;
+      if (!userRole || !license) {
+        // Per ora ritorna true per tutti i moduli se non c'è licenza
+        return true;
+      }
       
       // Check if license includes the module
       if (!license.active_modules.includes(module)) return false;
@@ -30,7 +33,19 @@ export const useUserPermissions = (organizationId?: string): UserPermissionsChec
       // Check if user has permission for this module
       if (userRole.role === 'super_admin') return true;
       
-      return userRole.module_permissions.includes(module);
+      // Convertire module_permissions in array se è JSON
+      let modulePermissions: SystemModule[] = [];
+      if (Array.isArray(userRole.module_permissions)) {
+        modulePermissions = userRole.module_permissions as SystemModule[];
+      } else if (typeof userRole.module_permissions === 'string') {
+        try {
+          modulePermissions = JSON.parse(userRole.module_permissions);
+        } catch {
+          modulePermissions = [];
+        }
+      }
+      
+      return modulePermissions.includes(module);
     };
 
     const isAdmin = (): boolean => {
