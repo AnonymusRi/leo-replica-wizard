@@ -35,7 +35,7 @@ export const useSupportTickets = () => {
     queryKey: ['support-tickets'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('support_tickets')
+        .from('support_tickets' as any)
         .select('*')
         .order('created_at', { ascending: false });
       
@@ -51,7 +51,7 @@ export const useCreateTicket = () => {
   return useMutation({
     mutationFn: async (ticket: Partial<SupportTicket>) => {
       const { data, error } = await supabase
-        .from('support_tickets')
+        .from('support_tickets' as any)
         .insert(ticket)
         .select()
         .single();
@@ -75,7 +75,7 @@ export const useUpdateTicket = () => {
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<SupportTicket> }) => {
       const { data, error } = await supabase
-        .from('support_tickets')
+        .from('support_tickets' as any)
         .update(updates)
         .eq('id', id)
         .select()
@@ -99,7 +99,7 @@ export const useTicketComments = (ticketId: string) => {
     queryKey: ['ticket-comments', ticketId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('ticket_comments')
+        .from('ticket_comments' as any)
         .select('*')
         .eq('ticket_id', ticketId)
         .order('created_at', { ascending: true });
@@ -117,7 +117,7 @@ export const useCreateComment = () => {
   return useMutation({
     mutationFn: async (comment: Partial<TicketComment>) => {
       const { data, error } = await supabase
-        .from('ticket_comments')
+        .from('ticket_comments' as any)
         .insert(comment)
         .select()
         .single();

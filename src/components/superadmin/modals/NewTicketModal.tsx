@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCreateTicket } from "@/hooks/useSupportTickets";
+import { useCreateTicket, SupportTicket } from "@/hooks/useSupportTickets";
 
 interface NewTicketModalProps {
   open: boolean;
@@ -17,8 +17,8 @@ export const NewTicketModal = ({ open, onOpenChange }: NewTicketModalProps) => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    category: "bug_report",
-    priority: "medium"
+    category: "bug_report" as SupportTicket['category'],
+    priority: "medium" as SupportTicket['priority']
   });
 
   const createTicketMutation = useCreateTicket();
@@ -72,7 +72,7 @@ export const NewTicketModal = ({ open, onOpenChange }: NewTicketModalProps) => {
               <Label htmlFor="category">Categoria</Label>
               <Select 
                 value={formData.category} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                onValueChange={(value: SupportTicket['category']) => setFormData(prev => ({ ...prev, category: value }))}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -90,7 +90,7 @@ export const NewTicketModal = ({ open, onOpenChange }: NewTicketModalProps) => {
               <Label htmlFor="priority">Priorità</Label>
               <Select 
                 value={formData.priority} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}
+                onValueChange={(value: SupportTicket['priority']) => setFormData(prev => ({ ...prev, priority: value }))}
               >
                 <SelectTrigger>
                   <SelectValue />

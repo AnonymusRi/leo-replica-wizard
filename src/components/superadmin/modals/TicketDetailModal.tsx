@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useUpdateTicket, useCreateComment, useTicketComments } from "@/hooks/useSupportTickets";
+import { useUpdateTicket, useCreateComment, useTicketComments, SupportTicket } from "@/hooks/useSupportTickets";
 import { MessageSquare } from "lucide-react";
 
 interface TicketDetailModalProps {
@@ -25,13 +25,13 @@ export const TicketDetailModal = ({ ticketId, open, onOpenChange }: TicketDetail
     queryKey: ['ticket-detail', ticketId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('support_tickets')
+        .from('support_tickets' as any)
         .select('*')
         .eq('id', ticketId)
         .single();
       
       if (error) throw error;
-      return data;
+      return data as SupportTicket;
     },
     enabled: !!ticketId
   });
@@ -44,7 +44,7 @@ export const TicketDetailModal = ({ ticketId, open, onOpenChange }: TicketDetail
     if (statusUpdate && ticket) {
       await updateTicketMutation.mutateAsync({
         id: ticketId,
-        updates: { status: statusUpdate as any }
+        updates: { status: statusUpdate as SupportTicket['status'] }
       });
       setStatusUpdate("");
     }

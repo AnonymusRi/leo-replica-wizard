@@ -24,7 +24,7 @@ export const useSaasLicenses = () => {
     queryKey: ['saas-licenses'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('saas_licenses')
+        .from('saas_licenses' as any)
         .select(`
           *,
           organizations (
@@ -46,7 +46,7 @@ export const useCreateLicense = () => {
   return useMutation({
     mutationFn: async (license: Partial<SaasLicense>) => {
       const { data, error } = await supabase
-        .from('saas_licenses')
+        .from('saas_licenses' as any)
         .insert(license)
         .select()
         .single();
@@ -70,7 +70,7 @@ export const useUpdateLicense = () => {
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<SaasLicense> }) => {
       const { data, error } = await supabase
-        .from('saas_licenses')
+        .from('saas_licenses' as any)
         .update(updates)
         .eq('id', id)
         .select()
@@ -94,7 +94,7 @@ export const useExpiredLicenses = () => {
     queryKey: ['expired-licenses'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('saas_licenses')
+        .from('saas_licenses' as any)
         .select(`
           *,
           organizations (
@@ -120,7 +120,7 @@ export const useExpiringLicenses = () => {
     queryKey: ['expiring-licenses'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('saas_licenses')
+        .from('saas_licenses' as any)
         .select(`
           *,
           organizations (
@@ -136,5 +136,26 @@ export const useExpiringLicenses = () => {
       if (error) throw error;
       return data;
     }
+  });
+};
+
+// Aggiungo la funzione mancante
+export const useOrganizationLicense = (organizationId?: string) => {
+  return useQuery({
+    queryKey: ['organization-license', organizationId],
+    queryFn: async () => {
+      if (!organizationId) return null;
+      
+      const { data, error } = await supabase
+        .from('saas_licenses' as any)
+        .select('*')
+        .eq('organization_id', organizationId)
+        .eq('is_active', true)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!organizationId
   });
 };
