@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 const SuperAdminSetup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    email: 'superadmin@example.com',
+    email: 'admin@test.com',
     password: 'SuperAdmin123!',
     firstName: 'Super',
     lastName: 'Admin'
@@ -20,6 +20,13 @@ const SuperAdminSetup = () => {
     setIsLoading(true);
     try {
       console.log('Attempting to create super admin with email:', formData.email);
+      
+      // Validate email format first
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        toast.error('Formato email non valido');
+        return;
+      }
       
       // First, sign up the user
       const { data, error } = await supabase.auth.signUp({
@@ -36,7 +43,13 @@ const SuperAdminSetup = () => {
 
       if (error) {
         console.error('Signup error:', error);
-        toast.error('Errore durante la registrazione: ' + error.message);
+        if (error.message.includes('invalid')) {
+          toast.error('Email non valido. Prova con un indirizzo email diverso.');
+        } else if (error.message.includes('already')) {
+          toast.error('Questo utente esiste già. Prova con un email diverso.');
+        } else {
+          toast.error('Errore durante la registrazione: ' + error.message);
+        }
         return;
       }
 
