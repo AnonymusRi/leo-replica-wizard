@@ -43,15 +43,24 @@ const SuperAdminSetup = () => {
         // Wait a bit for the profile to be created by the trigger
         setTimeout(async () => {
           try {
-            // Update the user's organization and role
+            // Get the spiral-admin organization ID
+            const { data: orgData, error: orgError } = await supabase
+              .from('organizations')
+              .select('id')
+              .eq('slug', 'spiral-admin')
+              .single();
+
+            if (orgError) {
+              console.error('Error fetching organization:', orgError);
+              toast.error('Errore nel recupero dell\'organizzazione');
+              return;
+            }
+
+            // Update the user's organization
             const { error: updateError } = await supabase
               .from('profiles')
               .update({
-                organization_id: (await supabase
-                  .from('organizations')
-                  .select('id')
-                  .eq('slug', 'spiral-admin')
-                  .single()).data?.id
+                organization_id: orgData.id
               })
               .eq('id', data.user.id);
 
@@ -59,27 +68,24 @@ const SuperAdminSetup = () => {
               console.error('Error updating profile:', updateError);
             }
 
-            // Create the super admin role
-            const { error: roleError } = await supabase
-              .from('user_roles')
-              .insert({
-                user_id: data.user.id,
-                organization_id: (await supabase
-                  .from('organizations')
-                  .select('id')
-                  .eq('slug', 'spiral-admin')
-                  .single()).data?.id,
-                role: 'super_admin',
-                module_permissions: ['all']
+            // Use the secure function to create the super admin role
+            const { data: roleData, error: roleError } = await supabase
+              .rpc('create_user_role', {
+                p_user_id: data.user.id,
+                p_organization_id: orgData.id,
+                p_role: 'super_admin',
+                p_module_permissions: ['all']
               });
 
             if (roleError) {
               console.error('Error creating role:', roleError);
+              toast.error('Errore nella creazione del ruolo: ' + roleError.message);
+            } else {
+              toast.success('Super admin creato con successo! Ora puoi effettuare il login.');
             }
-
-            toast.success('Super admin creato con successo! Ora puoi effettuare il login.');
           } catch (err) {
             console.error('Error in post-creation setup:', err);
+            toast.error('Errore nella configurazione post-creazione');
           }
         }, 2000);
       }

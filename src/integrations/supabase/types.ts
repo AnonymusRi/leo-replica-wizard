@@ -2845,6 +2845,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_user_role: {
+        Args: {
+          p_user_id: string
+          p_organization_id: string
+          p_role: Database["public"]["Enums"]["user_role"]
+          p_module_permissions?: Json
+        }
+        Returns: string
+      }
       get_user_organization: {
         Args: Record<PropertyKey, never>
         Returns: string
