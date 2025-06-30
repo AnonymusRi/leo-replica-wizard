@@ -1,86 +1,83 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertTriangle, Clock, Mail, Phone, RefreshCw } from "lucide-react";
+import { AlertTriangle, Calendar, Mail, Phone, Clock, RefreshCw, Search } from "lucide-react";
 
 export const ExpiringLicenses = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+
   const expiringLicenses = [
     {
       id: 1,
-      organization: "Air Dolomiti",
-      type: "Standard",
-      expiresOn: "2024-07-15",
-      daysLeft: 10,
-      monthlyFee: 299,
-      contactEmail: "admin@airdolomiti.com",
-      contactPhone: "+39 0471 123456",
-      lastContact: "2024-06-25",
-      renewalStatus: "pending",
-      priority: "high"
+      organization: "Eurofly",
+      type: "Premium",
+      users: 75,
+      expiresIn: 5,
+      expiryDate: "2024-07-05",
+      contactPerson: "Marco Bianchi",
+      email: "m.bianchi@eurofly.com",
+      phone: "+39 02 1234567",
+      monthlyFee: 699,
+      lastContact: "2024-06-20",
+      renewalStatus: "not_contacted"
     },
     {
       id: 2,
-      organization: "Meridiana",
-      type: "Premium",
-      expiresOn: "2024-07-20",
-      daysLeft: 15,
-      monthlyFee: 499,
-      contactEmail: "it@meridiana.com",
-      contactPhone: "+39 070 987654",
-      lastContact: "2024-06-20",
-      renewalStatus: "contacted",
-      priority: "medium"
+      organization: "Air Dolomiti",
+      type: "Standard",
+      users: 30,
+      expiresIn: 15,
+      expiryDate: "2024-07-15",
+      contactPerson: "Anna Rossi",
+      email: "a.rossi@airdolomiti.com",
+      phone: "+39 0471 123456",
+      monthlyFee: 399,
+      lastContact: "2024-06-25",
+      renewalStatus: "contacted"
     },
     {
       id: 3,
-      organization: "Eurofly",
+      organization: "Meridiana",
       type: "Enterprise",
-      expiresOn: "2024-06-30",
-      daysLeft: -5,
-      monthlyFee: 899,
-      contactEmail: "ops@eurofly.com",
-      contactPhone: "+39 02 555666",
+      users: 120,
+      expiresIn: 30,
+      expiryDate: "2024-07-30",
+      contactPerson: "Giuseppe Carta",
+      email: "g.carta@meridiana.com",
+      phone: "+39 070 987654",
+      monthlyFee: 999,
       lastContact: "2024-06-28",
-      renewalStatus: "expired",
-      priority: "critical"
+      renewalStatus: "renewal_sent"
     }
   ];
 
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case "critical":
-        return <Badge variant="destructive">Critica</Badge>;
-      case "high":
-        return <Badge className="bg-orange-100 text-orange-800">Alta</Badge>;
-      case "medium":
-        return <Badge variant="secondary">Media</Badge>;
-      default:
-        return <Badge variant="outline">Bassa</Badge>;
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "expired":
-        return <Badge variant="destructive">Scaduta</Badge>;
+      case "not_contacted":
+        return <Badge variant="destructive">Non Contattato</Badge>;
       case "contacted":
-        return <Badge className="bg-blue-100 text-blue-800">Contattato</Badge>;
-      case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800">In Attesa</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800">Contattato</Badge>;
+      case "renewal_sent":
+        return <Badge className="bg-blue-100 text-blue-800">Rinnovo Inviato</Badge>;
+      case "renewed":
+        return <Badge variant="default">Rinnovato</Badge>;
       default:
         return <Badge variant="outline">Sconosciuto</Badge>;
     }
   };
 
-  const getDaysLeftColor = (days: number) => {
-    if (days < 0) return "text-red-600 font-bold";
-    if (days <= 7) return "text-red-500 font-semibold";
-    if (days <= 30) return "text-orange-500 font-medium";
-    return "text-gray-600";
+  const getUrgencyColor = (days: number) => {
+    if (days <= 7) return "border-red-200 bg-red-50";
+    if (days <= 15) return "border-orange-200 bg-orange-50";
+    return "border-yellow-200 bg-yellow-50";
   };
+
+  const criticalExpiring = expiringLicenses.filter(l => l.expiresIn <= 7).length;
+  const totalRevenue = expiringLicenses.reduce((sum, license) => sum + license.monthlyFee, 0);
 
   return (
     <div className="space-y-6">
@@ -93,20 +90,19 @@ export const ExpiringLicenses = () => {
           </Button>
           <Button>
             <RefreshCw className="w-4 h-4 mr-2" />
-            Aggiorna Stato
+            Rinnova Automatico
           </Button>
         </div>
       </div>
 
-      {/* Alert Scadenze */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Statistiche Scadenze */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-red-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-red-600">Scadute</p>
-                <p className="text-2xl font-bold text-red-600">1</p>
-                <p className="text-xs text-red-500">Richiedono azione immediata</p>
+                <p className="text-sm font-medium text-red-600">Scadono Questa Settimana</p>
+                <p className="text-2xl font-bold text-red-600">{criticalExpiring}</p>
               </div>
               <AlertTriangle className="w-8 h-8 text-red-600" />
             </div>
@@ -117,152 +113,119 @@ export const ExpiringLicenses = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-orange-600">Prossimi 30 giorni</p>
-                <p className="text-2xl font-bold text-orange-600">2</p>
-                <p className="text-xs text-orange-500">Da contattare presto</p>
+                <p className="text-sm font-medium text-orange-600">Scadono Questo Mese</p>
+                <p className="text-2xl font-bold text-orange-600">{expiringLicenses.length}</p>
               </div>
-              <Clock className="w-8 h-8 text-orange-600" />
+              <Calendar className="w-8 h-8 text-orange-600" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-blue-200">
+        <Card className="border-purple-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-blue-600">Fatturato a rischio</p>
-                <p className="text-2xl font-bold text-blue-600">€1,697</p>
-                <p className="text-xs text-blue-500">Fatturato mensile</p>
+                <p className="text-sm font-medium text-purple-600">Fatturato a Rischio</p>
+                <p className="text-2xl font-bold text-purple-600">€{totalRevenue.toLocaleString()}</p>
               </div>
-              <AlertTriangle className="w-8 h-8 text-blue-600" />
+              <Clock className="w-8 h-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-green-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-600">Tasso Rinnovo</p>
+                <p className="text-2xl font-bold text-green-600">87%</p>
+              </div>
+              <RefreshCw className="w-8 h-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabella Scadenze */}
+      {/* Lista Licenze in Scadenza */}
       <Card>
         <CardHeader>
-          <CardTitle>Dettaglio Scadenze</CardTitle>
+          <CardTitle>Licenze che Scadono Presto</CardTitle>
           <CardDescription>
-            Licenze che necessitano di rinnovo o sono già scadute
+            Monitora e gestisci i rinnovi delle licenze in scadenza
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Organizzazione</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Scadenza</TableHead>
-                <TableHead>Giorni Rimasti</TableHead>
-                <TableHead>Valore Mensile</TableHead>
-                <TableHead>Contatti</TableHead>
-                <TableHead>Ultimo Contatto</TableHead>
-                <TableHead>Stato</TableHead>
-                <TableHead>Priorità</TableHead>
-                <TableHead>Azioni</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {expiringLicenses.map((license) => (
-                <TableRow key={license.id}>
-                  <TableCell className="font-medium">
-                    {license.organization}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{license.type}</Badge>
-                  </TableCell>
-                  <TableCell>{license.expiresOn}</TableCell>
-                  <TableCell>
-                    <span className={getDaysLeftColor(license.daysLeft)}>
-                      {license.daysLeft < 0 
-                        ? `Scaduta da ${Math.abs(license.daysLeft)} giorni`
-                        : `${license.daysLeft} giorni`
-                      }
-                    </span>
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    €{license.monthlyFee}
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      <div>{license.contactEmail}</div>
-                      <div className="text-gray-500">{license.contactPhone}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{license.lastContact}</TableCell>
-                  <TableCell>
-                    {getStatusBadge(license.renewalStatus)}
-                  </TableCell>
-                  <TableCell>
-                    {getPriorityBadge(license.priority)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-1">
-                      <Button variant="outline" size="sm">
-                        <Mail className="w-3 h-3" />
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Phone className="w-3 h-3" />
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <RefreshCw className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+          <div className="flex items-center space-x-2 mb-4">
+            <Search className="w-4 h-4 text-gray-400" />
+            <Input
+              placeholder="Cerca organizzazione..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-sm"
+            />
+          </div>
 
-      {/* Azioni Bulk */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Azioni Automatiche</CardTitle>
-          <CardDescription>
-            Gestisci le comunicazioni automatiche per i rinnovi
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <h4 className="font-medium">Template Email Promemoria</h4>
-              <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start">
-                  <Mail className="w-4 h-4 mr-2" />
-                  Primo promemoria (30 giorni)
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Mail className="w-4 h-4 mr-2" />
-                  Secondo promemoria (15 giorni)
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <Mail className="w-4 h-4 mr-2" />
-                  Ultimo avviso (7 giorni)
-                </Button>
-              </div>
-            </div>
+          <div className="space-y-4">
+            {expiringLicenses.map((license) => (
+              <Card key={license.id} className={getUrgencyColor(license.expiresIn)}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-4 mb-2">
+                        <h4 className="font-semibold text-lg">{license.organization}</h4>
+                        <Badge variant="outline">{license.type}</Badge>
+                        {getStatusBadge(license.renewalStatus)}
+                      </div>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600">Scade in:</span>
+                          <div className="font-medium">{license.expiresIn} giorni</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Data scadenza:</span>
+                          <div className="font-medium">{license.expiryDate}</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Utenti:</span>
+                          <div className="font-medium">{license.users}</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Fatturato mensile:</span>
+                          <div className="font-medium">€{license.monthlyFee}</div>
+                        </div>
+                      </div>
 
-            <div className="space-y-2">
-              <h4 className="font-medium">Impostazioni Automatiche</h4>
-              <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start">
-                  <Clock className="w-4 h-4 mr-2" />
-                  Configura promemoria automatici
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Regole di sospensione
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <AlertTriangle className="w-4 h-4 mr-2" />
-                  Notifiche escalation
-                </Button>
-              </div>
-            </div>
+                      <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
+                        <div className="flex items-center">
+                          <span className="mr-1">👤</span>
+                          {license.contactPerson}
+                        </div>
+                        <div className="flex items-center">
+                          <Mail className="w-3 h-3 mr-1" />
+                          {license.email}
+                        </div>
+                        <div className="flex items-center">
+                          <Phone className="w-3 h-3 mr-1" />
+                          {license.phone}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col space-y-2">
+                      <Button variant="outline" size="sm">
+                        <Mail className="w-3 h-3 mr-1" />
+                        Contatta
+                      </Button>
+                      <Button variant="default" size="sm">
+                        <RefreshCw className="w-3 h-3 mr-1" />
+                        Rinnova
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </CardContent>
       </Card>

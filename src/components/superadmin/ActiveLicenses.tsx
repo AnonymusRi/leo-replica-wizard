@@ -1,11 +1,11 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle, Users, Package, TrendingUp, Search, Eye, Edit } from "lucide-react";
+import { CheckCircle, Users, Package, TrendingUp, Search, Eye, Edit, Download, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 export const ActiveLicenses = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,17 +58,42 @@ export const ActiveLicenses = () => {
   const totalRevenue = activeLicenses.reduce((sum, license) => sum + license.monthlyRevenue, 0);
   const totalUsers = activeLicenses.reduce((sum, license) => sum + license.users.current, 0);
 
+  const handleExportReport = () => {
+    toast.success("Report esportato con successo!");
+    console.log("Esportazione report licenze attive");
+  };
+
+  const handleRenewAll = () => {
+    toast.success("Procedura di rinnovo automatico avviata!");
+    console.log("Rinnovo automatico di tutte le licenze");
+  };
+
+  const handleViewLicense = (licenseId: number) => {
+    toast.info(`Apertura dettagli licenza ${licenseId}`);
+    console.log("Visualizzazione dettagli licenza:", licenseId);
+  };
+
+  const handleEditLicense = (licenseId: number) => {
+    toast.info(`Modifica licenza ${licenseId}`);
+    console.log("Modifica licenza:", licenseId);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Licenze Attive</h1>
         <div className="flex items-center space-x-2">
-          <Button variant="outline">Esporta Report</Button>
-          <Button>Rinnova Tutte</Button>
+          <Button variant="outline" onClick={handleExportReport}>
+            <Download className="w-4 h-4 mr-2" />
+            Esporta Report
+          </Button>
+          <Button onClick={handleRenewAll}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Rinnova Tutte
+          </Button>
         </div>
       </div>
 
-      {/* Statistiche Generali */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
@@ -185,10 +210,10 @@ export const ActiveLicenses = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => handleViewLicense(license.id)}>
                         <Eye className="w-3 h-3" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => handleEditLicense(license.id)}>
                         <Edit className="w-3 h-3" />
                       </Button>
                     </div>

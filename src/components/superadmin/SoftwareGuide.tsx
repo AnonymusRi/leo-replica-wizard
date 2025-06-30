@@ -3,137 +3,206 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Book, 
-  Video, 
-  FileText, 
-  Users, 
-  Plane, 
-  Calendar, 
-  Wrench, 
-  BarChart3,
-  Phone,
-  Settings,
-  Download,
-  Play,
-  ExternalLink,
-  Mail
-} from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { BookOpen, Video, Download, Search, ChevronDown, ExternalLink, Play, FileText } from "lucide-react";
 
 export const SoftwareGuide = () => {
-  const [selectedModule, setSelectedModule] = useState("overview");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [openSections, setOpenSections] = useState<string[]>(["getting-started"]);
 
-  const modules = [
-    { id: "overview", label: "Panoramica", icon: Book, color: "bg-blue-500" },
-    { id: "sched", label: "Schedulazione", icon: Calendar, color: "bg-green-500" },
-    { id: "sales", label: "Vendite", icon: Plane, color: "bg-purple-500" },
-    { id: "ops", label: "Operazioni", icon: Settings, color: "bg-orange-500" },
-    { id: "crew", label: "Equipaggio", icon: Users, color: "bg-indigo-500" },
-    { id: "mx", label: "Manutenzione", icon: Wrench, color: "bg-red-500" },
-    { id: "reports", label: "Report", icon: BarChart3, color: "bg-teal-500" },
-    { id: "phonebook", label: "Rubrica", icon: Phone, color: "bg-pink-500" }
-  ];
-
-  const guides = {
-    overview: [
-      {
-        title: "Introduzione al Sistema",
-        description: "Panoramica generale delle funzionalità",
-        type: "video",
-        duration: "15 min",
-        level: "Principiante"
-      },
-      {
-        title: "Setup Iniziale Organizzazione",
-        description: "Come configurare la tua organizzazione",
-        type: "document",
-        duration: "10 min",
-        level: "Principiante"
-      },
-      {
-        title: "Gestione Utenti e Ruoli",
-        description: "Configurazione permissions e accessi",
-        type: "video",
-        duration: "20 min",
-        level: "Intermedio"
-      }
-    ],
-    sched: [
-      {
-        title: "Creazione Programmazione Voli",
-        description: "Come creare e gestire la programmazione",
-        type: "video",
-        duration: "25 min",
-        level: "Principiante"
-      },
-      {
-        title: "Gestione Modifiche e Versioning",
-        description: "Tracking delle modifiche alla programmazione",
-        type: "document",
-        duration: "15 min",
-        level: "Intermedio"
-      },
-      {
-        title: "Pubblicazione Programmazione",
-        description: "Come pubblicare e condividere la programmazione",
-        type: "video",
-        duration: "12 min",
-        level: "Principiante"
-      }
-    ],
-    sales: [
-      {
-        title: "Gestione Clienti e Preventivi",
-        description: "Creazione e invio preventivi",
-        type: "video",
-        duration: "30 min",
-        level: "Principiante"
-      },
-      {
-        title: "Processo di Vendita",
-        description: "Dalla richiesta alla conferma",
-        type: "document",
-        duration: "20 min",
-        level: "Intermedio"
-      }
-    ]
+  const toggleSection = (sectionId: string) => {
+    setOpenSections(prev => 
+      prev.includes(sectionId) 
+        ? prev.filter(id => id !== sectionId)
+        : [...prev, sectionId]
+    );
   };
 
-  const currentGuides = guides[selectedModule as keyof typeof guides] || guides.overview;
+  const guideCategories = [
+    {
+      id: "getting-started",
+      title: "Primi Passi",
+      description: "Guida introduttiva all'utilizzo del software",
+      items: [
+        {
+          title: "Configurazione Iniziale",
+          type: "article",
+          duration: "5 min",
+          description: "Come configurare il sistema per la prima volta"
+        },
+        {
+          title: "Tour dell'Interfaccia",
+          type: "video",
+          duration: "12 min",
+          description: "Video introduttivo alle funzionalità principali"
+        },
+        {
+          title: "Creazione Primo Volo",
+          type: "tutorial",
+          duration: "8 min",
+          description: "Guida step-by-step per inserire il primo volo"
+        }
+      ]
+    },
+    {
+      id: "schedule",
+      title: "Modulo Schedule",
+      description: "Gestione programmazione voli",
+      items: [
+        {
+          title: "Pianificazione Voli",
+          type: "article",
+          duration: "10 min",
+          description: "Come pianificare e gestire i voli"
+        },
+        {
+          title: "Gestione Equipaggio",
+          type: "video",
+          duration: "15 min",
+          description: "Assegnazione equipaggio ai voli"
+        },
+        {
+          title: "Pubblicazione Schedule",
+          type: "tutorial",
+          duration: "7 min",
+          description: "Come pubblicare e condividere gli orari"
+        }
+      ]
+    },
+    {
+      id: "sales",
+      title: "Modulo Sales",
+      description: "Gestione vendite e preventivi",
+      items: [
+        {
+          title: "Creazione Preventivi",
+          type: "article",
+          duration: "12 min",
+          description: "Come creare e gestire i preventivi"
+        },
+        {
+          title: "Gestione Clienti",
+          type: "video",
+          duration: "18 min",
+          description: "Anagrafica e gestione della clientela"
+        },
+        {
+          title: "Report Vendite",
+          type: "tutorial",
+          duration: "10 min",
+          description: "Analisi e reportistica delle vendite"
+        }
+      ]
+    },
+    {
+      id: "ops",
+      title: "Modulo Operations",
+      description: "Gestione operazioni di volo",
+      items: [
+        {
+          title: "Checklist Operative",
+          type: "article",
+          duration: "8 min",
+          description: "Utilizzo delle checklist per le operazioni"
+        },
+        {
+          title: "Gestione Documenti",
+          type: "video",
+          duration: "14 min",
+          description: "Caricamento e gestione documenti di volo"
+        },
+        {
+          title: "Handling Requests",
+          type: "tutorial",
+          duration: "6 min",
+          description: "Gestione richieste di handling aeroportuale"
+        }
+      ]
+    },
+    {
+      id: "maintenance",
+      title: "Modulo Maintenance",
+      description: "Gestione manutenzione aeromobili",
+      items: [
+        {
+          title: "Pianificazione Manutenzioni",
+          type: "article",
+          duration: "15 min",
+          description: "Come pianificare le manutenzioni"
+        },
+        {
+          title: "Tracking Componenti",
+          type: "video",
+          duration: "20 min",
+          description: "Monitoraggio ore e cicli componenti"
+        },
+        {
+          title: "Hold Items Management",
+          type: "tutorial",
+          duration: "12 min",  
+          description: "Gestione degli hold items MEL/CDL"
+        }
+      ]
+    },
+    {
+      id: "crew",
+      title: "Modulo Crew",
+      description: "Gestione equipaggio e FTL",
+      items: [
+        {
+          title: "Gestione Qualifiche",
+          type: "article",
+          duration: "10 min",
+          description: "Tracking delle qualifiche equipaggio"
+        },
+        {
+          title: "FTL Compliance",
+          type: "video",
+          duration: "22 min",
+          description: "Conformità ai limiti di tempo di volo"
+        },
+        {
+          title: "Training Records",
+          type: "tutorial",
+          duration: "8 min",
+          description: "Gestione record di addestramento"
+        }
+      ]
+    }
+  ];
 
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "video":
         return <Video className="w-4 h-4" />;
-      case "document":
-        return <FileText className="w-4 h-4" />;
+      case "tutorial":
+        return <Play className="w-4 h-4" />;
       default:
-        return <Book className="w-4 h-4" />;
+        return <FileText className="w-4 h-4" />;
     }
   };
 
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case "Principiante":
-        return "bg-green-100 text-green-800";
-      case "Intermedio":
-        return "bg-yellow-100 text-yellow-800";
-      case "Avanzato":
-        return "bg-red-100 text-red-800";
+  const getTypeBadge = (type: string) => {
+    switch (type) {
+      case "video":
+        return <Badge className="bg-red-100 text-red-800">Video</Badge>;
+      case "tutorial":
+        return <Badge className="bg-blue-100 text-blue-800">Tutorial</Badge>;
       default:
-        return "bg-gray-100 text-gray-800";
+        return <Badge className="bg-green-100 text-green-800">Articolo</Badge>;
     }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Guida al Software</h1>
+        <h1 className="text-3xl font-bold">Guida Software</h1>
         <div className="flex items-center space-x-2">
           <Button variant="outline">
             <Download className="w-4 h-4 mr-2" />
-            Scarica PDF Completo
+            Scarica PDF
           </Button>
           <Button>
             <ExternalLink className="w-4 h-4 mr-2" />
@@ -142,162 +211,270 @@ export const SoftwareGuide = () => {
         </div>
       </div>
 
-      <Tabs value={selectedModule} onValueChange={setSelectedModule} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
-          {modules.map((module) => {
-            const Icon = module.icon;
-            return (
-              <TabsTrigger key={module.id} value={module.id} className="flex items-center space-x-1">
-                <Icon className="w-4 h-4" />
-                <span className="hidden sm:inline">{module.label}</span>
-              </TabsTrigger>
-            );
-          })}
+      {/* Statistiche Utilizzo */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Guide Totali</p>
+                <p className="text-2xl font-bold text-blue-600">24</p>
+              </div>
+              <BookOpen className="w-8 h-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Video Tutorial</p>
+                <p className="text-2xl font-bold text-purple-600">8</p>
+              </div>
+              <Video className="w-8 h-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Tempo Totale</p>
+                <p className="text-2xl font-bold text-green-600">3h 25min</p>
+              </div>
+              <Play className="w-8 h-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Aggiornamenti</p>
+                <p className="text-2xl font-bold text-orange-600">2</p>
+              </div>
+              <ExternalLink className="w-8 h-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="guides" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="guides">Guide</TabsTrigger>
+          <TabsTrigger value="videos">Video Tutorial</TabsTrigger>
+          <TabsTrigger value="faq">FAQ</TabsTrigger>
+          <TabsTrigger value="updates">Aggiornamenti</TabsTrigger>
         </TabsList>
 
-        {modules.map((module) => (
-          <TabsContent key={module.id} value={module.id}>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Sidebar Modulo */}
-              <Card className="lg:col-span-1">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <div className={`w-8 h-8 ${module.color} rounded-lg flex items-center justify-center mr-3`}>
-                      <module.icon className="w-4 h-4 text-white" />
-                    </div>
-                    {module.label}
-                  </CardTitle>
-                  <CardDescription>
-                    Tutte le guide e risorse per il modulo {module.label}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Guide disponibili:</span>
-                      <Badge variant="outline">{currentGuides.length}</Badge>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Tempo totale:</span>
-                      <Badge variant="outline">
-                        {currentGuides.reduce((total, guide) => {
-                          const minutes = parseInt(guide.duration.replace(' min', ''));
-                          return total + minutes;
-                        }, 0)} min
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+        <TabsContent value="guides">
+          <Card>
+            <CardHeader>
+              <CardTitle>Guide Utente</CardTitle>
+              <CardDescription>
+                Documentazione completa per tutti i moduli del software
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-2 mb-6">
+                <Search className="w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Cerca nelle guide..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="max-w-sm"
+                />
+              </div>
 
-              {/* Lista Guide */}
-              <div className="lg:col-span-2 space-y-4">
-                {currentGuides.map((guide, index) => (
-                  <Card key={index} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            {getTypeIcon(guide.type)}
-                            <h3 className="font-semibold text-lg">{guide.title}</h3>
+              <div className="space-y-4">
+                {guideCategories.map((category) => (
+                  <Collapsible 
+                    key={category.id}
+                    open={openSections.includes(category.id)}
+                    onOpenChange={() => toggleSection(category.id)}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <Card className="cursor-pointer hover:bg-gray-50 transition-colors">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="font-semibold text-lg">{category.title}</h3>
+                              <p className="text-sm text-gray-600">{category.description}</p>
+                            </div>
+                            <ChevronDown className={`w-5 h-5 transition-transform ${
+                              openSections.includes(category.id) ? 'rotate-180' : ''
+                            }`} />
                           </div>
-                          <p className="text-gray-600 mb-3">{guide.description}</p>
-                          <div className="flex items-center space-x-3">
-                            <Badge variant="outline">{guide.duration}</Badge>
-                            <Badge className={getLevelColor(guide.level)}>
-                              {guide.level}
-                            </Badge>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2 ml-4">
-                          <Button variant="outline" size="sm">
-                            {guide.type === "video" ? (
-                              <Play className="w-4 h-4" />
-                            ) : (
-                              <FileText className="w-4 h-4" />
-                            )}
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        </CardContent>
+                      </Card>
+                    </CollapsibleTrigger>
+                    
+                    <CollapsibleContent>
+                      <div className="ml-4 mt-2 space-y-2">
+                        {category.items.map((item, index) => (
+                          <Card key={index} className="border-l-4 border-l-blue-500">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  {getTypeIcon(item.type)}
+                                  <div>
+                                    <h4 className="font-medium">{item.title}</h4>
+                                    <p className="text-sm text-gray-600">{item.description}</p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  {getTypeBadge(item.type)}
+                                  <Badge variant="outline">{item.duration}</Badge>
+                                  <Button variant="outline" size="sm">
+                                    <ExternalLink className="w-3 h-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="videos">
+          <Card>
+            <CardHeader>
+              <CardTitle>Video Tutorial</CardTitle>
+              <CardDescription>
+                Playlist video per imparare velocemente
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Card key={i}>
+                    <CardContent className="p-4">
+                      <div className="aspect-video bg-gray-200 rounded-lg mb-3 flex items-center justify-center">
+                        <Play className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <h4 className="font-medium mb-1">Tutorial Video {i}</h4>
+                      <p className="text-sm text-gray-600 mb-2">Descrizione del video tutorial</p>
+                      <div className="flex items-center justify-between">
+                        <Badge variant="outline">15 min</Badge>
+                        <Button variant="outline" size="sm">
+                          <Play className="w-3 h-3 mr-1" />
+                          Guarda
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
-            </div>
-          </TabsContent>
-        ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="faq">
+          <Card>
+            <CardHeader>
+              <CardTitle>Domande Frequenti</CardTitle>
+              <CardDescription>
+                Risposte alle domande più comuni
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {[
+                  "Come posso reimpostare la mia password?",
+                  "Come aggiungo un nuovo utente all'organizzazione?",
+                  "Come posso esportare i dati dei voli?",
+                  "Quali sono i limiti di tempo di volo EASA?",
+                  "Come configurare le notifiche email?"
+                ].map((question, index) => (
+                  <Collapsible key={index}>
+                    <CollapsibleTrigger asChild>
+                      <Card className="cursor-pointer hover:bg-gray-50">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium">{question}</h4>
+                            <ChevronDown className="w-4 h-4" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="ml-4 mt-2 p-4 bg-gray-50 rounded-lg">
+                        <p className="text-sm text-gray-600">
+                          Risposta dettagliata alla domanda frequente. Qui verrebbe inserita 
+                          una spiegazione completa e chiara per aiutare l'utente.
+                        </p>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="updates">
+          <Card>
+            <CardHeader>
+              <CardTitle>Aggiornamenti Recenti</CardTitle>
+              <CardDescription>
+                Ultime novità e aggiornamenti del software
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {[
+                  {
+                    version: "v2.4.1",
+                    date: "28 Giugno 2024",
+                    title: "Miglioramenti FTL e Nuove Funzionalità",
+                    changes: [
+                      "Nuovo algoritmo calcolo FTL più preciso",
+                      "Interfaccia crew dashboard migliorata",
+                      "Correzioni bug minori"
+                    ]
+                  },
+                  {
+                    version: "v2.4.0",
+                    date: "15 Giugno 2024",
+                    title: "Modulo SuperAdmin e Gestione Licenze",
+                    changes: [
+                      "Nuovo modulo SuperAdmin completo",
+                      "Sistema gestione licenze SaaS",
+                      "Miglioramenti sicurezza autenticazione"
+                    ]
+                  }
+                ].map((update, index) => (
+                  <Card key={index}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 className="font-semibold">{update.title}</h4>
+                          <p className="text-sm text-gray-600">{update.date}</p>
+                        </div>
+                        <Badge variant="outline">{update.version}</Badge>
+                      </div>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
+                        {update.changes.map((change, changeIndex) => (
+                          <li key={changeIndex}>{change}</li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
-
-      {/* Sezione FAQ e Supporto */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>FAQ Frequenti</CardTitle>
-            <CardDescription>
-              Le domande più comuni dei nostri clienti
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="border-l-2 border-blue-500 pl-4">
-                <h4 className="font-medium">Come resettare la password di un utente?</h4>
-                <p className="text-sm text-gray-600">Vai in Admin → Utenti → Seleziona utente → Reset Password</p>
-              </div>
-              <div className="border-l-2 border-green-500 pl-4">
-                <h4 className="font-medium">Come aggiungere un nuovo aeromobile?</h4>
-                <p className="text-sm text-gray-600">Modulo Aircraft → Nuovo Aeromobile → Compila tutti i campi obbligatori</p>
-              </div>
-              <div className="border-l-2 border-orange-500 pl-4">
-                <h4 className="font-medium">Come configurare le notifiche email?</h4>
-                <p className="text-sm text-gray-600">Impostazioni → Notifiche → Configura template e destinatari</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Supporto e Contatti</CardTitle>
-            <CardDescription>
-              Come ottenere assistenza quando necessario
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Mail className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Email Support</h4>
-                  <p className="text-sm text-gray-600">support@alidasoft.com</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Phone className="w-5 h-5 text-green-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Telefono</h4>
-                  <p className="text-sm text-gray-600">+39 02 1234567 (Lun-Ven 9-18)</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <ExternalLink className="w-5 h-5 text-purple-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium">Centro Assistenza Online</h4>
-                  <p className="text-sm text-gray-600">help.alidasoft.com</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 };

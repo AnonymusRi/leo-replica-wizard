@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Search, Edit, Eye, AlertTriangle } from "lucide-react";
+import { NewLicenseModal } from "./modals/NewLicenseModal";
 
 export const LicenseManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showNewLicenseModal, setShowNewLicenseModal] = useState(false);
 
   const licenses = [
     {
@@ -60,7 +61,7 @@ export const LicenseManagement = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Gestione Licenze</h1>
-        <Button>
+        <Button onClick={() => setShowNewLicenseModal(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Nuova Licenza
         </Button>
@@ -140,6 +141,11 @@ export const LicenseManagement = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <NewLicenseModal 
+        open={showNewLicenseModal} 
+        onOpenChange={setShowNewLicenseModal} 
+      />
     </div>
   );
 };

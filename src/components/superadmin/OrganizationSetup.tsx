@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,9 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building, Plus, Mail, Phone, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { NewOrganizationModal } from "./modals/NewOrganizationModal";
 
 export const OrganizationSetup = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showNewOrganizationModal, setShowNewOrganizationModal] = useState(false);
 
   const pendingOrganizations = [
     {
@@ -66,7 +67,7 @@ export const OrganizationSetup = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Nuove Organizzazioni</h1>
-        <Button>
+        <Button onClick={() => setShowNewOrganizationModal(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Nuova Richiesta
         </Button>
@@ -224,6 +225,11 @@ export const OrganizationSetup = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <NewOrganizationModal 
+        open={showNewOrganizationModal} 
+        onOpenChange={setShowNewOrganizationModal} 
+      />
     </div>
   );
 };

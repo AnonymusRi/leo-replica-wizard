@@ -1,66 +1,109 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, FileText, Download, Mail, Search, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { Euro, FileText, AlertTriangle, TrendingUp, Download, Search, Eye, Send } from "lucide-react";
 
 export const BillingManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const invoices = [
     {
-      id: "INV-2024-001",
+      id: 1,
+      invoiceNumber: "INV-2024-001",
       organization: "AlidaSoft Aviation",
       amount: 499,
+      dueDate: "2024-07-01",
       issueDate: "2024-06-01",
-      dueDate: "2024-06-30",
       status: "paid",
-      paymentDate: "2024-06-15"
+      paymentDate: "2024-06-28",
+      licenseType: "Premium"
     },
     {
-      id: "INV-2024-002",
+      id: 2,
+      invoiceNumber: "INV-2024-002",
       organization: "Sky Aviation",
       amount: 299,
+      dueDate: "2024-07-01",
       issueDate: "2024-06-01",
-      dueDate: "2024-06-30",
-      status: "pending",
-      paymentDate: null
+      status: "overdue",
+      paymentDate: null,
+      licenseType: "Standard"
     },
     {
-      id: "INV-2024-003",
+      id: 3,
+      invoiceNumber: "INV-2024-003",
       organization: "Eurofly",
-      amount: 899,
-      issueDate: "2024-05-01",
-      dueDate: "2024-05-30",
-      status: "overdue",
-      paymentDate: null
+      amount: 699,
+      dueDate: "2024-07-05",
+      issueDate: "2024-06-05",
+      status: "pending",
+      paymentDate: null,
+      licenseType: "Premium"
+    }
+  ];
+
+  const revenue = [
+    {
+      month: "Gennaio 2024",
+      amount: 12450,
+      invoices: 15,
+      growth: 8.5
+    },
+    {
+      month: "Febbraio 2024",
+      amount: 13200,
+      invoices: 16,
+      growth: 12.3
+    },
+    {
+      month: "Marzo 2024",
+      amount: 14800,
+      invoices: 18,
+      growth: 15.7
+    },
+    {
+      month: "Aprile 2024",
+      amount: 16200,
+      invoices: 20,
+      growth: 18.9
+    },
+    {
+      month: "Maggio 2024",
+      amount: 17900,
+      invoices: 22,
+      growth: 22.1
+    },
+    {
+      month: "Giugno 2024",
+      amount: 19500,
+      invoices: 24,
+      growth: 25.4
     }
   ];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "paid":
-        return <Badge variant="default" className="bg-green-100 text-green-800">Pagata</Badge>;
+        return <Badge variant="default">Pagato</Badge>;
       case "pending":
-        return <Badge variant="secondary">In Attesa</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800">In Attesa</Badge>;
       case "overdue":
-        return <Badge variant="destructive">Scaduta</Badge>;
+        return <Badge variant="destructive">Scaduto</Badge>;
+      case "cancelled":
+        return <Badge variant="secondary">Annullato</Badge>;
       default:
-        return <Badge variant="outline">Sconosciuta</Badge>;
+        return <Badge variant="outline">Sconosciuto</Badge>;
     }
   };
 
-  const monthlyStats = {
-    totalRevenue: 25450,
-    paidInvoices: 15,
-    pendingInvoices: 5,
-    overdueInvoices: 3,
-    averagePaymentTime: 12
-  };
+  const totalRevenue = invoices.reduce((sum, inv) => sum + inv.amount, 0);
+  const paidInvoices = invoices.filter(inv => inv.status === "paid").length;
+  const overdueInvoices = invoices.filter(inv => inv.status === "overdue").length;
 
   return (
     <div className="space-y-6">
@@ -73,21 +116,21 @@ export const BillingManagement = () => {
           </Button>
           <Button>
             <FileText className="w-4 h-4 mr-2" />
-            Genera Fatture
+            Nuova Fattura
           </Button>
         </div>
       </div>
 
       {/* Statistiche Fatturazione */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Fatturato Mensile</p>
-                <p className="text-2xl font-bold text-green-600">€{monthlyStats.totalRevenue.toLocaleString()}</p>
+                <p className="text-2xl font-bold text-green-600">€{totalRevenue.toLocaleString()}</p>
               </div>
-              <CreditCard className="w-8 h-8 text-green-600" />
+              <Euro className="w-8 h-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
@@ -97,9 +140,9 @@ export const BillingManagement = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Fatture Pagate</p>
-                <p className="text-2xl font-bold text-blue-600">{monthlyStats.paidInvoices}</p>
+                <p className="text-2xl font-bold text-blue-600">{paidInvoices}</p>
               </div>
-              <CheckCircle className="w-8 h-8 text-blue-600" />
+              <FileText className="w-8 h-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
@@ -108,10 +151,10 @@ export const BillingManagement = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">In Attesa</p>
-                <p className="text-2xl font-bold text-yellow-600">{monthlyStats.pendingInvoices}</p>
+                <p className="text-sm font-medium text-gray-600">Fatture Scadute</p>
+                <p className="text-2xl font-bold text-red-600">{overdueInvoices}</p>
               </div>
-              <Clock className="w-8 h-8 text-yellow-600" />
+              <AlertTriangle className="w-8 h-8 text-red-600" />
             </div>
           </CardContent>
         </Card>
@@ -120,22 +163,10 @@ export const BillingManagement = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Scadute</p>
-                <p className="text-2xl font-bold text-red-600">{monthlyStats.overdueInvoices}</p>
+                <p className="text-sm font-medium text-gray-600">Crescita Mensile</p>
+                <p className="text-2xl font-bold text-purple-600">+25.4%</p>
               </div>
-              <AlertCircle className="w-8 h-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Tempo Medio Pagamento</p>
-                <p className="text-2xl font-bold text-purple-600">{monthlyStats.averagePaymentTime}gg</p>
-              </div>
-              <FileText className="w-8 h-8 text-purple-600" />
+              <TrendingUp className="w-8 h-8 text-purple-600" />
             </div>
           </CardContent>
         </Card>
@@ -144,9 +175,8 @@ export const BillingManagement = () => {
       <Tabs defaultValue="invoices" className="space-y-4">
         <TabsList>
           <TabsTrigger value="invoices">Fatture</TabsTrigger>
-          <TabsTrigger value="payments">Pagamenti</TabsTrigger>
+          <TabsTrigger value="revenue">Ricavi</TabsTrigger>
           <TabsTrigger value="reports">Report</TabsTrigger>
-          <TabsTrigger value="settings">Impostazioni</TabsTrigger>
         </TabsList>
 
         <TabsContent value="invoices">
@@ -154,7 +184,7 @@ export const BillingManagement = () => {
             <CardHeader>
               <CardTitle>Gestione Fatture</CardTitle>
               <CardDescription>
-                Tutte le fatture emesse e il loro stato di pagamento
+                Monitora tutte le fatture emesse e i pagamenti
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -177,7 +207,6 @@ export const BillingManagement = () => {
                     <TableHead>Data Emissione</TableHead>
                     <TableHead>Scadenza</TableHead>
                     <TableHead>Stato</TableHead>
-                    <TableHead>Data Pagamento</TableHead>
                     <TableHead>Azioni</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -185,7 +214,7 @@ export const BillingManagement = () => {
                   {invoices.map((invoice) => (
                     <TableRow key={invoice.id}>
                       <TableCell className="font-medium">
-                        {invoice.id}
+                        {invoice.invoiceNumber}
                       </TableCell>
                       <TableCell>{invoice.organization}</TableCell>
                       <TableCell className="font-medium">
@@ -197,15 +226,15 @@ export const BillingManagement = () => {
                         {getStatusBadge(invoice.status)}
                       </TableCell>
                       <TableCell>
-                        {invoice.paymentDate || "-"}
-                      </TableCell>
-                      <TableCell>
                         <div className="flex items-center space-x-2">
+                          <Button variant="outline" size="sm">
+                            <Eye className="w-3 h-3" />
+                          </Button>
                           <Button variant="outline" size="sm">
                             <Download className="w-3 h-3" />
                           </Button>
                           <Button variant="outline" size="sm">
-                            <Mail className="w-3 h-3" />
+                            <Send className="w-3 h-3" />
                           </Button>
                         </div>
                       </TableCell>
@@ -217,16 +246,29 @@ export const BillingManagement = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="payments">
+        <TabsContent value="revenue">
           <Card>
             <CardHeader>
-              <CardTitle>Cronologia Pagamenti</CardTitle>
+              <CardTitle>Andamento Ricavi</CardTitle>
               <CardDescription>
-                Tutti i pagamenti ricevuti e le transazioni
+                Analisi dei ricavi mensili e crescita
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-500">Sezione in sviluppo - Cronologia pagamenti</p>
+              <div className="space-y-4">
+                {revenue.map((month, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <h4 className="font-semibold">{month.month}</h4>
+                      <p className="text-sm text-gray-600">{month.invoices} fatture emesse</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-green-600">€{month.amount.toLocaleString()}</p>
+                      <p className="text-sm text-green-600">+{month.growth}%</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -236,60 +278,32 @@ export const BillingManagement = () => {
             <CardHeader>
               <CardTitle>Report Finanziari</CardTitle>
               <CardDescription>
-                Analisi e report sui ricavi e pagamenti
+                Genera e scarica report dettagliati
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button variant="outline" className="h-20 flex-col">
-                  <FileText className="w-6 h-6 mb-2" />
-                  Report Mensile
-                </Button>
-                <Button variant="outline" className="h-20 flex-col">
-                  <FileText className="w-6 h-6 mb-2" />
-                  Analisi Trimestrale
-                </Button>
-                <Button variant="outline" className="h-20 flex-col">
-                  <FileText className="w-6 h-6 mb-2" />
-                  Previsioni Ricavi
-                </Button>
-                <Button variant="outline" className="h-20 flex-col">
-                  <FileText className="w-6 h-6 mb-2" />
-                  Report Scadenze
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                <Card>
+                  <CardContent className="p-4">
+                    <h4 className="font-semibold mb-2">Report Mensile</h4>
+                    <p className="text-sm text-gray-600 mb-4">Riepilogo completo del mese corrente</p>
+                    <Button variant="outline" className="w-full">
+                      <Download className="w-4 h-4 mr-2" />
+                      Scarica PDF
+                    </Button>
+                  </CardContent>
+                </Card>
 
-        <TabsContent value="settings">
-          <Card>
-            <CardHeader>
-              <CardTitle>Impostazioni Fatturazione</CardTitle>
-              <CardDescription>
-                Configura template, termini di pagamento e notifiche
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Button variant="outline" className="h-16 flex-col">
-                    <FileText className="w-5 h-5 mb-1" />
-                    Template Fatture
-                  </Button>
-                  <Button variant="outline" className="h-16 flex-col">
-                    <Mail className="w-5 h-5 mb-1" />
-                    Notifiche Automatiche
-                  </Button>
-                  <Button variant="outline" className="h-16 flex-col">
-                    <CreditCard className="w-5 h-5 mb-1" />
-                    Metodi Pagamento
-                  </Button>
-                  <Button variant="outline" className="h-16 flex-col">
-                    <FileText className="w-5 h-5 mb-1" />
-                    Termini e Condizioni
-                  </Button>
-                </div>
+                <Card>
+                  <CardContent className="p-4">
+                    <h4 className="font-semibold mb-2">Report Annuale</h4>
+                    <p className="text-sm text-gray-600 mb-4">Analisi completa dell'anno fiscale</p>
+                    <Button variant="outline" className="w-full">
+                      <Download className="w-4 h-4 mr-2" />
+                      Scarica Excel
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
             </CardContent>
           </Card>
