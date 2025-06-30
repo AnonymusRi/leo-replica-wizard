@@ -10,8 +10,8 @@ import { toast } from 'sonner';
 const SuperAdminSetup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    email: 'admin@spiralapp.it',
-    password: 'ric64478C_!Z',
+    email: 'superadmin@example.com',
+    password: 'SuperAdmin123!',
     firstName: 'Super',
     lastName: 'Admin'
   });
@@ -19,6 +19,8 @@ const SuperAdminSetup = () => {
   const createSuperAdmin = async () => {
     setIsLoading(true);
     try {
+      console.log('Attempting to create super admin with email:', formData.email);
+      
       // First, sign up the user
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
@@ -33,7 +35,8 @@ const SuperAdminSetup = () => {
       });
 
       if (error) {
-        toast.error('Errore durante la creazione del super admin: ' + error.message);
+        console.error('Signup error:', error);
+        toast.error('Errore durante la registrazione: ' + error.message);
         return;
       }
 
@@ -52,9 +55,11 @@ const SuperAdminSetup = () => {
 
             if (orgError) {
               console.error('Error fetching organization:', orgError);
-              toast.error('Errore nel recupero dell\'organizzazione');
+              toast.error('Errore nel recupero dell\'organizzazione: ' + orgError.message);
               return;
             }
+
+            console.log('Organization found:', orgData);
 
             // Update the user's organization
             const { error: updateError } = await supabase
@@ -66,7 +71,11 @@ const SuperAdminSetup = () => {
 
             if (updateError) {
               console.error('Error updating profile:', updateError);
+              toast.error('Errore nell\'aggiornamento del profilo: ' + updateError.message);
+              return;
             }
+
+            console.log('Profile updated successfully');
 
             // Use the secure function to create the super admin role
             const { data: roleData, error: roleError } = await supabase
@@ -81,6 +90,7 @@ const SuperAdminSetup = () => {
               console.error('Error creating role:', roleError);
               toast.error('Errore nella creazione del ruolo: ' + roleError.message);
             } else {
+              console.log('Role created successfully:', roleData);
               toast.success('Super admin creato con successo! Ora puoi effettuare il login.');
             }
           } catch (err) {
@@ -88,9 +98,12 @@ const SuperAdminSetup = () => {
             toast.error('Errore nella configurazione post-creazione');
           }
         }, 2000);
+      } else {
+        console.log('User creation returned no user object');
+        toast.error('Errore: nessun utente creato');
       }
     } catch (error) {
-      console.error('Error creating super admin:', error);
+      console.error('Unexpected error creating super admin:', error);
       toast.error('Errore imprevisto durante la creazione del super admin');
     } finally {
       setIsLoading(false);
