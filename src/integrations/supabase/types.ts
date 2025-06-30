@@ -3228,7 +3228,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: {
-        Args: { user_email: string }
+        Args: Record<PropertyKey, never> | { user_email: string }
         Returns: boolean
       }
     }

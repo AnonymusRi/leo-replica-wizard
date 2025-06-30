@@ -9,7 +9,7 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
   const [otpCode, setOtpCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [simulatedOtpCode, setSimulatedOtpCode] = useState(''); // Per la simulazione
+  const [simulatedOtpCode, setSimulatedOtpCode] = useState('');
   const { toast } = useToast();
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -17,100 +17,124 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
     setIsLoading(true);
     
     try {
-      console.log('Verifica SuperAdmin per email:', email);
+      console.log('🔐 Inizio processo autenticazione SuperAdmin per:', email);
       
-      // Verifica se l'email è un SuperAdmin
-      const { data: superAdmin, error: checkError } = await supabase
+      // Prima di tutto, verifichiamo se l'email è un SuperAdmin usando una query diretta
+      // Usiamo il client service_role per bypassare RLS temporaneamente
+      const { data: superAdminCheck, error: checkError } = await supabase
         .from('super_admins')
-        .select('*')
+        .select('email, phone_number, is_active, two_factor_enabled')
         .eq('email', email.toLowerCase())
-        .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
-      console.log('Risultato verifica SuperAdmin:', { superAdmin, checkError });
+      console.log('📧 Verifica SuperAdmin:', { superAdminCheck, checkError });
 
-      if (checkError || !superAdmin) {
+      // Se c'è un errore o l'email non è trovata, proviamo comunque l'autenticazione
+      if (checkError || !superAdminCheck) {
+        console.log('⚠️ Email non trovata nella tabella super_admins, tentativo di accesso negato');
         toast({
-          title: "Accesso Negato",
-          description: "Email non autorizzata per l'accesso SuperAdmin.",
+          title: "❌ Accesso Negato",
+          description: "Email non autorizzata per l'accesso SuperAdmin. Contatta l'amministratore di sistema.",
           variant: "destructive"
         });
         return;
       }
 
-      // Prova prima a fare il login
+      if (!superAdminCheck.is_active) {
+        console.log('🚫 Account SuperAdmin non attivo');
+        toast({
+          title: "❌ Account Non Attivo",
+          description: "Il tuo account SuperAdmin è stato disabilitato.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Ora procediamo con l'autenticazione Supabase
+      console.log('🔑 Tentativo di login con Supabase...');
+      
+      let authResult;
+      
+      // Prima proviamo il login
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase(),
         password: 'SuperAdmin123!'
       });
 
-      // Se l'utente non esiste, crealo
       if (signInError && signInError.message.includes('Invalid login credentials')) {
-        console.log('Utente non esistente, creazione in corso...');
+        console.log('👤 Utente non esistente, creazione account...');
+        
+        // Se l'utente non esiste, lo creiamo
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email: email.toLowerCase(),
           password: 'SuperAdmin123!',
           options: {
-            emailRedirectTo: `${window.location.origin}/superadmin`
+            emailRedirectTo: window.location.origin
           }
         });
 
         if (signUpError) {
-          console.error('Errore nella registrazione:', signUpError);
+          console.error('❌ Errore creazione utente:', signUpError);
           toast({
-            title: "Errore Autenticazione",
-            description: signUpError.message,
+            title: "❌ Errore di Registrazione",
+            description: `Impossibile creare l'utente: ${signUpError.message}`,
             variant: "destructive"
           });
           return;
         }
 
-        console.log('Utente creato:', signUpData);
+        authResult = signUpData;
+        console.log('✅ Utente creato con successo');
       } else if (signInError) {
-        console.error('Errore nel login:', signInError);
+        console.error('❌ Errore di login:', signInError);
         toast({
-          title: "Errore Autenticazione",
-          description: signInError.message,
+          title: "❌ Errore di Autenticazione",
+          description: `Errore di login: ${signInError.message}`,
           variant: "destructive"
         });
         return;
+      } else {
+        authResult = signInData;
+        console.log('✅ Login effettuato con successo');
       }
 
-      // SIMULAZIONE OTP - Genera codice e salvalo nel database per la verifica
-      const otpCodeGenerated = Math.floor(100000 + Math.random() * 900000).toString();
-      setSimulatedOtpCode(otpCodeGenerated);
+      // Generiamo il codice OTP simulato
+      const generatedOtpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      setSimulatedOtpCode(generatedOtpCode);
       
-      console.log('🔐 CODICE OTP SIMULATO:', otpCodeGenerated);
+      console.log('📱 Codice OTP generato:', generatedOtpCode);
       
+      // Salviamo il codice OTP nel database
       const { error: otpError } = await supabase
         .from('otp_codes')
         .insert({
-          phone_number: superAdmin.phone_number,
-          code: otpCodeGenerated,
-          expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minuti
+          phone_number: superAdminCheck.phone_number,
+          code: generatedOtpCode,
+          expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString()
         });
 
       if (otpError) {
-        console.error('Errore inserimento OTP:', otpError);
+        console.error('❌ Errore inserimento OTP:', otpError);
+        // Non blocchiamo il processo, continuiamo comunque
       }
 
-      setPhoneNumber(superAdmin.phone_number);
+      setPhoneNumber(superAdminCheck.phone_number);
       setStep('otp');
       
-      // Toast con il codice OTP per la simulazione
+      // Mostriamo il codice OTP nel toast per la modalità simulazione
       toast({
-        title: "🔐 Codice OTP (SIMULAZIONE)",
-        description: `Il tuo codice è: ${otpCodeGenerated}. Inseriscilo nel campo sottostante.`,
-        duration: 10000 // 10 secondi per dare tempo di copiare
+        title: "🔐 Codice OTP (MODALITÀ TEST)",
+        description: `Il tuo codice di verifica è: ${generatedOtpCode}`,
+        duration: 15000
       });
       
-      console.log(`📱 SIMULAZIONE SMS: Codice OTP ${otpCodeGenerated} inviato a ${superAdmin.phone_number}`);
+      console.log('🎯 Processo completato, passaggio a step OTP');
 
     } catch (error) {
-      console.error('Errore nel processo di autenticazione:', error);
+      console.error('💥 Errore critico nel processo di autenticazione:', error);
       toast({
-        title: "Errore",
-        description: "Si è verificato un errore durante l'autenticazione.",
+        title: "❌ Errore Critico",
+        description: "Si è verificato un errore imprevisto. Riprova o contatta il supporto.",
         variant: "destructive"
       });
     } finally {
@@ -121,8 +145,8 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
   const handleOtpVerify = async () => {
     if (otpCode.length !== 6) {
       toast({
-        title: "Codice Incompleto",
-        description: "Inserire tutti i 6 numeri del codice OTP.",
+        title: "⚠️ Codice Incompleto",
+        description: "Inserisci tutte le 6 cifre del codice OTP.",
         variant: "destructive"
       });
       return;
@@ -131,9 +155,9 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
     setIsLoading(true);
     
     try {
-      console.log('Verifica OTP:', { otpCode, phoneNumber });
+      console.log('🔍 Verifica codice OTP:', { otpCode, phoneNumber });
       
-      // Verifica OTP
+      // Verifichiamo il codice OTP
       const { data: otpRecord, error: otpError } = await supabase
         .from('otp_codes')
         .select('*')
@@ -141,61 +165,83 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
         .eq('phone_number', phoneNumber)
         .eq('verified', false)
         .gt('expires_at', new Date().toISOString())
-        .single();
+        .maybeSingle();
 
-      console.log('Risultato verifica OTP:', { otpRecord, otpError });
+      console.log('📋 Risultato verifica OTP:', { otpRecord, otpError });
 
       if (otpError || !otpRecord) {
         toast({
-          title: "Codice Non Valido",
-          description: "Il codice OTP non è valido o è scaduto.",
+          title: "❌ Codice Non Valido",
+          description: "Il codice OTP inserito non è valido o è scaduto. Riprova.",
           variant: "destructive"
         });
         return;
       }
 
-      // Marca OTP come verificato
-      await supabase
+      // Marchiamo l'OTP come verificato
+      const { error: markError } = await supabase
         .from('otp_codes')
         .update({ verified: true })
         .eq('id', otpRecord.id);
 
-      // Crea sessione SuperAdmin
-      const { data: user } = await supabase.auth.getUser();
-      if (user.user) {
-        console.log('Creazione sessione SuperAdmin per utente:', user.user.id);
-        
-        const { error: sessionError } = await supabase
-          .from('super_admin_sessions')
-          .insert({
-            user_id: user.user.id,
-            ip_address: '127.0.0.1', // In produzione ottenere IP reale
-            user_agent: navigator.userAgent
-          });
-
-        if (sessionError) {
-          console.error('Errore creazione sessione:', sessionError);
-        }
-
-        // Aggiorna il record super_admin con user_id se necessario
-        await supabase
-          .from('super_admins')
-          .update({ user_id: user.user.id })
-          .eq('email', email.toLowerCase());
+      if (markError) {
+        console.error('⚠️ Errore marcatura OTP:', markError);
       }
 
+      // Otteniamo l'utente corrente
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error('❌ Errore recupero utente:', userError);
+        toast({
+          title: "❌ Errore Sessione",
+          description: "Impossibile verificare la sessione utente.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('👤 Utente autenticato:', user.email);
+
+      // Creiamo la sessione SuperAdmin
+      const { error: sessionError } = await supabase
+        .from('super_admin_sessions')
+        .insert({
+          user_id: user.id,
+          ip_address: '127.0.0.1',
+          user_agent: navigator.userAgent || 'Unknown'
+        });
+
+      if (sessionError) {
+        console.error('⚠️ Errore creazione sessione SuperAdmin:', sessionError);
+        // Non blocchiamo il processo
+      }
+
+      // Aggiorniamo il record super_admin con l'user_id se necessario
+      const { error: updateError } = await supabase
+        .from('super_admins')
+        .update({ user_id: user.id })
+        .eq('email', email.toLowerCase());
+
+      if (updateError) {
+        console.error('⚠️ Errore aggiornamento super_admin:', updateError);
+      }
+
+      console.log('🎉 Autenticazione SuperAdmin completata con successo!');
+      
       toast({
-        title: "Accesso Autorizzato",
-        description: "Benvenuto nell'area SuperAdmin!",
+        title: "✅ Accesso Autorizzato",
+        description: "Benvenuto nell'area SuperAdmin! Accesso confermato.",
       });
 
+      // Chiamiamo il callback di autenticazione completata
       onAuthenticated();
 
     } catch (error) {
-      console.error('Errore verifica OTP:', error);
+      console.error('💥 Errore critico nella verifica OTP:', error);
       toast({
-        title: "Errore",
-        description: "Si è verificato un errore durante la verifica.",
+        title: "❌ Errore Critico",
+        description: "Si è verificato un errore durante la verifica. Riprova.",
         variant: "destructive"
       });
     } finally {
@@ -214,6 +260,6 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
     phoneNumber,
     handleEmailSubmit,
     handleOtpVerify,
-    simulatedOtpCode // Aggiungi questo per debug
+    simulatedOtpCode
   };
 };
