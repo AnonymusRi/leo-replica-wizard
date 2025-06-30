@@ -3,280 +3,417 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Building, Mail, Phone, MapPin, CreditCard } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Building, Users, CreditCard, CheckCircle, Clock, AlertTriangle, Plus, Eye, Edit } from "lucide-react";
 
 export const OrganizationSetup = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    country: "",
-    licenseType: "",
-    maxUsers: "",
-    modules: [] as string[],
-    billingEmail: "",
-    vatNumber: "",
-    notes: ""
+  const [newOrgData, setNewOrgData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    country: '',
+    city: '',
+    address: '',
+    licenseType: '',
+    maxUsers: '',
+    modules: [] as string[]
   });
 
-  const availableModules = [
-    { id: "SCHED", label: "Schedulazione", description: "Gestione voli e programmazione" },
-    { id: "SALES", label: "Vendite", description: "Preventivi e clienti" },
-    { id: "OPS", label: "Operazioni", description: "Gestione operativa voli" },
-    { id: "AIRCRAFT", label: "Aeromobili", description: "Gestione flotta" },
-    { id: "CREW", label: "Equipaggio", description: "Gestione personale di volo" },
-    { id: "CREW-TIME", label: "Ore Equipaggio", description: "Tracciamento tempi di volo" },
-    { id: "MX", label: "Manutenzione", description: "Manutenzione aeromobili" },
-    { id: "REPORTS", label: "Report", description: "Reportistica avanzata" },
-    { id: "PHONEBOOK", label: "Rubrica", description: "Contatti e directory" },
-    { id: "OWNER BOARD", label: "Owner Board", description: "Dashboard proprietari" }
+  const pendingOrganizations = [
+    {
+      id: 1,
+      name: "Meridiana Flight Services",
+      email: "admin@meridiana-flight.com",
+      phone: "+39 070 123456",
+      country: "Italia",
+      city: "Cagliari",
+      requestDate: "2024-06-28",
+      licenseType: "Premium",
+      maxUsers: 75,
+      status: "pending_review",
+      requestedModules: ["SCHED", "SALES", "OPS", "CREW", "MX"],
+      notes: "Richiesta licenza per compagnia charter con flotta di 5 aeromobili"
+    },
+    {
+      id: 2,
+      name: "Alpine Aviation",
+      email: "ops@alpine-aviation.ch",
+      phone: "+41 22 987654",
+      country: "Svizzera",
+      city: "Ginevra",
+      requestDate: "2024-06-27",
+      licenseType: "Standard",
+      maxUsers: 25,
+      status: "documents_required",
+      requestedModules: ["SCHED", "SALES", "OPS"],
+      notes: "Mancano documenti di certificazione AOC"
+    },
+    {
+      id: 3,
+      name: "Iberian Executive Jets",
+      email: "info@iberian-jets.es",
+      phone: "+34 91 555666",
+      country: "Spagna",
+      city: "Madrid",
+      requestDate: "2024-06-26",
+      licenseType: "Enterprise",
+      maxUsers: 100,
+      status: "ready_to_activate",
+      requestedModules: ["SCHED", "SALES", "OPS", "CREW", "MX", "REPORTS", "PHONEBOOK"],
+      notes: "Documentazione completa, pronto per attivazione"
+    }
   ];
 
-  const handleModuleToggle = (moduleId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      modules: prev.modules.includes(moduleId)
-        ? prev.modules.filter(m => m !== moduleId)
-        : [...prev.modules, moduleId]
-    }));
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "pending_review":
+        return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" />In Revisione</Badge>;
+      case "documents_required":
+        return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1" />Doc. Richiesti</Badge>;
+      case "ready_to_activate":
+        return <Badge variant="default"><CheckCircle className="w-3 h-3 mr-1" />Pronta</Badge>;
+      default:
+        return <Badge variant="outline">Sconosciuto</Badge>;
+    }
   };
+
+  const availableModules = [
+    { code: "SCHED", name: "Programmazione Voli", essential: true },
+    { code: "SALES", name: "Vendite & Preventivi", essential: true },
+    { code: "OPS", name: "Operazioni Volo", essential: true },
+    { code: "CREW", name: "Gestione Equipaggio", essential: false },
+    { code: "MX", name: "Manutenzione", essential: false },
+    { code: "REPORTS", name: "Report & Analytics", essential: false },
+    { code: "PHONEBOOK", name: "Rubrica Aeroportuale", essential: false }
+  ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Setup Nuova Organizzazione</h1>
-        <Button variant="outline">
-          Importa da CSV
-        </Button>
+        <h1 className="text-3xl font-bold">Setup Nuove Organizzazioni</h1>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline">Importa da CSV</Button>
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Nuova Richiesta
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Dati Azienda */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Building className="w-5 h-5 mr-2" />
-              Dati Azienda
-            </CardTitle>
-            <CardDescription>
-              Informazioni di base dell'organizzazione
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="name">Nome Organizzazione</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="es. Alitalia Express"
-              />
-            </div>
+      <Tabs defaultValue="pending" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="pending">Richieste Pendenti</TabsTrigger>
+          <TabsTrigger value="setup">Setup Manuale</TabsTrigger>
+          <TabsTrigger value="templates">Template Licenze</TabsTrigger>
+        </TabsList>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  placeholder="info@company.com"
-                />
-              </div>
-              <div>
-                <Label htmlFor="phone">Telefono</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                  placeholder="+39 02 1234567"
-                />
-              </div>
-            </div>
+        <TabsContent value="pending">
+          <Card>
+            <CardHeader>
+              <CardTitle>Organizzazioni in Attesa di Attivazione</CardTitle>
+              <CardDescription>
+                Gestisci le richieste di nuove licenze ricevute dal sito web
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Organizzazione</TableHead>
+                    <TableHead>Contatti</TableHead>
+                    <TableHead>Licenza Richiesta</TableHead>
+                    <TableHead>Moduli</TableHead>
+                    <TableHead>Data Richiesta</TableHead>
+                    <TableHead>Stato</TableHead>
+                    <TableHead>Azioni</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingOrganizations.map((org) => (
+                    <TableRow key={org.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{org.name}</div>
+                          <div className="text-sm text-gray-500">{org.city}, {org.country}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{org.email}</div>
+                          <div className="text-gray-500">{org.phone}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <Badge variant="outline">{org.licenseType}</Badge>
+                          <div className="text-xs text-gray-500 mt-1">{org.maxUsers} utenti</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {org.requestedModules.map((module) => (
+                            <Badge key={module} variant="outline" className="text-xs">
+                              {module}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>{org.requestDate}</TableCell>
+                      <TableCell>{getStatusBadge(org.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Button variant="outline" size="sm">
+                            <Eye className="w-3 h-3" />
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                          {org.status === 'ready_to_activate' && (
+                            <Button size="sm">Attiva</Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            <div>
-              <Label htmlFor="address">Indirizzo</Label>
-              <Input
-                id="address"
-                value={formData.address}
-                onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                placeholder="Via Roma 123"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="city">Città</Label>
-                <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                  placeholder="Milano"
-                />
-              </div>
-              <div>
-                <Label htmlFor="country">Paese</Label>
-                <Select value={formData.country} onValueChange={(value) => setFormData(prev => ({ ...prev, country: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleziona paese" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="IT">Italia</SelectItem>
-                    <SelectItem value="FR">Francia</SelectItem>
-                    <SelectItem value="DE">Germania</SelectItem>
-                    <SelectItem value="ES">Spagna</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Configurazione Licenza */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <CreditCard className="w-5 h-5 mr-2" />
-              Configurazione Licenza
-            </CardTitle>
-            <CardDescription>
-              Tipo di licenza e moduli inclusi
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="licenseType">Tipo Licenza</Label>
-              <Select value={formData.licenseType} onValueChange={(value) => setFormData(prev => ({ ...prev, licenseType: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleziona tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="trial">Trial (30 giorni)</SelectItem>
-                  <SelectItem value="standard">Standard (€299/mese)</SelectItem>
-                  <SelectItem value="premium">Premium (€499/mese)</SelectItem>
-                  <SelectItem value="enterprise">Enterprise (€899/mese)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="maxUsers">Numero Massimo Utenti</Label>
-              <Input
-                id="maxUsers"
-                type="number"
-                value={formData.maxUsers}
-                onChange={(e) => setFormData(prev => ({ ...prev, maxUsers: e.target.value }))}
-                placeholder="50"
-              />
-            </div>
-
-            <div>
-              <Label>Moduli Inclusi</Label>
-              <div className="grid grid-cols-1 gap-3 mt-2">
-                {availableModules.map((module) => (
-                  <div key={module.id} className="flex items-start space-x-2">
-                    <Checkbox
-                      id={module.id}
-                      checked={formData.modules.includes(module.id)}
-                      onCheckedChange={() => handleModuleToggle(module.id)}
+        <TabsContent value="setup">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Informazioni Organizzazione</CardTitle>
+                <CardDescription>
+                  Dati principali della nuova organizzazione
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Nome Organizzazione</label>
+                    <Input
+                      value={newOrgData.name}
+                      onChange={(e) => setNewOrgData({...newOrgData, name: e.target.value})}
+                      placeholder="Es. AlidaSoft Aviation"
                     />
-                    <div className="flex-1">
-                      <Label htmlFor={module.id} className="text-sm font-medium">
-                        {module.label}
-                      </Label>
-                      <p className="text-xs text-gray-600">{module.description}</p>
-                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Email Principale</label>
+                    <Input
+                      type="email"
+                      value={newOrgData.email}
+                      onChange={(e) => setNewOrgData({...newOrgData, email: e.target.value})}
+                      placeholder="admin@azienda.com"
+                    />
+                  </div>
+                </div>
 
-        {/* Dati Fatturazione */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Mail className="w-5 h-5 mr-2" />
-              Dati Fatturazione
-            </CardTitle>
-            <CardDescription>
-              Informazioni per la fatturazione
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="billingEmail">Email Fatturazione</Label>
-              <Input
-                id="billingEmail"
-                type="email"
-                value={formData.billingEmail}
-                onChange={(e) => setFormData(prev => ({ ...prev, billingEmail: e.target.value }))}
-                placeholder="accounting@company.com"
-              />
-            </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Telefono</label>
+                    <Input
+                      value={newOrgData.phone}
+                      onChange={(e) => setNewOrgData({...newOrgData, phone: e.target.value})}
+                      placeholder="+39 02 1234567"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Paese</label>
+                    <Select onValueChange={(value) => setNewOrgData({...newOrgData, country: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleziona paese" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="italy">Italia</SelectItem>
+                        <SelectItem value="switzerland">Svizzera</SelectItem>
+                        <SelectItem value="france">Francia</SelectItem>
+                        <SelectItem value="spain">Spagna</SelectItem>
+                        <SelectItem value="germany">Germania</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-            <div>
-              <Label htmlFor="vatNumber">Partita IVA</Label>
-              <Input
-                id="vatNumber"
-                value={formData.vatNumber}
-                onChange={(e) => setFormData(prev => ({ ...prev, vatNumber: e.target.value }))}
-                placeholder="IT12345678901"
-              />
-            </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Città</label>
+                    <Input
+                      value={newOrgData.city}
+                      onChange={(e) => setNewOrgData({...newOrgData, city: e.target.value})}
+                      placeholder="Milano"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Indirizzo</label>
+                    <Input
+                      value={newOrgData.address}
+                      onChange={(e) => setNewOrgData({...newOrgData, address: e.target.value})}
+                      placeholder="Via Roma 123"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-            <div>
-              <Label htmlFor="notes">Note</Label>
-              <Textarea
-                id="notes"
-                value={formData.notes}
-                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                placeholder="Note aggiuntive o requisiti speciali..."
-                rows={4}
-              />
-            </div>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Configurazione Licenza</CardTitle>
+                <CardDescription>
+                  Imposta tipo di licenza e moduli attivi
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Tipo Licenza</label>
+                    <Select onValueChange={(value) => setNewOrgData({...newOrgData, licenseType: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleziona tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="standard">Standard - €299/mese</SelectItem>
+                        <SelectItem value="premium">Premium - €499/mese</SelectItem>
+                        <SelectItem value="enterprise">Enterprise - €899/mese</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Utenti Massimi</label>
+                    <Input
+                      type="number"
+                      value={newOrgData.maxUsers}
+                      onChange={(e) => setNewOrgData({...newOrgData, maxUsers: e.target.value})}
+                      placeholder="25"
+                    />
+                  </div>
+                </div>
 
-        {/* Riepilogo */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Riepilogo Setup</CardTitle>
-            <CardDescription>
-              Verifica i dati prima di creare l'organizzazione
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-blue-50 p-4 rounded-lg text-sm">
-              <h4 className="font-semibold mb-2">Cosa succederà:</h4>
-              <ul className="space-y-1 text-gray-700">
-                <li>• Creazione organizzazione nel database</li>
-                <li>• Attivazione licenza {formData.licenseType}</li>
-                <li>• Abilitazione moduli selezionati</li>
-                <li>• Invio email di benvenuto</li>
-                <li>• Creazione utente amministratore</li>
-              </ul>
-            </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Moduli Attivi</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {availableModules.map((module) => (
+                      <div key={module.code} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={module.code}
+                          className="rounded"
+                        />
+                        <label htmlFor={module.code} className="text-sm">
+                          {module.name}
+                          {module.essential && <span className="text-red-500 ml-1">*</span>}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">* Moduli essenziali</p>
+                </div>
 
-            <div className="flex space-x-2">
-              <Button className="flex-1">
-                Crea Organizzazione
-              </Button>
-              <Button variant="outline">
-                Salva Bozza
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Note Aggiuntive</label>
+                  <Textarea
+                    placeholder="Note sulla configurazione o richieste speciali..."
+                    className="h-20"
+                  />
+                </div>
+
+                <Button className="w-full">
+                  <Building className="w-4 h-4 mr-2" />
+                  Crea Organizzazione
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="templates">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="border-blue-200">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Badge variant="outline" className="mr-2">Standard</Badge>
+                  €299/mese
+                </CardTitle>
+                <CardDescription>
+                  Perfetto per piccole compagnie charter
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Users className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm">Fino a 25 utenti</span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Moduli inclusi: SCHED, SALES, OPS
+                  </div>
+                  <Button variant="outline" className="w-full mt-4">
+                    Usa Template
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-green-200">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Badge variant="outline" className="mr-2">Premium</Badge>
+                  €499/mese
+                </CardTitle>
+                <CardDescription>
+                  Ideale per operatori medi
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Users className="w-4 h-4 text-green-600" />
+                    <span className="text-sm">Fino a 50 utenti</span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Moduli inclusi: SCHED, SALES, OPS, CREW, MX
+                  </div>
+                  <Button variant="outline" className="w-full mt-4">
+                    Usa Template
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-purple-200">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Badge variant="outline" className="mr-2">Enterprise</Badge>
+                  €899/mese
+                </CardTitle>
+                <CardDescription>
+                  Per grandi compagnie aeree
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Users className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm">Utenti illimitati</span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Tutti i moduli inclusi + supporto prioritario
+                  </div>
+                  <Button variant="outline" className="w-full mt-4">
+                    Usa Template
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

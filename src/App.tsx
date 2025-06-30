@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import CrewDashboard from "./pages/CrewDashboard";
-import SuperAdmin from "./pages/SuperAdmin";
+import SuperAdminAuth from "./pages/SuperAdminAuth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,7 +22,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/crew-dashboard" element={<CrewDashboard />} />
-          <Route path="/superadmin" element={<SuperAdmin />} />
+          <Route path="/superadmin" element={<SuperAdminAuth />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

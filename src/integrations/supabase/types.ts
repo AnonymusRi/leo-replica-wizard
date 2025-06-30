@@ -2122,6 +2122,36 @@ export type Database = {
         }
         Relationships: []
       }
+      otp_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          expires_at: string
+          id: string
+          phone_number: string
+          user_id: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          phone_number: string
+          user_id?: string | null
+          verified?: boolean | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          phone_number?: string
+          user_id?: string | null
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
       passengers: {
         Row: {
           created_at: string
@@ -2742,6 +2772,69 @@ export type Database = {
           },
         ]
       }
+      super_admin_sessions: {
+        Row: {
+          id: string
+          ip_address: string | null
+          is_active: boolean | null
+          login_at: string | null
+          logout_at: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean | null
+          login_at?: string | null
+          logout_at?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean | null
+          login_at?: string | null
+          logout_at?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      super_admins: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          phone_number: string | null
+          two_factor_enabled: boolean | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          phone_number?: string | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          phone_number?: string | null
+          two_factor_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       sync_status: {
         Row: {
           created_at: string
@@ -3114,6 +3207,10 @@ export type Database = {
         }
         Returns: string
       }
+      generate_otp_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_organization: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -3121,6 +3218,10 @@ export type Database = {
       get_user_role: {
         Args: Record<PropertyKey, never> | { user_id: string; org_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      is_super_admin: {
+        Args: { user_email: string }
+        Returns: boolean
       }
     }
     Enums: {
