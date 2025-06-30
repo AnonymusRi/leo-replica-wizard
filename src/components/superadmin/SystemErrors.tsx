@@ -1,65 +1,92 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, Bug, Server, Database, Wifi, Search, Eye, Trash2, RefreshCw } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock, XCircle, Search, Filter, RefreshCw, Eye, Settings } from "lucide-react";
 
 export const SystemErrors = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterSeverity, setFilterSeverity] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
 
   const systemErrors = [
     {
       id: 1,
-      type: "database",
+      timestamp: "2024-06-30 14:32:15",
       severity: "critical",
-      message: "Connection timeout to database server",
-      organization: "Sky Aviation",
-      timestamp: "2024-06-30 14:35:22",
-      status: "open",
-      affectedUsers: 25,
-      details: "Database connection pool exhausted after 30 seconds timeout",
-      stackTrace: "SQLException: Connection timeout\n  at DatabasePool.getConnection()\n  at UserService.authenticate()"
+      component: "Database Connection",
+      error_code: "DB_CONN_001",
+      message: "Connection timeout to primary database",
+      affected_users: 45,
+      status: "investigating",
+      resolution_time: null,
+      organization: "Sky Aviation"
     },
     {
       id: 2,
-      type: "api",
-      severity: "high",
-      message: "API rate limit exceeded for user authentication",
-      organization: "AlidaSoft Aviation",
-      timestamp: "2024-06-30 13:45:12",
-      status: "investigating",
-      affectedUsers: 1,
-      details: "User exceeded 100 requests/minute limit on auth endpoint",
-      stackTrace: "RateLimitException: Too many requests\n  at AuthController.login()"
+      timestamp: "2024-06-30 13:15:42",
+      severity: "warning",
+      component: "SMS Service",
+      error_code: "SMS_001",
+      message: "OTP delivery delayed for +393933374430",
+      affected_users: 1,
+      status: "resolved",
+      resolution_time: "5 min",
+      organization: "SuperAdmin"
     },
     {
       id: 3,
-      type: "network",
-      severity: "medium",
-      message: "Intermittent connectivity issues with external SMS provider",
-      organization: "Multiple",
-      timestamp: "2024-06-30 12:20:45",
+      timestamp: "2024-06-30 12:48:30",
+      severity: "error",
+      component: "License Validation",
+      error_code: "LIC_VAL_003",
+      message: "Expired license detected for organization",
+      affected_users: 12,
+      status: "pending",
+      resolution_time: null,
+      organization: "Meridiana Flight"
+    },
+    {
+      id: 4,
+      timestamp: "2024-06-30 11:22:18",
+      severity: "info",
+      component: "Backup System",
+      error_code: "BACKUP_INFO_001",
+      message: "Daily backup completed successfully",
+      affected_users: 0,
       status: "resolved",
-      affectedUsers: 12,
-      details: "SMS OTP delivery delayed by 2-5 minutes",
-      stackTrace: "NetworkException: Connection refused\n  at SMSProvider.sendOTP()"
+      resolution_time: "N/A",
+      organization: "System"
+    },
+    {
+      id: 5,
+      timestamp: "2024-06-30 10:15:33",
+      severity: "warning",
+      component: "API Rate Limit",
+      error_code: "API_RATE_002",
+      message: "Rate limit exceeded for external API calls",
+      affected_users: 8,
+      status: "monitoring",
+      resolution_time: null,
+      organization: "Alpine Aviation"
     }
   ];
 
   const getSeverityBadge = (severity: string) => {
     switch (severity) {
       case "critical":
-        return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1" />Critico</Badge>;
-      case "high":
-        return <Badge className="bg-orange-100 text-orange-800"><Bug className="w-3 h-3 mr-1" />Alto</Badge>;
-      case "medium":
-        return <Badge variant="secondary"><Server className="w-3 h-3 mr-1" />Medio</Badge>;
-      case "low":
-        return <Badge variant="outline">Basso</Badge>;
+        return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" />Critico</Badge>;
+      case "error":
+        return <Badge variant="destructive" className="bg-orange-600"><AlertTriangle className="w-3 h-3 mr-1" />Errore</Badge>;
+      case "warning":
+        return <Badge variant="outline" className="border-yellow-500 text-yellow-700"><Clock className="w-3 h-3 mr-1" />Warning</Badge>;
+      case "info":
+        return <Badge variant="secondary"><CheckCircle className="w-3 h-3 mr-1" />Info</Badge>;
       default:
         return <Badge variant="outline">Sconosciuto</Badge>;
     }
@@ -67,36 +94,28 @@ export const SystemErrors = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "open":
-        return <Badge variant="destructive">Aperto</Badge>;
-      case "investigating":
-        return <Badge className="bg-yellow-100 text-yellow-800">In Analisi</Badge>;
       case "resolved":
-        return <Badge variant="default">Risolto</Badge>;
+        return <Badge variant="default" className="bg-green-600"><CheckCircle className="w-3 h-3 mr-1" />Risolto</Badge>;
+      case "investigating":
+        return <Badge variant="outline" className="border-blue-500 text-blue-700"><Search className="w-3 h-3 mr-1" />Investigando</Badge>;
+      case "pending":
+        return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" />In Attesa</Badge>;
+      case "monitoring":
+        return <Badge variant="outline" className="border-purple-500 text-purple-700"><Eye className="w-3 h-3 mr-1" />Monitoraggio</Badge>;
       default:
         return <Badge variant="outline">Sconosciuto</Badge>;
     }
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "database":
-        return <Database className="w-4 h-4 text-blue-600" />;
-      case "api":
-        return <Server className="w-4 h-4 text-green-600" />;
-      case "network":
-        return <Wifi className="w-4 h-4 text-orange-600" />;
-      default:
-        return <Bug className="w-4 h-4 text-gray-600" />;
-    }
-  };
-
-  const errorStats = {
-    total: systemErrors.length,
-    critical: systemErrors.filter(e => e.severity === 'critical').length,
-    open: systemErrors.filter(e => e.status === 'open').length,
-    affectedUsers: systemErrors.reduce((sum, error) => sum + error.affectedUsers, 0)
-  };
+  const filteredErrors = systemErrors.filter(error => {
+    const matchesSearch = error.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         error.component.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         error.organization.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSeverity = filterSeverity === "all" || error.severity === filterSeverity;
+    const matchesStatus = filterStatus === "all" || error.status === filterStatus;
+    
+    return matchesSearch && matchesSeverity && matchesStatus;
+  });
 
   return (
     <div className="space-y-6">
@@ -107,59 +126,11 @@ export const SystemErrors = () => {
             <RefreshCw className="w-4 h-4 mr-2" />
             Aggiorna
           </Button>
-          <Button variant="outline">Esporta Log</Button>
+          <Button variant="outline">
+            <Settings className="w-4 h-4 mr-2" />
+            Configurazioni
+          </Button>
         </div>
-      </div>
-
-      {/* Statistiche Errori */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Errori Totali</p>
-                <p className="text-2xl font-bold">{errorStats.total}</p>
-              </div>
-              <Bug className="w-8 h-8 text-gray-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Errori Critici</p>
-                <p className="text-2xl font-bold text-red-600">{errorStats.critical}</p>
-              </div>
-              <AlertTriangle className="w-8 h-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Errori Aperti</p>
-                <p className="text-2xl font-bold text-orange-600">{errorStats.open}</p>
-              </div>
-              <Server className="w-8 h-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Utenti Coinvolti</p>
-                <p className="text-2xl font-bold text-blue-600">{errorStats.affectedUsers}</p>
-              </div>
-              <Database className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       <Tabs defaultValue="errors" className="space-y-4">
@@ -172,67 +143,113 @@ export const SystemErrors = () => {
         <TabsContent value="errors">
           <Card>
             <CardHeader>
-              <CardTitle>Log Errori di Sistema</CardTitle>
+              <CardTitle>Sistema di Monitoraggio Errori</CardTitle>
               <CardDescription>
-                Monitoraggio in tempo reale degli errori dell'applicazione
+                Visualizza e gestisci tutti gli errori di sistema in tempo reale
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center space-x-2 mb-4">
-                <Search className="w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder="Cerca errori, organizzazioni o messaggi..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="max-w-sm"
-                />
+              {/* Filtri */}
+              <div className="flex flex-wrap gap-4 mb-6">
+                <div className="flex items-center space-x-2">
+                  <Search className="w-4 h-4 text-gray-500" />
+                  <Input
+                    placeholder="Cerca errori, componenti, organizzazioni..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-64"
+                  />
+                </div>
+                
+                <Select value={filterSeverity} onValueChange={setFilterSeverity}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Severità" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tutte le Severità</SelectItem>
+                    <SelectItem value="critical">Critico</SelectItem>
+                    <SelectItem value="error">Errore</SelectItem>
+                    <SelectItem value="warning">Warning</SelectItem>
+                    <SelectItem value="info">Info</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tutti gli Status</SelectItem>
+                    <SelectItem value="resolved">Risolto</SelectItem>
+                    <SelectItem value="investigating">Investigando</SelectItem>
+                    <SelectItem value="pending">In Attesa</SelectItem>
+                    <SelectItem value="monitoring">Monitoraggio</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
+              {/* Tabella Errori */}
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Severità</TableHead>
-                    <TableHead>Messaggio</TableHead>
-                    <TableHead>Organizzazione</TableHead>
-                    <TableHead>Utenti Coinvolti</TableHead>
                     <TableHead>Timestamp</TableHead>
-                    <TableHead>Stato</TableHead>
+                    <TableHead>Severità</TableHead>
+                    <TableHead>Componente</TableHead>
+                    <TableHead>Errore</TableHead>
+                    <TableHead>Utenti Coinvolti</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Tempo Risoluzione</TableHead>
                     <TableHead>Azioni</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {systemErrors.map((error) => (
+                  {filteredErrors.map((error) => (
                     <TableRow key={error.id}>
+                      <TableCell className="font-mono text-xs">
+                        {error.timestamp}
+                      </TableCell>
                       <TableCell>
-                        <div className="flex items-center space-x-2">
-                          {getTypeIcon(error.type)}
-                          <span className="capitalize">{error.type}</span>
+                        {getSeverityBadge(error.severity)}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{error.component}</div>
+                          <div className="text-xs text-gray-500">{error.error_code}</div>
                         </div>
                       </TableCell>
-                      <TableCell>{getSeverityBadge(error.severity)}</TableCell>
                       <TableCell>
-                        <div className="max-w-xs">
-                          <p className="text-sm font-medium truncate">{error.message}</p>
-                          <p className="text-xs text-gray-500 truncate">{error.details}</p>
+                        <div>
+                          <div className="font-medium text-sm">{error.message}</div>
+                          <div className="text-xs text-gray-500">{error.organization}</div>
                         </div>
                       </TableCell>
-                      <TableCell>{error.organization}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{error.affectedUsers} utenti</Badge>
+                        <Badge variant="outline">
+                          {error.affected_users} utenti
+                        </Badge>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm">{error.timestamp}</span>
+                        {getStatusBadge(error.status)}
                       </TableCell>
-                      <TableCell>{getStatusBadge(error.status)}</TableCell>
+                      <TableCell>
+                        {error.resolution_time ? (
+                          <span className="text-green-600 font-medium">
+                            {error.resolution_time}
+                          </span>
+                        ) : (
+                          <span className="text-gray-500">-</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <Button variant="outline" size="sm">
                             <Eye className="w-3 h-3" />
                           </Button>
-                          <Button variant="outline" size="sm">
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
+                          {error.status !== 'resolved' && (
+                            <Button size="sm">
+                              Risolvi
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -244,89 +261,44 @@ export const SystemErrors = () => {
         </TabsContent>
 
         <TabsContent value="monitoring">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Stato Servizi</CardTitle>
-                <CardDescription>
-                  Monitoraggio in tempo reale dei servizi principali
-                </CardDescription>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Errori Critici</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-green-50 rounded">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="font-medium">Database Principale</span>
-                    </div>
-                    <Badge variant="default">Online</Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-green-50 rounded">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="font-medium">API Gateway</span>
-                    </div>
-                    <Badge variant="default">Online</Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-yellow-50 rounded">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                      <span className="font-medium">SMS Provider</span>
-                    </div>
-                    <Badge className="bg-yellow-100 text-yellow-800">Lento</Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-green-50 rounded">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="font-medium">Storage</span>
-                    </div>
-                    <Badge variant="default">Online</Badge>
-                  </div>
-                </div>
+                <div className="text-3xl font-bold text-red-600">1</div>
+                <p className="text-sm text-gray-600">Ultima ora</p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Metriche Performance</CardTitle>
-                <CardDescription>
-                  Statistiche delle performance dell'ultimo periodo
-                </CardDescription>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Warning Attivi</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Tempo Risposta API</span>
-                    <span className="text-sm">145ms</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '70%' }}></div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Utilizzo CPU</span>
-                    <span className="text-sm">34%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '34%' }}></div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Memoria RAM</span>
-                    <span className="text-sm">67%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-orange-500 h-2 rounded-full" style={{ width: '67%' }}></div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Uptime</span>
-                    <span className="text-sm text-green-600">99.8%</span>
-                  </div>
-                </div>
+                <div className="text-3xl font-bold text-yellow-600">2</div>
+                <p className="text-sm text-gray-600">In monitoraggio</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Uptime Sistema</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-green-600">99.8%</div>
+                <p className="text-sm text-gray-600">Ultimi 30 giorni</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Tempo Risp. Medio</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600">245ms</div>
+                <p className="text-sm text-gray-600">Ultima ora</p>
               </CardContent>
             </Card>
           </div>
@@ -337,52 +309,43 @@ export const SystemErrors = () => {
             <CardHeader>
               <CardTitle>Configurazione Alert</CardTitle>
               <CardDescription>
-                Imposta le notifiche automatiche per gli errori di sistema
+                Imposta regole di notifica per gli errori di sistema
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Soglie di Alert</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 border rounded">
-                        <span className="text-sm">Errori Critici</span>
-                        <span className="text-sm text-red-600">Immediato</span>
-                      </div>
-                      <div className="flex items-center justify-between p-2 border rounded">
-                        <span className="text-sm">Errori Alto Livello</span>
-                        <span className="text-sm">Entro 5 minuti</span>
-                      </div>
-                      <div className="flex items-center justify-between p-2 border rounded">
-                        <span className="text-sm">Errori Medio Livello</span>
-                        <span className="text-sm">Entro 30 minuti</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Canali di Notifica</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="email-alerts" defaultChecked className="rounded" />
-                        <label htmlFor="email-alerts">Email Alert</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="sms-alerts" defaultChecked className="rounded" />
-                        <label htmlFor="sms-alerts">SMS Alert</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="slack-alerts" className="rounded" />
-                        <label htmlFor="slack-alerts">Slack Integration</label>
-                      </div>
-                    </div>
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">Alert Email SuperAdmin</h4>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Invia email a riccardo.cirulli@gmail.com per errori critici
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <Badge variant="default">Attivo</Badge>
+                    <Button variant="outline" size="sm">Configura</Button>
                   </div>
                 </div>
 
-                <Button className="w-full">
-                  Salva Configurazione
-                </Button>
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">Alert SMS</h4>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Invia SMS al +393933374430 per errori critici
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <Badge variant="default">Attivo</Badge>
+                    <Button variant="outline" size="sm">Configura</Button>
+                  </div>
+                </div>
+
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">Slack Integration</h4>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Notifiche su canale Slack #system-alerts
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <Badge variant="secondary">Non Configurato</Badge>
+                    <Button variant="outline" size="sm">Configura</Button>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
