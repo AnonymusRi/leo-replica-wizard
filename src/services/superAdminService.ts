@@ -29,12 +29,12 @@ export class SuperAdminService {
     try {
       this.addDebugInfo('Avvio creazione super admin...');
       
-      // Step 1: Verifica se l'organizzazione esiste
+      // Step 1: Verifica se l'organizzazione esiste, usa maybeSingle invece di single
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .select('id, name')
         .eq('slug', 'spiral-admin')
-        .single();
+        .maybeSingle();
 
       if (orgError) {
         this.addDebugInfo('Errore nel recupero organizzazione: ' + orgError.message);
@@ -42,7 +42,34 @@ export class SuperAdminService {
         return false;
       }
 
-      this.addDebugInfo(`Organizzazione trovata: ${orgData.name} (${orgData.id})`);
+      if (!orgData) {
+        this.addDebugInfo('Organizzazione spiral-admin non trovata, la creo...');
+        
+        // Crea l'organizzazione se non esiste
+        const { data: newOrgData, error: createOrgError } = await supabase
+          .from('organizations')
+          .insert({
+            name: 'Spiral App Administration',
+            slug: 'spiral-admin',
+            email: 'admin@spiralapp.it',
+            subscription_status: 'active',
+            active_modules: ['aircraft', 'crew', 'schedule', 'ops', 'maintenance', 'sales', 'phonebook', 'reports', 'owner_board']
+          })
+          .select('id, name')
+          .single();
+
+        if (createOrgError) {
+          this.addDebugInfo('Errore nella creazione organizzazione: ' + createOrgError.message);
+          toast.error('Errore nella creazione organizzazione: ' + createOrgError.message);
+          return false;
+        }
+
+        this.addDebugInfo(`Organizzazione creata: ${newOrgData.name} (${newOrgData.id})`);
+        // Usa i dati dell'organizzazione appena creata
+        orgData = newOrgData;
+      } else {
+        this.addDebugInfo(`Organizzazione trovata: ${orgData.name} (${orgData.id})`);
+      }
 
       // Step 2: Tentativo di registrazione
       this.addDebugInfo('Tentativo di registrazione utente...');
