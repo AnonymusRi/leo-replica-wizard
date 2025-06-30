@@ -16,7 +16,9 @@ import {
   TrendingUp,
   AlertCircle,
   CheckCircle,
-  Clock
+  Clock,
+  MessageSquare,
+  DollarSign
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LicenseManagement } from "@/components/superadmin/LicenseManagement";
@@ -27,6 +29,8 @@ import { BillingManagement } from "@/components/superadmin/BillingManagement";
 import { ReportsModule } from "@/components/reports/ReportsModule";
 import { SoftwareGuide } from "@/components/superadmin/SoftwareGuide";
 import { SystemErrors } from "@/components/superadmin/SystemErrors";
+import { TicketManagement } from "@/components/superadmin/TicketManagement";
+import { PaymentManagement } from "@/components/superadmin/PaymentManagement";
 
 const SuperAdmin = () => {
   const [activeModule, setActiveModule] = useState("dashboard");
@@ -38,6 +42,8 @@ const SuperAdmin = () => {
     { id: "active-licenses", label: "Licenze Attive", icon: CheckCircle },
     { id: "expiring", label: "In Scadenza", icon: AlertTriangle },
     { id: "billing", label: "Fatturazione", icon: CreditCard },
+    { id: "payments", label: "Pagamenti", icon: DollarSign },
+    { id: "tickets", label: "Ticket Support", icon: MessageSquare },
     { id: "reports", label: "Report", icon: FileText },
     { id: "guide", label: "Guida Software", icon: FileText },
     { id: "errors", label: "Errori Sistema", icon: AlertCircle },
@@ -102,6 +108,8 @@ const SuperAdmin = () => {
         {activeModule === "active-licenses" && <ActiveLicenses />}
         {activeModule === "expiring" && <ExpiringLicenses />}
         {activeModule === "billing" && <BillingManagement />}
+        {activeModule === "payments" && <PaymentManagement />}
+        {activeModule === "tickets" && <TicketManagement />}
         {activeModule === "reports" && <ReportsModule />}
         {activeModule === "guide" && <SoftwareGuide />}
         {activeModule === "errors" && <SystemErrors />}
