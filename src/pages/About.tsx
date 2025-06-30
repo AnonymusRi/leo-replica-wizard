@@ -12,14 +12,14 @@ export default function About() {
   const content = {
     it: {
       title: 'Chi Siamo',
-      subtitle: 'La storia dietro AlidaSoft e la nostra missione nel settore dell\'aviazione',
+      subtitle: 'La storia dietro WeFly e la nostra missione nel settore dell\'aviazione',
       mission: {
         title: 'La Nostra Missione',
         text: 'Semplificare e digitalizzare le operazioni aeree attraverso software innovativi che rispettano i più alti standard di sicurezza e conformità normativa.'
       },
       story: {
         title: 'La Nostra Storia',
-        text: 'AlidaSoft nasce dall\'esperienza diretta nel settore dell\'aviazione commerciale. Fondata da professionisti del settore, comprendiamo le sfide quotidiane degli operatori aerei e abbiamo sviluppato soluzioni concrete per risolverle.'
+        text: 'WeFly nasce dall\'esperienza diretta nel settore dell\'aviazione commerciale. Fondata da professionisti del settore, comprendiamo le sfide quotidiane degli operatori aerei e abbiamo sviluppato soluzioni concrete per risolverle.'
       },
       values: {
         title: 'I Nostri Valori',
@@ -52,14 +52,14 @@ export default function About() {
     },
     en: {
       title: 'About Us',
-      subtitle: 'The story behind AlidaSoft and our mission in the aviation industry',
+      subtitle: 'The story behind WeFly and our mission in the aviation industry',
       mission: {
         title: 'Our Mission',
         text: 'To simplify and digitize aviation operations through innovative software that meets the highest safety and regulatory compliance standards.'
       },
       story: {
         title: 'Our Story',
-        text: 'AlidaSoft was born from direct experience in the commercial aviation sector. Founded by industry professionals, we understand the daily challenges of air operators and have developed concrete solutions to solve them.'
+        text: 'WeFly was born from direct experience in the commercial aviation sector. Founded by industry professionals, we understand the daily challenges of air operators and have developed concrete solutions to solve them.'
       },
       values: {
         title: 'Our Values',
@@ -103,8 +103,12 @@ export default function About() {
             <div className="flex items-center">
               <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
                 <ArrowLeft className="w-5 h-5 mr-2 text-gray-600" />
-                <Plane className="w-8 h-8 text-blue-600 mr-2" />
-                <span className="text-2xl font-bold text-gray-900">AlidaSoft</span>
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center mr-2">
+                  <Plane className="w-5 h-5 text-white transform rotate-45" />
+                </div>
+                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  WeFly
+                </span>
               </Link>
             </div>
             

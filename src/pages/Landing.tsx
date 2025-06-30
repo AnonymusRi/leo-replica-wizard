@@ -19,7 +19,7 @@ export default function Landing() {
         signup: 'Registrati'
       },
       hero: {
-        title: 'AlidaSoft - La Suite Completa per la Gestione dell\'Aviazione',
+        title: 'WeFly - La Suite Completa per la Gestione dell\'Aviazione',
         subtitle: 'Software professionale per operatori di volo, compagnie aeree e servizi charter. Gestisci flotte, equipaggi, manutenzione e operazioni in un\'unica piattaforma.',
         cta: 'Inizia Prova Gratuita',
         demo: 'Richiedi Demo'
@@ -61,7 +61,7 @@ export default function Landing() {
         }
       },
       benefits: {
-        title: 'Perché Scegliere AlidaSoft',
+        title: 'Perché Scegliere WeFly',
         compliance: {
           title: 'Conformità EASA/ENAC',
           desc: 'Rispetta tutti i regolamenti europei per l\'aviazione civile'
@@ -78,7 +78,7 @@ export default function Landing() {
       testimonials: {
         title: 'Cosa Dicono i Nostri Clienti',
         testimonial1: {
-          text: 'AlidaSoft ha rivoluzionato la nostra gestione operativa. Risparmio di tempo incredibile.',
+          text: 'WeFly ha rivoluzionato la nostra gestione operativa. Risparmio di tempo incredibile.',
           author: 'Marco Rossi',
           role: 'Operations Manager - SkyItaly Charter'
         },
@@ -103,7 +103,7 @@ export default function Landing() {
         signup: 'Sign Up'
       },
       hero: {
-        title: 'AlidaSoft - Complete Aviation Management Suite',
+        title: 'WeFly - Complete Aviation Management Suite',
         subtitle: 'Professional software for flight operators, airlines and charter services. Manage fleets, crews, maintenance and operations in one platform.',
         cta: 'Start Free Trial',
         demo: 'Request Demo'
@@ -145,7 +145,7 @@ export default function Landing() {
         }
       },
       benefits: {
-        title: 'Why Choose AlidaSoft',
+        title: 'Why Choose WeFly',
         compliance: {
           title: 'EASA/ENAC Compliance',
           desc: 'Meets all European civil aviation regulations'
@@ -162,7 +162,7 @@ export default function Landing() {
       testimonials: {
         title: 'What Our Customers Say',
         testimonial1: {
-          text: 'AlidaSoft has revolutionized our operational management. Incredible time savings.',
+          text: 'WeFly has revolutionized our operational management. Incredible time savings.',
           author: 'Marco Rossi',
           role: 'Operations Manager - SkyItaly Charter'
         },
@@ -189,8 +189,14 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Plane className="w-8 h-8 text-blue-600 mr-2" />
-              <span className="text-2xl font-bold text-gray-900">AlidaSoft</span>
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                  <Plane className="w-6 h-6 text-white transform rotate-45" />
+                </div>
+                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                  WeFly
+                </span>
+              </div>
             </div>
             
             <div className="hidden md:flex items-center space-x-8">
@@ -457,8 +463,10 @@ export default function Landing() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center mb-4">
-                <Plane className="w-6 h-6 text-blue-400 mr-2" />
-                <span className="text-xl font-bold">AlidaSoft</span>
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-lg flex items-center justify-center mr-2">
+                  <Plane className="w-5 h-5 text-white transform rotate-45" />
+                </div>
+                <span className="text-xl font-bold">WeFly</span>
               </div>
               <p className="text-gray-400">
                 Software professionale per l'aviazione commerciale
@@ -499,7 +507,7 @@ export default function Landing() {
           </div>
           
           <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 AlidaSoft. Tutti i diritti riservati.</p>
+            <p>&copy; 2024 WeFly. Tutti i diritti riservati.</p>
           </div>
         </div>
       </footer>
