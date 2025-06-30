@@ -7,11 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, User } from 'lucide-react';
+import { CheckCircle, User, Shield, Database } from 'lucide-react';
 
 const SuperAdminSetup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCreated, setIsCreated] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     email: 'admin@gmail.com',
     password: 'SuperAdmin123!',
@@ -19,28 +20,40 @@ const SuperAdminSetup = () => {
     lastName: 'Admin'
   });
 
-  const createSuperAdminSimple = async () => {
-    setIsLoading(true);
-    try {
-      console.log('Tentativo di creazione super admin semplificato...');
-      
-      // Tentativo di login per vedere se l'utente esiste già
-      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password
-      });
+  const addDebugInfo = (message: string) => {
+    console.log('DEBUG:', message);
+    setDebugInfo(prev => [...prev, message]);
+  };
 
-      if (loginData.user && !loginError) {
-        console.log('Utente già esistente, procedo con assegnazione ruolo');
-        await assignSuperAdminRole(loginData.user.id);
+  const createSuperAdminDirect = async () => {
+    setIsLoading(true);
+    setDebugInfo([]);
+    
+    try {
+      addDebugInfo('Avvio creazione super admin...');
+      
+      // Step 1: Verifica se l'organizzazione esiste
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .eq('slug', 'spiral-admin')
+        .single();
+
+      if (orgError) {
+        addDebugInfo('Errore nel recupero organizzazione: ' + orgError.message);
+        toast.error('Errore nel recupero organizzazione: ' + orgError.message);
         return;
       }
 
-      // Se l'utente non esiste, provo a crearlo con opzioni semplificate
+      addDebugInfo(`Organizzazione trovata: ${orgData.name} (${orgData.id})`);
+
+      // Step 2: Tentativo di registrazione
+      addDebugInfo('Tentativo di registrazione utente...');
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
             first_name: formData.firstName,
             last_name: formData.lastName
@@ -48,77 +61,62 @@ const SuperAdminSetup = () => {
         }
       });
 
+      let userId: string | null = null;
+
       if (signUpError) {
-        console.error('Errore signup:', signUpError);
+        addDebugInfo('Errore signup: ' + signUpError.message);
         
-        if (signUpError.message.includes('rate limit') || signUpError.message.includes('429')) {
-          toast.error('Troppi tentativi. Riprova tra qualche minuto con un indirizzo Gmail.');
-          return;
-        }
-        
+        // Se l'utente esiste già, prova a fare login
         if (signUpError.message.includes('User already registered')) {
-          toast.success('Utente già registrato! Procedo con l\'assegnazione del ruolo...');
-          // Provo a fare login
-          const { data: existingUser } = await supabase.auth.signInWithPassword({
+          addDebugInfo('Utente già registrato, tentativo di login...');
+          const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
             email: formData.email,
             password: formData.password
           });
-          
-          if (existingUser.user) {
-            await assignSuperAdminRole(existingUser.user.id);
+
+          if (loginError) {
+            addDebugInfo('Errore login: ' + loginError.message);
+            toast.error('Errore durante il login: ' + loginError.message);
+            return;
           }
+
+          userId = loginData.user?.id || null;
+          addDebugInfo(`Login riuscito per utente esistente: ${userId}`);
+        } else {
+          toast.error('Errore durante la registrazione: ' + signUpError.message);
           return;
         }
-        
-        toast.error('Errore: ' + signUpError.message);
-        return;
-      }
-
-      if (signUpData.user) {
-        console.log('Utente creato:', signUpData.user.id);
-        await assignSuperAdminRole(signUpData.user.id);
       } else {
-        toast.error('Errore nella creazione utente');
+        userId = signUpData.user?.id || null;
+        addDebugInfo(`Utente creato con successo: ${userId}`);
       }
 
-    } catch (error) {
-      console.error('Errore imprevisto:', error);
-      toast.error('Errore imprevisto nella creazione del super admin');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const assignSuperAdminRole = async (userId: string) => {
-    try {
-      // Recupera l'organizzazione spiral-admin
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('slug', 'spiral-admin')
-        .single();
-
-      if (orgError) {
-        console.error('Errore organizzazione:', orgError);
-        toast.error('Errore nel recupero organizzazione: ' + orgError.message);
+      if (!userId) {
+        addDebugInfo('Nessun ID utente disponibile');
+        toast.error('Errore: nessun ID utente disponibile');
         return;
       }
 
-      console.log('Organizzazione trovata:', orgData.id);
-
-      // Aggiorna il profilo utente
+      // Step 3: Aggiorna il profilo utente
+      addDebugInfo('Aggiornamento profilo utente...');
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          organization_id: orgData.id
+          organization_id: orgData.id,
+          first_name: formData.firstName,
+          last_name: formData.lastName
         })
         .eq('id', userId);
 
       if (profileError) {
-        console.error('Errore aggiornamento profilo:', profileError);
+        addDebugInfo('Errore aggiornamento profilo: ' + profileError.message);
+        // Non bloccare il processo per errori di profilo
+      } else {
+        addDebugInfo('Profilo aggiornato con successo');
       }
 
-      // Crea il ruolo super admin
+      // Step 4: Crea il ruolo super admin
+      addDebugInfo('Creazione ruolo super admin...');
       const { data: roleData, error: roleError } = await supabase
         .rpc('create_user_role', {
           p_user_id: userId,
@@ -128,53 +126,96 @@ const SuperAdminSetup = () => {
         });
 
       if (roleError) {
-        console.error('Errore ruolo:', roleError);
+        addDebugInfo('Errore creazione ruolo: ' + roleError.message);
         toast.error('Errore nell\'assegnazione ruolo: ' + roleError.message);
-      } else {
-        console.log('Ruolo creato con successo');
-        setIsCreated(true);
-        toast.success('Super admin creato con successo! Puoi ora effettuare il login.');
+        return;
       }
-    } catch (err) {
-      console.error('Errore nell\'assegnazione ruolo:', err);
-      toast.error('Errore nell\'assegnazione del ruolo');
+
+      addDebugInfo('Ruolo super admin creato con successo');
+      setIsCreated(true);
+      toast.success('Super admin creato con successo! Puoi ora effettuare il login.');
+
+    } catch (error: any) {
+      addDebugInfo('Errore imprevisto: ' + error.message);
+      console.error('Errore imprevisto:', error);
+      toast.error('Errore imprevisto: ' + error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   if (isCreated) {
     return (
-      <Card className="w-full max-w-md mx-auto mt-8">
+      <Card className="w-full max-w-lg mx-auto mt-8">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-green-600">
             <CheckCircle className="h-6 w-6" />
-            Super Admin Creato
+            Super Admin Creato con Successo
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert>
-            <User className="h-4 w-4" />
+            <Shield className="h-4 w-4" />
             <AlertDescription>
-              Il super admin è stato creato con successo! Puoi ora tornare al login e accedere con le credenziali:
+              Il super admin è stato creato e configurato correttamente!
+              <br />
+              <br />
+              <strong>Credenziali:</strong>
               <br />
               <strong>Email:</strong> {formData.email}
               <br />
               <strong>Password:</strong> {formData.password}
+              <br />
+              <br />
+              Puoi ora tornare al login e accedere al sistema.
             </AlertDescription>
           </Alert>
+          
+          {debugInfo.length > 0 && (
+            <Alert>
+              <Database className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Log di debug:</strong>
+                <div className="mt-2 text-xs space-y-1">
+                  {debugInfo.map((info, index) => (
+                    <div key={index} className="text-gray-600">
+                      {index + 1}. {info}
+                    </div>
+                  ))}
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          <Button 
+            onClick={() => {
+              setIsCreated(false);
+              setDebugInfo([]);
+            }}
+            variant="outline" 
+            className="w-full"
+          >
+            Crea un altro Super Admin
+          </Button>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto mt-8">
+    <Card className="w-full max-w-lg mx-auto mt-8">
       <CardHeader>
-        <CardTitle>Setup Super Admin Semplificato</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Shield className="h-6 w-6" />
+          Setup Super Admin
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <Alert>
+          <User className="h-4 w-4" />
           <AlertDescription>
-            Questo metodo semplificato evita i problemi di conferma email e limiti di rate.
+            Questo strumento creerà un super admin con accesso completo al sistema.
+            Le politiche RLS sono state configurate correttamente.
           </AlertDescription>
         </Alert>
         
@@ -188,6 +229,7 @@ const SuperAdminSetup = () => {
             placeholder="admin@gmail.com"
           />
         </div>
+        
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
           <Input
@@ -197,6 +239,7 @@ const SuperAdminSetup = () => {
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
           />
         </div>
+        
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="firstName">Nome</Label>
@@ -215,17 +258,30 @@ const SuperAdminSetup = () => {
             />
           </div>
         </div>
+        
         <Button 
-          onClick={createSuperAdminSimple} 
+          onClick={createSuperAdminDirect} 
           className="w-full"
           disabled={isLoading}
         >
           {isLoading ? 'Creazione in corso...' : 'Crea Super Admin'}
         </Button>
         
-        <div className="text-sm text-gray-600 mt-4">
-          <p><strong>Nota:</strong> Questo metodo semplificato gestisce automaticamente utenti esistenti e bypassa i problemi di conferma email.</p>
-        </div>
+        {debugInfo.length > 0 && (
+          <Alert>
+            <Database className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Log di debug:</strong>
+              <div className="mt-2 text-xs space-y-1 max-h-32 overflow-y-auto">
+                {debugInfo.map((info, index) => (
+                  <div key={index} className="text-gray-600">
+                    {index + 1}. {info}
+                  </div>
+                ))}
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
       </CardContent>
     </Card>
   );
