@@ -2,12 +2,13 @@
 import React from 'react';
 import { usePermissions } from '@/hooks/usePermissions';
 import { ModulePermissions } from '@/types/permissions';
+import { UserRole } from '@/types/auth';
 
 interface RoleBasedComponentProps {
   children: React.ReactNode;
   module?: keyof ModulePermissions;
   action?: string;
-  roles?: string[];
+  roles?: UserRole[];
   requireAll?: boolean; // Se true, richiede tutti i ruoli, altrimenti almeno uno
 }
 
@@ -40,19 +41,19 @@ const RoleBasedComponent: React.FC<RoleBasedComponentProps> = ({
 
 // Componenti helper per ruoli specifici
 export const SuperAdminOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <RoleBasedComponent roles={['super_admin']}>{children}</RoleBasedComponent>
+  <RoleBasedComponent roles={['super_admin'] as UserRole[]}>{children}</RoleBasedComponent>
 );
 
 export const OrganizationAdminOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <RoleBasedComponent roles={['organization_admin', 'super_admin']}>{children}</RoleBasedComponent>
+  <RoleBasedComponent roles={['organization_admin', 'super_admin'] as UserRole[]}>{children}</RoleBasedComponent>
 );
 
 export const ModuleAdminOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <RoleBasedComponent roles={['module_admin', 'organization_admin', 'super_admin']}>{children}</RoleBasedComponent>
+  <RoleBasedComponent roles={['module_admin', 'organization_admin', 'super_admin'] as UserRole[]}>{children}</RoleBasedComponent>
 );
 
 export const CrewMemberOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <RoleBasedComponent roles={['crew_member']}>{children}</RoleBasedComponent>
+  <RoleBasedComponent roles={['crew_member'] as UserRole[]}>{children}</RoleBasedComponent>
 );
 
 export default RoleBasedComponent;
