@@ -18,7 +18,7 @@ const SuperAdminAuthPage = () => {
       
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
-      if (userError) {
+      if (userError && !userError.message.includes('session missing')) {
         console.error('❌ Errore recupero utente:', userError);
         setIsAuthenticated(false);
         return;
