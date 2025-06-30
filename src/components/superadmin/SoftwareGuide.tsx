@@ -17,7 +17,8 @@ import {
   Settings,
   Download,
   Play,
-  ExternalLink
+  ExternalLink,
+  Mail
 } from "lucide-react";
 
 export const SoftwareGuide = () => {

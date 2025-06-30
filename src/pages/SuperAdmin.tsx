@@ -24,7 +24,7 @@ import { OrganizationSetup } from "@/components/superadmin/OrganizationSetup";
 import { ActiveLicenses } from "@/components/superadmin/ActiveLicenses";
 import { ExpiringLicenses } from "@/components/superadmin/ExpiringLicenses";
 import { BillingManagement } from "@/components/superadmin/BillingManagement";
-import { ReportsModule } from "@/components/superadmin/ReportsModule";
+import { ReportsModule } from "@/components/reports/ReportsModule";
 import { SoftwareGuide } from "@/components/superadmin/SoftwareGuide";
 import { SystemErrors } from "@/components/superadmin/SystemErrors";
 
