@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,12 +49,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      // Ensure the organization data matches our types
+      // Properly cast the organization data with correct types
       const typedProfile: UserProfile = {
         ...profileData,
         organization: profileData.organization ? {
           ...profileData.organization,
-          subscription_status: profileData.organization.subscription_status as 'trial' | 'active' | 'expired' | 'cancelled'
+          subscription_status: profileData.organization.subscription_status as 'trial' | 'active' | 'expired' | 'cancelled',
+          active_modules: Array.isArray(profileData.organization.active_modules) 
+            ? profileData.organization.active_modules as string[]
+            : [],
+          settings: profileData.organization.settings || {}
         } : undefined
       };
 
