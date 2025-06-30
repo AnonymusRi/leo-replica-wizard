@@ -16,13 +16,17 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
     setIsLoading(true);
     
     try {
+      console.log('Verifica SuperAdmin per email:', email);
+      
       // Verifica se l'email è un SuperAdmin
       const { data: superAdmin, error: checkError } = await supabase
         .from('super_admins')
         .select('*')
-        .eq('email', email)
+        .eq('email', email.toLowerCase())
         .eq('is_active', true)
         .single();
+
+      console.log('Risultato verifica SuperAdmin:', { superAdmin, checkError });
 
       if (checkError || !superAdmin) {
         toast({
@@ -33,16 +37,17 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
         return;
       }
 
-      // Autentica con Supabase
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password: 'temp-password' // Verrà sostituito con sistema più sicuro
+      // Prova prima a fare il login
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase(),
+        password: 'SuperAdmin123!'
       });
 
-      if (signInError) {
-        // Se l'utente non esiste, crealo
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
+      // Se l'utente non esiste, crealo
+      if (signInError && signInError.message.includes('Invalid login credentials')) {
+        console.log('Utente non esistente, creazione in corso...');
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: email.toLowerCase(),
           password: 'SuperAdmin123!',
           options: {
             emailRedirectTo: `${window.location.origin}/superadmin`
@@ -50,6 +55,7 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
         });
 
         if (signUpError) {
+          console.error('Errore nella registrazione:', signUpError);
           toast({
             title: "Errore Autenticazione",
             description: signUpError.message,
@@ -57,10 +63,22 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
           });
           return;
         }
+
+        console.log('Utente creato:', signUpData);
+      } else if (signInError) {
+        console.error('Errore nel login:', signInError);
+        toast({
+          title: "Errore Autenticazione",
+          description: signInError.message,
+          variant: "destructive"
+        });
+        return;
       }
 
       // Genera e invia OTP
       const otpCodeGenerated = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      console.log('Generazione OTP per telefono:', superAdmin.phone_number);
       
       const { error: otpError } = await supabase
         .from('otp_codes')
@@ -82,11 +100,11 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
       
       toast({
         title: "Codice OTP Inviato",
-        description: `Codice di verifica inviato al numero ${superAdmin.phone_number}`,
+        description: `Codice di verifica inviato al numero ${superAdmin.phone_number.replace(/(\+\d{2})(\d{3})(\d{3})(\d+)/, '$1 $2 $3 $4')}`,
       });
 
     } catch (error) {
-      console.error('Errore:', error);
+      console.error('Errore nel processo di autenticazione:', error);
       toast({
         title: "Errore",
         description: "Si è verificato un errore durante l'autenticazione.",
@@ -110,6 +128,8 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
     setIsLoading(true);
     
     try {
+      console.log('Verifica OTP:', { otpCode, phoneNumber });
+      
       // Verifica OTP
       const { data: otpRecord, error: otpError } = await supabase
         .from('otp_codes')
@@ -119,6 +139,8 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
         .eq('verified', false)
         .gt('expires_at', new Date().toISOString())
         .single();
+
+      console.log('Risultato verifica OTP:', { otpRecord, otpError });
 
       if (otpError || !otpRecord) {
         toast({
@@ -138,13 +160,25 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
       // Crea sessione SuperAdmin
       const { data: user } = await supabase.auth.getUser();
       if (user.user) {
-        await supabase
+        console.log('Creazione sessione SuperAdmin per utente:', user.user.id);
+        
+        const { error: sessionError } = await supabase
           .from('super_admin_sessions')
           .insert({
             user_id: user.user.id,
             ip_address: '127.0.0.1', // In produzione ottenere IP reale
             user_agent: navigator.userAgent
           });
+
+        if (sessionError) {
+          console.error('Errore creazione sessione:', sessionError);
+        }
+
+        // Aggiorna il record super_admin con user_id se necessario
+        await supabase
+          .from('super_admins')
+          .update({ user_id: user.user.id })
+          .eq('email', email.toLowerCase());
       }
 
       toast({

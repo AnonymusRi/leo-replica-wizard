@@ -14,31 +14,45 @@ const SuperAdminAuthPage = () => {
 
   const checkAuthentication = async () => {
     try {
+      console.log('Verifica stato autenticazione SuperAdmin...');
+      
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('Utente corrente:', user);
       
       if (user) {
         // Verifica se l'utente è un SuperAdmin
-        const { data: superAdmin } = await supabase
+        const { data: superAdmin, error: superAdminError } = await supabase
           .from('super_admins')
           .select('*')
           .eq('email', user.email)
           .eq('is_active', true)
           .single();
 
+        console.log('Verifica SuperAdmin:', { superAdmin, superAdminError });
+
         if (superAdmin) {
           // Verifica se ha una sessione attiva recente
-          const { data: session } = await supabase
+          const { data: session, error: sessionError } = await supabase
             .from('super_admin_sessions')
             .select('*')
             .eq('user_id', user.id)
             .eq('is_active', true)
             .gte('login_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Ultimi 24 ore
-            .single();
+            .maybeSingle();
+
+          console.log('Verifica sessione SuperAdmin:', { session, sessionError });
 
           if (session) {
+            console.log('Sessione SuperAdmin valida trovata');
             setIsAuthenticated(true);
+          } else {
+            console.log('Nessuna sessione SuperAdmin attiva trovata');
           }
+        } else {
+          console.log('Utente non è un SuperAdmin');
         }
+      } else {
+        console.log('Nessun utente autenticato');
       }
     } catch (error) {
       console.error('Errore verifica autenticazione:', error);
@@ -48,6 +62,7 @@ const SuperAdminAuthPage = () => {
   };
 
   const handleAuthenticated = () => {
+    console.log('Autenticazione SuperAdmin completata');
     setIsAuthenticated(true);
   };
 
