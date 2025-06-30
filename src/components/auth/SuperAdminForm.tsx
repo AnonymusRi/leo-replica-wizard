@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { User, Shield, Database } from 'lucide-react';
+import { User, Shield, Database, AlertTriangle } from 'lucide-react';
 
 interface SuperAdminFormProps {
   formData: {
@@ -27,6 +27,10 @@ const SuperAdminForm = ({
   isLoading, 
   debugInfo 
 }: SuperAdminFormProps) => {
+  const hasRateLimit = debugInfo.some(info => 
+    info.includes('rate limit') || info.includes('Rate limit')
+  );
+
   return (
     <Card className="w-full max-w-lg mx-auto mt-8">
       <CardHeader>
@@ -43,6 +47,19 @@ const SuperAdminForm = ({
             Le politiche RLS sono state configurate correttamente.
           </AlertDescription>
         </Alert>
+
+        {hasRateLimit && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Rate limit email raggiunto!</strong><br />
+              Soluzioni possibili:<br />
+              • Aspetta 10-15 minuti prima di riprovare<br />
+              • Disabilita "Email confirmations" in Supabase → Auth → Settings<br />
+              • Prova con un'email diversa
+            </AlertDescription>
+          </Alert>
+        )}
         
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>

@@ -91,6 +91,19 @@ export class SuperAdminService {
       if (signUpError) {
         this.addDebugInfo('Errore signup: ' + signUpError.message);
         
+        // Gestione specifica per rate limit delle email
+        if (signUpError.message.includes('email rate limit exceeded') || signUpError.message.includes('rate limit')) {
+          this.addDebugInfo('Rate limit email rilevato. Suggerisco di:');
+          this.addDebugInfo('1. Aspettare 10-15 minuti prima di riprovare');
+          this.addDebugInfo('2. Oppure disabilitare "Email confirmations" in Supabase Auth Settings');
+          this.addDebugInfo('3. Oppure provare con un\'email diversa');
+          
+          toast.error('Rate limit email raggiunto. Aspetta qualche minuto o disabilita le conferme email in Supabase per i test.', {
+            duration: 10000
+          });
+          return false;
+        }
+        
         // Se l'utente esiste già, prova a fare login
         if (signUpError.message.includes('User already registered')) {
           this.addDebugInfo('Utente già registrato, tentativo di login...');
@@ -101,7 +114,14 @@ export class SuperAdminService {
 
           if (loginError) {
             this.addDebugInfo('Errore login: ' + loginError.message);
-            toast.error('Errore durante il login: ' + loginError.message);
+            
+            // Se il login fallisce per password errata, suggerisci di resettarla
+            if (loginError.message.includes('Invalid login credentials')) {
+              this.addDebugInfo('Credenziali non valide. L\'utente potrebbe esistere con password diversa.');
+              toast.error('Utente già esistente ma password non corretta. Prova a fare login o reset password.');
+            } else {
+              toast.error('Errore durante il login: ' + loginError.message);
+            }
             return false;
           }
 
