@@ -667,6 +667,53 @@ export type Database = {
           },
         ]
       }
+      crew_auth_sessions: {
+        Row: {
+          created_at: string | null
+          crew_member_id: string | null
+          device_info: Json | null
+          expires_at: string
+          id: string
+          ip_address: unknown | null
+          is_mobile: boolean | null
+          last_activity: string | null
+          session_token: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          crew_member_id?: string | null
+          device_info?: Json | null
+          expires_at: string
+          id?: string
+          ip_address?: unknown | null
+          is_mobile?: boolean | null
+          last_activity?: string | null
+          session_token: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          crew_member_id?: string | null
+          device_info?: Json | null
+          expires_at?: string
+          id?: string
+          ip_address?: unknown | null
+          is_mobile?: boolean | null
+          last_activity?: string | null
+          session_token?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_auth_sessions_crew_member_id_fkey"
+            columns: ["crew_member_id"]
+            isOneToOne: false
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crew_certifications: {
         Row: {
           aircraft_type: string | null
@@ -710,6 +757,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "crew_certifications_crew_member_id_fkey"
+            columns: ["crew_member_id"]
+            isOneToOne: false
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crew_fatigue_records: {
+        Row: {
+          assessment_date: string
+          auto_calculated: boolean | null
+          created_at: string | null
+          crew_member_id: string | null
+          fatigue_level: number | null
+          id: string
+          notes: string | null
+          sleep_hours: number | null
+          stress_level: number | null
+          workload_rating: number | null
+        }
+        Insert: {
+          assessment_date: string
+          auto_calculated?: boolean | null
+          created_at?: string | null
+          crew_member_id?: string | null
+          fatigue_level?: number | null
+          id?: string
+          notes?: string | null
+          sleep_hours?: number | null
+          stress_level?: number | null
+          workload_rating?: number | null
+        }
+        Update: {
+          assessment_date?: string
+          auto_calculated?: boolean | null
+          created_at?: string | null
+          crew_member_id?: string | null
+          fatigue_level?: number | null
+          id?: string
+          notes?: string | null
+          sleep_hours?: number | null
+          stress_level?: number | null
+          workload_rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_fatigue_records_crew_member_id_fkey"
             columns: ["crew_member_id"]
             isOneToOne: false
             referencedRelation: "crew_members"
@@ -860,6 +954,110 @@ export type Database = {
           },
         ]
       }
+      crew_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          crew_member_id: string | null
+          id: string
+          is_read: boolean | null
+          message_type: string | null
+          priority: string | null
+          read_at: string | null
+          sender_id: string | null
+          sender_name: string
+          subject: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          crew_member_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          message_type?: string | null
+          priority?: string | null
+          read_at?: string | null
+          sender_id?: string | null
+          sender_name: string
+          subject: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          crew_member_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          message_type?: string | null
+          priority?: string | null
+          read_at?: string | null
+          sender_id?: string | null
+          sender_name?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_messages_crew_member_id_fkey"
+            columns: ["crew_member_id"]
+            isOneToOne: false
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crew_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crew_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          crew_member_id: string | null
+          id: string
+          notification_settings: Json | null
+          personal_notes: string | null
+          preferences: Json | null
+          social_links: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          crew_member_id?: string | null
+          id?: string
+          notification_settings?: Json | null
+          personal_notes?: string | null
+          preferences?: Json | null
+          social_links?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          crew_member_id?: string | null
+          id?: string
+          notification_settings?: Json | null
+          personal_notes?: string | null
+          preferences?: Json | null
+          social_links?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_profiles_crew_member_id_fkey"
+            columns: ["crew_member_id"]
+            isOneToOne: true
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crew_qualifications: {
         Row: {
           aircraft_type: string
@@ -903,6 +1101,68 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "crew_qualifications_crew_member_id_fkey"
+            columns: ["crew_member_id"]
+            isOneToOne: false
+            referencedRelation: "crew_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crew_statistics: {
+        Row: {
+          created_at: string | null
+          crew_member_id: string | null
+          days_off: number | null
+          ftl_violations: number | null
+          id: string
+          month_year: string
+          night_hours: number | null
+          performance_rating: number | null
+          simulator_hours: number | null
+          total_duty_hours: number | null
+          total_flight_hours: number | null
+          total_flights: number | null
+          total_sectors: number | null
+          training_hours: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          crew_member_id?: string | null
+          days_off?: number | null
+          ftl_violations?: number | null
+          id?: string
+          month_year: string
+          night_hours?: number | null
+          performance_rating?: number | null
+          simulator_hours?: number | null
+          total_duty_hours?: number | null
+          total_flight_hours?: number | null
+          total_flights?: number | null
+          total_sectors?: number | null
+          training_hours?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          crew_member_id?: string | null
+          days_off?: number | null
+          ftl_violations?: number | null
+          id?: string
+          month_year?: string
+          night_hours?: number | null
+          performance_rating?: number | null
+          simulator_hours?: number | null
+          total_duty_hours?: number | null
+          total_flight_hours?: number | null
+          total_flights?: number | null
+          total_sectors?: number | null
+          training_hours?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crew_statistics_crew_member_id_fkey"
             columns: ["crew_member_id"]
             isOneToOne: false
             referencedRelation: "crew_members"

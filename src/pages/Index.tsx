@@ -91,6 +91,15 @@ const Index = () => {
               <User className="w-3 h-3 mr-1" />
               TEST USER
             </Badge>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-gray-300"
+              onClick={() => window.location.href = '/auth'}
+            >
+              <User className="w-4 h-4 mr-2" />
+              Accesso
+            </Button>
             <Button variant="ghost" size="sm" className="text-gray-300">
               <Settings className="w-4 h-4" />
             </Button>
