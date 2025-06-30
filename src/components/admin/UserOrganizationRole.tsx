@@ -15,7 +15,7 @@ interface UserOrganizationRoleProps {
     organization_id: string;
     role: string;
   };
-  onFormDataChange: (updates: Partial<typeof formData>) => void;
+  onFormDataChange: (updates: Partial<UserOrganizationRoleProps['formData']>) => void;
 }
 
 const AVAILABLE_ROLES = ['super_admin', 'admin', 'manager', 'operator', 'viewer'];

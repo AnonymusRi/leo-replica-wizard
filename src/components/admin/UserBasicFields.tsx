@@ -8,7 +8,7 @@ interface UserBasicFieldsProps {
     last_name: string;
     email: string;
   };
-  onFormDataChange: (updates: Partial<typeof formData>) => void;
+  onFormDataChange: (updates: Partial<UserBasicFieldsProps['formData']>) => void;
   isEmailDisabled?: boolean;
 }
 
