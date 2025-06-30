@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plane, Shield, Users, Calendar, Wrench, BarChart3, Phone, MapPin, Star, CheckCircle, ArrowRight, Globe, FileText, Clock, CreditCard, AlertTriangle, Settings, Database, Cloud, Lock } from 'lucide-react';
+import { Plane, Shield, Users, Calendar, Wrench, BarChart3, Phone, MapPin, Star, CheckCircle, ArrowRight, Globe, FileText, Clock, CreditCard, AlertTriangle, Settings, Database, Cloud, Lock, UserCog } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Landing() {
@@ -117,6 +116,12 @@ export default function Landing() {
         title: 'Pronto a Decollare?',
         subtitle: 'Inizia oggi la tua prova gratuita di 30 giorni',
         button: 'Inizia Subito'
+      },
+      admin: {
+        title: 'Accesso Amministratori',
+        superadmin: 'SuperAdmin',
+        dashboard: 'Dashboard Utenti',
+        crew: 'Dashboard Equipaggio'
       }
     },
     en: {
@@ -226,6 +231,12 @@ export default function Landing() {
         title: 'Ready to Take Off?',
         subtitle: 'Start your 30-day free trial today',
         button: 'Get Started'
+      },
+      admin: {
+        title: 'Administrator Access',
+        superadmin: 'SuperAdmin',
+        dashboard: 'User Dashboard',
+        crew: 'Crew Dashboard'
       }
     }
   };
@@ -569,6 +580,35 @@ export default function Landing() {
               <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
+        </div>
+      </section>
+
+      {/* Admin Access Section */}
+      <section className="py-12 bg-gray-100">
+        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+          <h3 className="text-2xl font-bold text-gray-900 mb-8">
+            {t.admin.title}
+          </h3>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/superadmin">
+              <Button size="lg" variant="outline" className="flex items-center space-x-2 bg-red-50 border-red-200 text-red-700 hover:bg-red-100">
+                <UserCog className="w-5 h-5" />
+                <span>{t.admin.superadmin}</span>
+              </Button>
+            </Link>
+            <Link to="/dashboard">
+              <Button size="lg" variant="outline" className="flex items-center space-x-2 bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100">
+                <Settings className="w-5 h-5" />
+                <span>{t.admin.dashboard}</span>
+              </Button>
+            </Link>
+            <Link to="/crew-dashboard">
+              <Button size="lg" variant="outline" className="flex items-center space-x-2 bg-green-50 border-green-200 text-green-700 hover:bg-green-100">
+                <Users className="w-5 h-5" />
+                <span>{t.admin.crew}</span>
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
