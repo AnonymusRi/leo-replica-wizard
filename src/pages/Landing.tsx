@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plane, Shield, Users, Calendar, Wrench, BarChart3, Phone, MapPin, Star, CheckCircle, ArrowRight, Globe } from 'lucide-react';
+import { Plane, Shield, Users, Calendar, Wrench, BarChart3, Phone, MapPin, Star, CheckCircle, ArrowRight, Globe, FileText, Clock, CreditCard, AlertTriangle, Settings, Database, Cloud, Lock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Landing() {
@@ -29,63 +29,88 @@ export default function Landing() {
         subtitle: 'Una suite completa di strumenti specializzati per l\'aviazione commerciale',
         schedule: {
           title: 'Pianificazione Voli',
-          desc: 'Gestione completa dei programmi di volo con ottimizzazione automatica'
+          desc: 'Sistema completo di schedulazione con gestione multi-tratta, ottimizzazione automatica rotte, controllo disponibilità aeromobili ed equipaggi, gestione modifiche in tempo reale, export/import schedules, integrazione con sistemi esterni'
         },
         sales: {
-          title: 'Vendite e Quotazioni',
-          desc: 'Sistema CRM integrato per gestire clienti e preventivi'
+          title: 'Vendite e CRM',
+          desc: 'CRM avanzato con gestione clienti completa, sistema quotazioni automatico, calcolo prezzi dinamico, gestione contratti, fatturazione integrata, tracking vendite, marketplace integration (Avinode), comunicazioni automatizzate'
         },
         ops: {
           title: 'Operazioni di Volo',
-          desc: 'Controllo operativo in tempo reale con notifiche automatiche'
+          desc: 'Centro operativo completo con monitoraggio voli in tempo reale, checklist operative personalizzabili, gestione handling requests, generazione automatica documenti di volo, notifiche operative, controllo conformità, dashboard operativa'
         },
         aircraft: {
           title: 'Gestione Flotta',
-          desc: 'Monitoraggio completo degli aeromobili e documenti'
+          desc: 'Monitoraggio completo aeromobili con tracking ore di volo, gestione documenti e certificazioni, controllo scadenze, configurazioni cabina, registro tecnico digitale, analisi utilizzo flotta, costi operativi'
         },
         crew: {
           title: 'Gestione Equipaggi',
-          desc: 'Pianificazione turni e controllo limiti di volo (FTL)'
+          desc: 'Sistema completo crew management con controllo FTL (Flight Time Limitations), pianificazione turni automatica, gestione qualifiche e certificazioni, training records, fatigue management, disponibilità crew, comunicazioni dedicate'
         },
         maintenance: {
           title: 'Manutenzione',
-          desc: 'Tracciamento manutenzioni e scadenze certificate'
+          desc: 'Sistema manutenzione avanzato con pianificazione interventi, tracking scadenze, gestione MEL/CDL, registro componenti, oil consumption tracking, costi manutenzione, documentazione tecnica, integrazione fornitori'
         },
         reports: {
           title: 'Report e Analytics',
-          desc: 'Dashboard e report personalizzati per il business'
+          desc: 'Business intelligence completa con dashboard personalizzabili, report finanziari dettagliati, analisi performance, KPI operativi, trend analysis, export dati, grafici interattivi, schedulazione report automatici'
         },
         phonebook: {
           title: 'Rubrica Aeroportuale',
-          desc: 'Database completo di aeroporti e servizi di handling'
+          desc: 'Database completo aeroporti con informazioni handling, contatti operativi, servizi disponibili, tariffe aeroportuali, orari operativi, info doganali, fornitori carburante, catering services'
+        },
+        documents: {
+          title: 'Gestione Documenti',
+          desc: 'Sistema documentale completo con archiviazione digitale, template personalizzabili, generazione automatica documenti, firma elettronica, controllo versioni, backup automatici, ricerca avanzata'
+        },
+        compliance: {
+          title: 'Conformità Normativa',
+          desc: 'Controllo automatico conformità EASA/ENAC, verifiche FTL automatiche, alert scadenze, reporting authorities, gestione deroghe, documentazione audit, aggiornamenti normativi automatici'
+        },
+        finance: {
+          title: 'Gestione Finanziaria',
+          desc: 'Modulo finanziario integrato con fatturazione automatica, gestione costi operativi, budget planning, analisi profittabilità voli, controllo crediti, integrazione sistemi contabili, multi-currency support'
+        },
+        mobile: {
+          title: 'App Mobile Crew',
+          desc: 'Applicazione dedicata equipaggi con accesso schedules personali, checklist operative, comunicazioni, log book digitale, notifiche push, modalità offline, sincronizzazione automatica'
         }
       },
       benefits: {
         title: 'Perché Scegliere WeFly',
         compliance: {
           title: 'Conformità EASA/ENAC',
-          desc: 'Rispetta tutti i regolamenti europei per l\'aviazione civile'
+          desc: 'Rispetta tutti i regolamenti europei per l\'aviazione civile con aggiornamenti automatici'
         },
         realtime: {
           title: 'Tempo Reale',
-          desc: 'Sincronizzazione istantanea tra tutti i moduli e utenti'
+          desc: 'Sincronizzazione istantanea tra tutti i moduli e utenti con notifiche automatiche'
         },
         cloud: {
           title: 'Cloud Sicuro',
-          desc: 'Infrastruttura sicura con backup automatici e alta disponibilità'
+          desc: 'Infrastruttura sicura con backup automatici, alta disponibilità e protezione dati'
+        },
+        integration: {
+          title: 'Integrazione Completa',
+          desc: 'API avanzate per integrazione con sistemi esistenti e marketplace aviazione'
         }
       },
       testimonials: {
         title: 'Cosa Dicono i Nostri Clienti',
         testimonial1: {
-          text: 'WeFly ha rivoluzionato la nostra gestione operativa. Risparmio di tempo incredibile.',
+          text: 'WeFly ha rivoluzionato la nostra gestione operativa. Risparmio di tempo incredibile e controllo totale.',
           author: 'Marco Rossi',
-          role: 'Operations Manager - SkyItaly Charter'
+          role: 'Operations Manager - SkyItalia Charter'
         },
         testimonial2: {
-          text: 'La conformità FTL automatica ci ha evitato molti problemi normativi.',
+          text: 'La conformità FTL automatica e i report dettagliati ci hanno evitato molti problemi normativi.',
           author: 'Laura Bianchi',
           role: 'Chief Pilot - Mediterranean Air'
+        },
+        testimonial3: {
+          text: 'L\'integrazione tra tutti i moduli è perfetta. Finalmente un software pensato per l\'aviazione.',
+          author: 'Giuseppe Verdi',
+          role: 'CEO - AirMax Operations'
         }
       },
       cta: {
@@ -113,63 +138,88 @@ export default function Landing() {
         subtitle: 'A complete suite of specialized tools for commercial aviation',
         schedule: {
           title: 'Flight Scheduling',
-          desc: 'Complete flight program management with automatic optimization'
+          desc: 'Complete scheduling system with multi-leg management, automatic route optimization, aircraft and crew availability control, real-time change management, schedule export/import, external systems integration'
         },
         sales: {
-          title: 'Sales & Quotes',
-          desc: 'Integrated CRM system to manage clients and quotations'
+          title: 'Sales & CRM',
+          desc: 'Advanced CRM with complete client management, automatic quotation system, dynamic pricing, contract management, integrated invoicing, sales tracking, marketplace integration (Avinode), automated communications'
         },
         ops: {
           title: 'Flight Operations',
-          desc: 'Real-time operational control with automatic notifications'
+          desc: 'Complete operations center with real-time flight monitoring, customizable operational checklists, handling requests management, automatic flight documents generation, operational notifications, compliance control, operations dashboard'
         },
         aircraft: {
           title: 'Fleet Management',
-          desc: 'Complete aircraft monitoring and document management'
+          desc: 'Complete aircraft monitoring with flight hours tracking, documents and certifications management, expiry control, cabin configurations, digital technical log, fleet utilization analysis, operating costs'
         },
         crew: {
           title: 'Crew Management',
-          desc: 'Shift planning and flight time limitations (FTL) control'
+          desc: 'Complete crew management system with FTL (Flight Time Limitations) control, automatic shift planning, qualifications and certifications management, training records, fatigue management, crew availability, dedicated communications'
         },
         maintenance: {
           title: 'Maintenance',
-          desc: 'Maintenance tracking and certificate expiration management'
+          desc: 'Advanced maintenance system with intervention planning, expiry tracking, MEL/CDL management, component registry, oil consumption tracking, maintenance costs, technical documentation, supplier integration'
         },
         reports: {
           title: 'Reports & Analytics',
-          desc: 'Custom dashboards and business reports'
+          desc: 'Complete business intelligence with customizable dashboards, detailed financial reports, performance analysis, operational KPIs, trend analysis, data export, interactive charts, automatic report scheduling'
         },
         phonebook: {
           title: 'Airport Directory',
-          desc: 'Complete database of airports and handling services'
+          desc: 'Complete airports database with handling information, operational contacts, available services, airport fees, operating hours, customs info, fuel suppliers, catering services'
+        },
+        documents: {
+          title: 'Document Management',
+          desc: 'Complete document system with digital archiving, customizable templates, automatic document generation, electronic signature, version control, automatic backups, advanced search'
+        },
+        compliance: {
+          title: 'Regulatory Compliance',
+          desc: 'Automatic EASA/ENAC compliance control, automatic FTL checks, expiry alerts, authorities reporting, derogations management, audit documentation, automatic regulatory updates'
+        },
+        finance: {
+          title: 'Financial Management',
+          desc: 'Integrated financial module with automatic invoicing, operating costs management, budget planning, flight profitability analysis, credit control, accounting systems integration, multi-currency support'
+        },
+        mobile: {
+          title: 'Crew Mobile App',
+          desc: 'Dedicated crew application with personal schedules access, operational checklists, communications, digital log book, push notifications, offline mode, automatic synchronization'
         }
       },
       benefits: {
         title: 'Why Choose WeFly',
         compliance: {
           title: 'EASA/ENAC Compliance',
-          desc: 'Meets all European civil aviation regulations'
+          desc: 'Meets all European civil aviation regulations with automatic updates'
         },
         realtime: {
           title: 'Real-Time',
-          desc: 'Instant synchronization between all modules and users'
+          desc: 'Instant synchronization between all modules and users with automatic notifications'
         },
         cloud: {
           title: 'Secure Cloud',
-          desc: 'Secure infrastructure with automatic backups and high availability'
+          desc: 'Secure infrastructure with automatic backups, high availability and data protection'
+        },
+        integration: {
+          title: 'Complete Integration',
+          desc: 'Advanced APIs for integration with existing systems and aviation marketplaces'
         }
       },
       testimonials: {
         title: 'What Our Customers Say',
         testimonial1: {
-          text: 'WeFly has revolutionized our operational management. Incredible time savings.',
+          text: 'WeFly has revolutionized our operational management. Incredible time savings and total control.',
           author: 'Marco Rossi',
-          role: 'Operations Manager - SkyItaly Charter'
+          role: 'Operations Manager - SkyItalia Charter'
         },
         testimonial2: {
-          text: 'Automatic FTL compliance has saved us from many regulatory issues.',
+          text: 'Automatic FTL compliance and detailed reports have saved us from many regulatory issues.',
           author: 'Laura Bianchi',
           role: 'Chief Pilot - Mediterranean Air'
+        },
+        testimonial3: {
+          text: 'The integration between all modules is perfect. Finally software designed for aviation.',
+          author: 'Giuseppe Verdi',
+          role: 'CEO - AirMax Operations'
         }
       },
       cta: {
@@ -271,7 +321,7 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <Calendar className="w-8 h-8 text-blue-600 mb-2" />
@@ -284,7 +334,7 @@ export default function Landing() {
 
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader>
-                <BarChart3 className="w-8 h-8 text-green-600 mb-2" />
+                <CreditCard className="w-8 h-8 text-green-600 mb-2" />
                 <CardTitle className="text-lg">{t.features.sales.title}</CardTitle>
               </CardHeader>
               <CardContent>
@@ -351,6 +401,46 @@ export default function Landing() {
                 <CardDescription>{t.features.phonebook.desc}</CardDescription>
               </CardContent>
             </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <FileText className="w-8 h-8 text-cyan-600 mb-2" />
+                <CardTitle className="text-lg">{t.features.documents.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>{t.features.documents.desc}</CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <AlertTriangle className="w-8 h-8 text-yellow-600 mb-2" />
+                <CardTitle className="text-lg">{t.features.compliance.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>{t.features.compliance.desc}</CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <BarChart3 className="w-8 h-8 text-emerald-600 mb-2" />
+                <CardTitle className="text-lg">{t.features.finance.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>{t.features.finance.desc}</CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <Phone className="w-8 h-8 text-violet-600 mb-2" />
+                <CardTitle className="text-lg">{t.features.mobile.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription>{t.features.mobile.desc}</CardDescription>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
@@ -364,7 +454,7 @@ export default function Landing() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="text-center">
               <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-blue-600" />
@@ -375,7 +465,7 @@ export default function Landing() {
 
             <div className="text-center">
               <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="w-8 h-8 text-green-600" />
+                <Clock className="w-8 h-8 text-green-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">{t.benefits.realtime.title}</h3>
               <p className="text-gray-600">{t.benefits.realtime.desc}</p>
@@ -383,10 +473,18 @@ export default function Landing() {
 
             <div className="text-center">
               <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Shield className="w-8 h-8 text-purple-600" />
+                <Cloud className="w-8 h-8 text-purple-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">{t.benefits.cloud.title}</h3>
               <p className="text-gray-600">{t.benefits.cloud.desc}</p>
+            </div>
+
+            <div className="text-center">
+              <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Settings className="w-8 h-8 text-orange-600" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">{t.benefits.integration.title}</h3>
+              <p className="text-gray-600">{t.benefits.integration.desc}</p>
             </div>
           </div>
         </div>
@@ -401,7 +499,7 @@ export default function Landing() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-start space-x-4">
@@ -430,6 +528,23 @@ export default function Landing() {
                     <div>
                       <p className="font-semibold">{t.testimonials.testimonial2.author}</p>
                       <p className="text-sm text-gray-500">{t.testimonials.testimonial2.role}</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-start space-x-4">
+                  <div className="bg-purple-100 w-12 h-12 rounded-full flex items-center justify-center">
+                    <Star className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-gray-600 mb-4">"{t.testimonials.testimonial3.text}"</p>
+                    <div>
+                      <p className="font-semibold">{t.testimonials.testimonial3.author}</p>
+                      <p className="text-sm text-gray-500">{t.testimonials.testimonial3.role}</p>
                     </div>
                   </div>
                 </div>
