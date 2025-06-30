@@ -10,7 +10,7 @@ import { UserModal } from "./UserModal";
 import { Plus, Search, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-interface Profile {
+interface UserProfile {
   id: string;
   email: string;
   first_name: string;
@@ -24,13 +24,13 @@ interface Profile {
   };
   user_roles?: Array<{
     role: string;
-    module_permissions: string[];
+    module_permissions: string[] | null;
   }>;
 }
 
 export const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: users, isLoading, refetch } = useQuery({
@@ -46,7 +46,7 @@ export const UserManagement = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Profile[];
+      return data as UserProfile[];
     }
   });
 
@@ -61,7 +61,7 @@ export const UserManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleEditUser = (user: Profile) => {
+  const handleEditUser = (user: UserProfile) => {
     setSelectedUser(user);
     setIsModalOpen(true);
   };

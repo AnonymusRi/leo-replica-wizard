@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import type { SystemModule } from "@/types/user-roles";
 
-interface Profile {
+interface UserProfile {
   id: string;
   email: string;
   first_name: string;
@@ -27,7 +27,7 @@ interface Organization {
 }
 
 interface UserModalProps {
-  user: Profile | null;
+  user: UserProfile | null;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;

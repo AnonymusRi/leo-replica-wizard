@@ -62,12 +62,12 @@ export const useCreateUserRole = () => {
     }) => {
       const { data, error } = await supabase
         .from('user_roles')
-        .upsert([{
+        .upsert({
           user_id: roleData.user_id,
           organization_id: roleData.organization_id,
-          role: roleData.role,
+          role: roleData.role as any, // Cast per compatibilità con il tipo DB
           module_permissions: roleData.module_permissions || []
-        }])
+        })
         .select()
         .single();
       
@@ -97,7 +97,7 @@ export const useUpdateUserRole = () => {
       const { data, error } = await supabase
         .from('user_roles')
         .update({
-          role: update.role,
+          role: update.role as any, // Cast per compatibilità con il tipo DB
           module_permissions: update.module_permissions
         })
         .eq('id', update.id)
