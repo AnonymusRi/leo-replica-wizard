@@ -21,11 +21,11 @@ interface UserProfile {
   organizations?: {
     name: string;
     slug: string;
-  };
+  } | null;
   user_roles?: Array<{
     role: string;
     module_permissions: string[] | null;
-  }>;
+  }> | null;
 }
 
 export const UserManagement = () => {
@@ -36,17 +36,47 @@ export const UserManagement = () => {
   const { data: users, isLoading, refetch } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Prima prendiamo i profili
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select(`
-          *,
-          organizations (name, slug),
-          user_roles (role, module_permissions)
+          id,
+          email,
+          first_name,
+          last_name,
+          organization_id,
+          is_active,
+          created_at,
+          organizations (name, slug)
         `)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return data as UserProfile[];
+      if (profilesError) throw profilesError;
+      
+      if (!profiles || profiles.length === 0) {
+        return [];
+      }
+
+      // Poi prendiamo i ruoli separatamente
+      const { data: roles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role, module_permissions')
+        .in('user_id', profiles.map(p => p.id));
+      
+      if (rolesError) {
+        console.warn('Error fetching user roles:', rolesError);
+      }
+
+      // Combiniamo i dati
+      const usersWithRoles = profiles.map(profile => ({
+        ...profile,
+        user_roles: roles?.filter(role => role.user_id === profile.id)?.map(role => ({
+          role: role.role,
+          module_permissions: role.module_permissions as string[] | null
+        })) || []
+      }));
+
+      return usersWithRoles as UserProfile[];
     }
   });
 
@@ -131,7 +161,7 @@ export const UserManagement = () => {
                     <Badge key={index} variant="secondary">
                       {role.role}
                     </Badge>
-                  ))}
+                  )) || <span className="text-gray-500 text-sm">Nessun ruolo</span>}
                 </div>
               </TableCell>
               <TableCell>
