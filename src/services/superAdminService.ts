@@ -30,7 +30,7 @@ export class SuperAdminService {
       this.addDebugInfo('Avvio creazione super admin...');
       
       // Step 1: Verifica se l'organizzazione esiste, usa maybeSingle invece di single
-      const { data: orgData, error: orgError } = await supabase
+      const { data: orgDataResult, error: orgError } = await supabase
         .from('organizations')
         .select('id, name')
         .eq('slug', 'spiral-admin')
@@ -41,6 +41,8 @@ export class SuperAdminService {
         toast.error('Errore nel recupero organizzazione: ' + orgError.message);
         return false;
       }
+
+      let orgData = orgDataResult;
 
       if (!orgData) {
         this.addDebugInfo('Organizzazione spiral-admin non trovata, la creo...');
@@ -65,7 +67,6 @@ export class SuperAdminService {
         }
 
         this.addDebugInfo(`Organizzazione creata: ${newOrgData.name} (${newOrgData.id})`);
-        // Usa i dati dell'organizzazione appena creata
         orgData = newOrgData;
       } else {
         this.addDebugInfo(`Organizzazione trovata: ${orgData.name} (${orgData.id})`);
