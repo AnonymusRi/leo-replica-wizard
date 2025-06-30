@@ -3219,6 +3219,14 @@ export type Database = {
         Args: Record<PropertyKey, never> | { user_id: string; org_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      get_user_role_safe: {
+        Args: { user_uuid: string; org_uuid: string }
+        Returns: string
+      }
+      is_organization_admin: {
+        Args: { user_uuid: string; org_uuid: string }
+        Returns: boolean
+      }
       is_super_admin: {
         Args: { user_email: string }
         Returns: boolean
