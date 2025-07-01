@@ -1,4 +1,5 @@
 
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -66,21 +67,22 @@ export const useCreateTicket = () => {
       ticket: Partial<SupportTicket>; 
       targetOrganizations?: string[]; 
     }) => {
-      // Assicuriamoci che i campi obbligatori siano presenti
-      const ticketData = {
+      // Prepare the ticket data, excluding ticket_number as it's auto-generated
+      const ticketData: any = {
         title: ticket.title!,
         description: ticket.description!,
         category: ticket.category!,
         priority: ticket.priority || 'medium',
         status: ticket.status || 'open',
         is_general_announcement: ticket.is_general_announcement || false,
-        // Inseriamo solo i campi che esistono nella tabella DB
-        ...(ticket.organization_id && { organization_id: ticket.organization_id }),
-        ...(ticket.user_id && { user_id: ticket.user_id }),
-        ...(ticket.assigned_to && { assigned_to: ticket.assigned_to }),
-        ...(ticket.target_organization_id && { target_organization_id: ticket.target_organization_id }),
-        ...(ticket.attachments && { attachments: ticket.attachments }),
       };
+
+      // Add optional fields only if they exist
+      if (ticket.organization_id) ticketData.organization_id = ticket.organization_id;
+      if (ticket.user_id) ticketData.user_id = ticket.user_id;
+      if (ticket.assigned_to) ticketData.assigned_to = ticket.assigned_to;
+      if (ticket.target_organization_id) ticketData.target_organization_id = ticket.target_organization_id;
+      if (ticket.attachments) ticketData.attachments = ticket.attachments;
 
       const { data: newTicket, error } = await supabase
         .from('support_tickets')
@@ -162,10 +164,31 @@ export const useCreateComment = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (comment: Partial<TicketComment>) => {
+    mutationFn: async ({ 
+      ticket_id, 
+      content, 
+      is_internal = false, 
+      user_id, 
+      attachments 
+    }: { 
+      ticket_id: string; 
+      content: string; 
+      is_internal?: boolean; 
+      user_id?: string; 
+      attachments?: any[]; 
+    }) => {
+      const commentData: any = {
+        ticket_id,
+        content,
+        is_internal,
+      };
+
+      if (user_id) commentData.user_id = user_id;
+      if (attachments) commentData.attachments = attachments;
+
       const { data, error } = await supabase
         .from('ticket_comments')
-        .insert(comment)
+        .insert(commentData)
         .select()
         .single();
       
@@ -181,3 +204,4 @@ export const useCreateComment = () => {
     }
   });
 };
+
