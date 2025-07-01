@@ -28,9 +28,10 @@ import { ExpiringLicenses } from "@/components/superadmin/ExpiringLicenses";
 import { BillingManagement } from "@/components/superadmin/BillingManagement";
 import { ReportsModule } from "@/components/reports/ReportsModule";
 import { SoftwareGuide } from "@/components/superadmin/SoftwareGuide";
-import { SystemErrors } from "@/components/superadmin/SystemErrors";
+import { SystemErrors } from "@/components/superladmin/SystemErrors";
 import { TicketManagement } from "@/components/superadmin/TicketManagement";
 import { PaymentManagement } from "@/components/superadmin/PaymentManagement";
+import { OrganizationManagement } from "@/components/admin/OrganizationManagement";
 
 const SuperAdmin = () => {
   const [activeModule, setActiveModule] = useState("dashboard");
@@ -39,6 +40,7 @@ const SuperAdmin = () => {
     { id: "dashboard", label: "Dashboard", icon: BarChart3 },
     { id: "licenses", label: "Gestione Licenze", icon: Package },
     { id: "organizations", label: "Nuove Organizzazioni", icon: Building },
+    { id: "organization-management", label: "Gestione Organizzazioni", icon: Building },
     { id: "active-licenses", label: "Licenze Attive", icon: CheckCircle },
     { id: "expiring", label: "In Scadenza", icon: AlertTriangle },
     { id: "billing", label: "Fatturazione", icon: CreditCard },
@@ -105,6 +107,12 @@ const SuperAdmin = () => {
         {activeModule === "dashboard" && <SuperAdminDashboard />}
         {activeModule === "licenses" && <LicenseManagement />}
         {activeModule === "organizations" && <OrganizationSetup />}
+        {activeModule === "organization-management" && (
+          <div className="space-y-6">
+            <h1 className="text-3xl font-bold">Gestione Organizzazioni</h1>
+            <OrganizationManagement />
+          </div>
+        )}
         {activeModule === "active-licenses" && <ActiveLicenses />}
         {activeModule === "expiring" && <ExpiringLicenses />}
         {activeModule === "billing" && <BillingManagement />}

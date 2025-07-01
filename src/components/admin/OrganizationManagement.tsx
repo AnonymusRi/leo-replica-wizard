@@ -1,14 +1,15 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Building, Users, Settings, Plus } from "lucide-react";
 import { OrganizationModal } from "./OrganizationModal";
+import { useOrganizations } from "@/hooks/useOrganizations";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-interface Organization {
+interface OrganizationWithUserCount {
   id: string;
   name: string;
   slug: string;
@@ -24,22 +25,18 @@ interface Organization {
 }
 
 export const OrganizationManagement = () => {
-  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
+  const [selectedOrg, setSelectedOrg] = useState<OrganizationWithUserCount | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data: organizations, isLoading, refetch } = useQuery({
-    queryKey: ['organizations-management'],
-    queryFn: async () => {
-      const { data: orgs, error } = await supabase
-        .from('organizations')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
+  const { data: organizationsData, isLoading: orgsLoading, refetch } = useOrganizations();
 
-      // Conteggio utenti per organizzazione
+  const { data: organizations, isLoading } = useQuery({
+    queryKey: ['organizations-with-user-count'],
+    queryFn: async () => {
+      if (!organizationsData) return [];
+
       const orgsWithUserCount = await Promise.all(
-        orgs.map(async (org) => {
+        organizationsData.map(async (org) => {
           const { count } = await supabase
             .from('profiles')
             .select('*', { count: 'exact', head: true })
@@ -47,13 +44,15 @@ export const OrganizationManagement = () => {
           
           return {
             ...org,
+            active_modules: Array.isArray(org.active_modules) ? org.active_modules : [],
             user_count: count || 0
-          };
+          } as OrganizationWithUserCount;
         })
       );
 
-      return orgsWithUserCount as Organization[];
-    }
+      return orgsWithUserCount;
+    },
+    enabled: !!organizationsData
   });
 
   const getSubscriptionBadge = (status: string) => {
@@ -74,12 +73,12 @@ export const OrganizationManagement = () => {
     setIsModalOpen(true);
   };
 
-  const handleEditOrg = (org: Organization) => {
+  const handleEditOrg = (org: OrganizationWithUserCount) => {
     setSelectedOrg(org);
     setIsModalOpen(true);
   };
 
-  if (isLoading) {
+  if (isLoading || orgsLoading) {
     return <div>Caricamento organizzazioni...</div>;
   }
 

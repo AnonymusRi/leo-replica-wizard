@@ -20,6 +20,7 @@ interface Organization {
   country?: string;
   subscription_status: string;
   active_modules: string[];
+  created_at?: string;
 }
 
 interface OrganizationModalProps {
@@ -58,7 +59,7 @@ export const OrganizationModal = ({ organization, isOpen, onClose, onSuccess }: 
         city: organization.city || '',
         country: organization.country || '',
         subscription_status: organization.subscription_status || 'trial',
-        active_modules: organization.active_modules || []
+        active_modules: Array.isArray(organization.active_modules) ? organization.active_modules : []
       });
     } else {
       setFormData({
