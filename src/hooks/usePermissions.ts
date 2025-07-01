@@ -14,8 +14,7 @@ export const useUserPermissions = (organizationId?: string): UserPermissionsChec
       
       // Hierarchy check: super_admin has all permissions
       if (userRole.role === 'super_admin') return true;
-      if (userRole.role === 'admin' && ['admin', 'manager', 'operator', 'viewer'].includes(role)) return true;
-      if (userRole.role === 'manager' && ['manager', 'operator', 'viewer'].includes(role)) return true;
+      if (userRole.role === 'admin' && ['admin', 'operator', 'viewer'].includes(role)) return true;
       if (userRole.role === 'operator' && ['operator', 'viewer'].includes(role)) return true;
       
       return userRole.role === role;
