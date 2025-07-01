@@ -3370,7 +3370,7 @@ export type Database = {
       }
       get_user_role: {
         Args: Record<PropertyKey, never> | { user_id: string; org_id: string }
-        Returns: Database["public"]["Enums"]["user_role"]
+        Returns: string
       }
       get_user_role_safe: {
         Args: { user_uuid: string; org_uuid: string }
