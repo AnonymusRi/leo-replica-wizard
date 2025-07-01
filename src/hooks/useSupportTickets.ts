@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -65,12 +66,25 @@ export const useCreateTicket = () => {
       ticket: Partial<SupportTicket>; 
       targetOrganizations?: string[]; 
     }) => {
+      // Assicuriamoci che i campi obbligatori siano presenti
+      const ticketData = {
+        title: ticket.title!,
+        description: ticket.description!,
+        category: ticket.category!,
+        priority: ticket.priority || 'medium',
+        status: ticket.status || 'open',
+        is_general_announcement: ticket.is_general_announcement || false,
+        // Inseriamo solo i campi che esistono nella tabella DB
+        ...(ticket.organization_id && { organization_id: ticket.organization_id }),
+        ...(ticket.user_id && { user_id: ticket.user_id }),
+        ...(ticket.assigned_to && { assigned_to: ticket.assigned_to }),
+        ...(ticket.target_organization_id && { target_organization_id: ticket.target_organization_id }),
+        ...(ticket.attachments && { attachments: ticket.attachments }),
+      };
+
       const { data: newTicket, error } = await supabase
         .from('support_tickets')
-        .insert({
-          ...ticket,
-          created_by_super_admin: true
-        })
+        .insert(ticketData)
         .select()
         .single();
       
@@ -107,8 +121,7 @@ export const useUpdateTicket = () => {
   
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<SupportTicket> }) => {
-      // Using any type to bypass TypeScript errors until tables are created
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('support_tickets')
         .update(updates)
         .eq('id', id)
@@ -132,8 +145,7 @@ export const useTicketComments = (ticketId: string) => {
   return useQuery({
     queryKey: ['ticket-comments', ticketId],
     queryFn: async () => {
-      // Using any type to bypass TypeScript errors until tables are created
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('ticket_comments')
         .select('*')
         .eq('ticket_id', ticketId)
@@ -151,8 +163,7 @@ export const useCreateComment = () => {
   
   return useMutation({
     mutationFn: async (comment: Partial<TicketComment>) => {
-      // Using any type to bypass TypeScript errors until tables are created
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('ticket_comments')
         .insert(comment)
         .select()
