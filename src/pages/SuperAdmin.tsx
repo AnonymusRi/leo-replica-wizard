@@ -28,7 +28,7 @@ import { ExpiringLicenses } from "@/components/superadmin/ExpiringLicenses";
 import { BillingManagement } from "@/components/superadmin/BillingManagement";
 import { ReportsModule } from "@/components/reports/ReportsModule";
 import { SoftwareGuide } from "@/components/superadmin/SoftwareGuide";
-import { SystemErrors } from "@/components/superladmin/SystemErrors";
+import { SystemErrors } from "@/components/superadmin/SystemErrors";
 import { TicketManagement } from "@/components/superadmin/TicketManagement";
 import { PaymentManagement } from "@/components/superadmin/PaymentManagement";
 import { OrganizationManagement } from "@/components/admin/OrganizationManagement";
