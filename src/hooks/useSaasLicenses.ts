@@ -24,7 +24,7 @@ export const useSaasLicenses = () => {
     queryKey: ['saas-licenses'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('saas_licenses' as any)
+        .from('saas_licenses')
         .select(`
           *,
           organizations (
@@ -35,7 +35,7 @@ export const useSaasLicenses = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data || [];
     }
   });
 };
@@ -46,7 +46,7 @@ export const useCreateLicense = () => {
   return useMutation({
     mutationFn: async (license: Partial<SaasLicense>) => {
       const { data, error } = await supabase
-        .from('saas_licenses' as any)
+        .from('saas_licenses')
         .insert(license)
         .select()
         .single();
@@ -70,7 +70,7 @@ export const useUpdateLicense = () => {
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<SaasLicense> }) => {
       const { data, error } = await supabase
-        .from('saas_licenses' as any)
+        .from('saas_licenses')
         .update(updates)
         .eq('id', id)
         .select()
@@ -94,7 +94,7 @@ export const useExpiredLicenses = () => {
     queryKey: ['expired-licenses'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('saas_licenses' as any)
+        .from('saas_licenses')
         .select(`
           *,
           organizations (
@@ -107,7 +107,7 @@ export const useExpiredLicenses = () => {
         .order('expires_at', { ascending: true });
       
       if (error) throw error;
-      return data;
+      return data || [];
     }
   });
 };
@@ -120,7 +120,7 @@ export const useExpiringLicenses = () => {
     queryKey: ['expiring-licenses'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('saas_licenses' as any)
+        .from('saas_licenses')
         .select(`
           *,
           organizations (
@@ -134,12 +134,11 @@ export const useExpiringLicenses = () => {
         .order('expires_at', { ascending: true });
       
       if (error) throw error;
-      return data;
+      return data || [];
     }
   });
 };
 
-// Aggiungo la funzione mancante
 export const useOrganizationLicense = (organizationId?: string) => {
   return useQuery({
     queryKey: ['organization-license', organizationId],
@@ -147,14 +146,14 @@ export const useOrganizationLicense = (organizationId?: string) => {
       if (!organizationId) return null;
       
       const { data, error } = await supabase
-        .from('saas_licenses' as any)
+        .from('saas_licenses')
         .select('*')
         .eq('organization_id', organizationId)
         .eq('is_active', true)
         .single();
       
       if (error) throw error;
-      return data;
+      return data as SaasLicense | null;
     },
     enabled: !!organizationId
   });

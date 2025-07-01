@@ -35,12 +35,12 @@ export const useSupportTickets = () => {
     queryKey: ['support-tickets'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('support_tickets' as any)
+        .from('support_tickets')
         .select('*')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as SupportTicket[];
+      return (data || []) as SupportTicket[];
     }
   });
 };
@@ -51,7 +51,7 @@ export const useCreateTicket = () => {
   return useMutation({
     mutationFn: async (ticket: Partial<SupportTicket>) => {
       const { data, error } = await supabase
-        .from('support_tickets' as any)
+        .from('support_tickets')
         .insert(ticket)
         .select()
         .single();
@@ -75,7 +75,7 @@ export const useUpdateTicket = () => {
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<SupportTicket> }) => {
       const { data, error } = await supabase
-        .from('support_tickets' as any)
+        .from('support_tickets')
         .update(updates)
         .eq('id', id)
         .select()
@@ -99,13 +99,13 @@ export const useTicketComments = (ticketId: string) => {
     queryKey: ['ticket-comments', ticketId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('ticket_comments' as any)
+        .from('ticket_comments')
         .select('*')
         .eq('ticket_id', ticketId)
         .order('created_at', { ascending: true });
       
       if (error) throw error;
-      return data as TicketComment[];
+      return (data || []) as TicketComment[];
     },
     enabled: !!ticketId
   });
@@ -117,7 +117,7 @@ export const useCreateComment = () => {
   return useMutation({
     mutationFn: async (comment: Partial<TicketComment>) => {
       const { data, error } = await supabase
-        .from('ticket_comments' as any)
+        .from('ticket_comments')
         .insert(comment)
         .select()
         .single();
@@ -125,7 +125,7 @@ export const useCreateComment = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['ticket-comments', data.ticket_id] });
       toast.success('Commento aggiunto con successo');
     },

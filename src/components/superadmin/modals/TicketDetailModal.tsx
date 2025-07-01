@@ -25,7 +25,7 @@ export const TicketDetailModal = ({ ticketId, open, onOpenChange }: TicketDetail
     queryKey: ['ticket-detail', ticketId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('support_tickets' as any)
+        .from('support_tickets')
         .select('*')
         .eq('id', ticketId)
         .single();
