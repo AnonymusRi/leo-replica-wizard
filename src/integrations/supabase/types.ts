@@ -2585,6 +2585,50 @@ export type Database = {
           },
         ]
       }
+      saas_licenses: {
+        Row: {
+          active_modules: Json | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          license_type: string
+          max_users: number
+          organization_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          active_modules?: Json | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          license_type?: string
+          max_users?: number
+          organization_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          active_modules?: Json | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          license_type?: string
+          max_users?: number
+          organization_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saas_licenses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales_checklists: {
         Row: {
           checklist_type: string
@@ -3382,6 +3426,10 @@ export type Database = {
       }
       is_super_admin: {
         Args: Record<PropertyKey, never> | { user_email: string }
+        Returns: boolean
+      }
+      is_user_org_admin: {
+        Args: { user_uuid: string; org_uuid: string }
         Returns: boolean
       }
     }

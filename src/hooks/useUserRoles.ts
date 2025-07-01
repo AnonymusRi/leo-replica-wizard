@@ -2,28 +2,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { UserRole, SystemModule, UserRoleRecord } from '@/types/user-roles';
+import type { UserRole, SystemModule } from '@/types/user-roles';
 
-export const useCurrentUserRole = (organizationId?: string) => {
-  return useQuery({
-    queryKey: ['current-user-role', organizationId],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !organizationId) return null;
-      
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('organization_id', organizationId)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') throw error;
-      return data as UserRoleRecord | null;
-    },
-    enabled: !!organizationId
-  });
-};
+export interface UserRoleRecord {
+  id: string;
+  user_id: string;
+  organization_id: string;
+  role: UserRole;
+  module_permissions: SystemModule[];
+  created_at: string;
+  updated_at: string;
+}
 
 export const useUserRoles = (organizationId?: string) => {
   return useQuery({
@@ -33,7 +22,11 @@ export const useUserRoles = (organizationId?: string) => {
         .from('user_roles')
         .select(`
           *,
-          profiles!inner(email, first_name, last_name)
+          profiles!user_id (
+            email,
+            first_name,
+            last_name
+          )
         `)
         .order('created_at', { ascending: false });
       
@@ -44,7 +37,28 @@ export const useUserRoles = (organizationId?: string) => {
       const { data, error } = await query;
       
       if (error) throw error;
-      return data as (UserRoleRecord & { profiles: any })[];
+      return data as UserRoleRecord[];
+    },
+    enabled: !!organizationId
+  });
+};
+
+export const useCurrentUserRole = (organizationId?: string) => {
+  return useQuery({
+    queryKey: ['current-user-role', organizationId],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !organizationId) return null;
+
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data as UserRoleRecord | null;
     },
     enabled: !!organizationId
   });
@@ -60,16 +74,12 @@ export const useCreateUserRole = () => {
       role: UserRole;
       module_permissions?: SystemModule[];
     }) => {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .upsert({
-          user_id: roleData.user_id,
-          organization_id: roleData.organization_id,
-          role: roleData.role as any, // Cast per compatibilità con il tipo DB
-          module_permissions: roleData.module_permissions || []
-        })
-        .select()
-        .single();
+      const { data, error } = await supabase.rpc('create_user_role', {
+        p_user_id: roleData.user_id,
+        p_organization_id: roleData.organization_id,
+        p_role: roleData.role,
+        p_module_permissions: JSON.stringify(roleData.module_permissions || ['all'])
+      });
       
       if (error) throw error;
       return data;
@@ -77,10 +87,10 @@ export const useCreateUserRole = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-roles'] });
       queryClient.invalidateQueries({ queryKey: ['current-user-role'] });
-      toast.success('Ruolo utente assegnato con successo');
+      toast.success('Ruolo utente creato con successo');
     },
-    onError: (error) => {
-      toast.error('Errore assegnazione ruolo: ' + error.message);
+    onError: (error: any) => {
+      toast.error('Errore creazione ruolo: ' + error.message);
     }
   });
 };
@@ -89,18 +99,14 @@ export const useUpdateUserRole = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (update: {
-      id: string;
-      role?: UserRole;
-      module_permissions?: SystemModule[];
+    mutationFn: async ({ id, updates }: { 
+      id: string; 
+      updates: Partial<UserRoleRecord> 
     }) => {
       const { data, error } = await supabase
         .from('user_roles')
-        .update({
-          role: update.role as any, // Cast per compatibilità con il tipo DB
-          module_permissions: update.module_permissions
-        })
-        .eq('id', update.id)
+        .update(updates)
+        .eq('id', id)
         .select()
         .single();
       
@@ -110,9 +116,9 @@ export const useUpdateUserRole = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-roles'] });
       queryClient.invalidateQueries({ queryKey: ['current-user-role'] });
-      toast.success('Ruolo utente aggiornato con successo');
+      toast.success('Ruolo utente aggiornato');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast.error('Errore aggiornamento ruolo: ' + error.message);
     }
   });
@@ -123,21 +129,23 @@ export const useDeleteUserRole = () => {
   
   return useMutation({
     mutationFn: async (roleId: string) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_roles')
         .delete()
-        .eq('id', roleId);
+        .eq('id', roleId)
+        .select()
+        .single();
       
       if (error) throw error;
-      return roleId;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-roles'] });
       queryClient.invalidateQueries({ queryKey: ['current-user-role'] });
-      toast.success('Ruolo utente rimosso con successo');
+      toast.success('Ruolo utente eliminato');
     },
-    onError: (error) => {
-      toast.error('Errore rimozione ruolo: ' + error.message);
+    onError: (error: any) => {
+      toast.error('Errore eliminazione ruolo: ' + error.message);
     }
   });
 };

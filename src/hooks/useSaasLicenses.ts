@@ -11,10 +11,6 @@ export interface SaasLicense {
   active_modules: string[];
   expires_at?: string;
   is_active: boolean;
-  monthly_fee: number;
-  currency: string;
-  stripe_subscription_id?: string;
-  stripe_customer_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -23,8 +19,7 @@ export const useSaasLicenses = () => {
   return useQuery({
     queryKey: ['saas-licenses'],
     queryFn: async () => {
-      // Using any type to bypass TypeScript errors until tables are created
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('saas_licenses')
         .select(`
           *,
@@ -46,8 +41,7 @@ export const useCreateLicense = () => {
   
   return useMutation({
     mutationFn: async (license: Partial<SaasLicense>) => {
-      // Using any type to bypass TypeScript errors until tables are created
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('saas_licenses')
         .insert(license)
         .select()
@@ -71,8 +65,7 @@ export const useUpdateLicense = () => {
   
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<SaasLicense> }) => {
-      // Using any type to bypass TypeScript errors until tables are created
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('saas_licenses')
         .update(updates)
         .eq('id', id)
@@ -96,8 +89,7 @@ export const useExpiredLicenses = () => {
   return useQuery({
     queryKey: ['expired-licenses'],
     queryFn: async () => {
-      // Using any type to bypass TypeScript errors until tables are created
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('saas_licenses')
         .select(`
           *,
@@ -123,8 +115,7 @@ export const useExpiringLicenses = () => {
   return useQuery({
     queryKey: ['expiring-licenses'],
     queryFn: async () => {
-      // Using any type to bypass TypeScript errors until tables are created
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('saas_licenses')
         .select(`
           *,
@@ -150,8 +141,7 @@ export const useOrganizationLicense = (organizationId?: string) => {
     queryFn: async () => {
       if (!organizationId) return null;
       
-      // Using any type to bypass TypeScript errors until tables are created
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('saas_licenses')
         .select('*')
         .eq('organization_id', organizationId)
