@@ -1,9 +1,11 @@
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Check, X, Building, User, Mail, Phone, MapPin, Package } from "lucide-react";
+import { Building } from "lucide-react";
 import { useCreateOrganization } from "@/hooks/useCreateOrganization";
+import { OrganizationInfoSection } from "./modals/OrganizationInfoSection";
+import { LicenseDetailsSection } from "./modals/LicenseDetailsSection";
+import { ActiveModulesSection } from "./modals/ActiveModulesSection";
+import { OrganizationRequestActions } from "./modals/OrganizationRequestActions";
 
 interface OrganizationRequest {
   id: string;
@@ -114,89 +116,15 @@ export const OrganizationRequestModal = ({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Informazioni Organizzazione */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Informazioni Organizzazione</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center space-x-2">
-                <Building className="w-4 h-4 text-gray-500" />
-                <div>
-                  <div className="font-medium">{request.organizationName}</div>
-                  <div className="text-sm text-gray-500">Nome organizzazione</div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <User className="w-4 h-4 text-gray-500" />
-                <div>
-                  <div className="font-medium">{request.contactPerson}</div>
-                  <div className="text-sm text-gray-500">Referente</div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Mail className="w-4 h-4 text-gray-500" />
-                <div>
-                  <div className="font-medium">{request.email}</div>
-                  <div className="text-sm text-gray-500">Email</div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Phone className="w-4 h-4 text-gray-500" />
-                <div>
-                  <div className="font-medium">{request.phone}</div>
-                  <div className="text-sm text-gray-500">Telefono</div>
-                </div>
-              </div>
-              {(request.city || request.country) && (
-                <div className="flex items-center space-x-2">
-                  <MapPin className="w-4 h-4 text-gray-500" />
-                  <div>
-                    <div className="font-medium">
-                      {request.city}{request.city && request.country && ', '}{request.country}
-                    </div>
-                    <div className="text-sm text-gray-500">Ubicazione</div>
-                  </div>
-                </div>
-              )}
-              <div className="flex items-center space-x-2">
-                <Package className="w-4 h-4 text-gray-500" />
-                <div>
-                  <div className="font-medium">{request.businessType}</div>
-                  <div className="text-sm text-gray-500">Tipo business</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <OrganizationInfoSection request={request} />
+          
+          <LicenseDetailsSection 
+            licenseType={request.licenseType}
+            estimatedUsers={request.estimatedUsers}
+            fleetSize={request.fleetSize}
+          />
 
-          {/* Dettagli Licenza */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Dettagli Licenza</h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <div className="font-medium">Tipo Licenza</div>
-                <Badge variant="outline">{request.licenseType}</Badge>
-              </div>
-              <div>
-                <div className="font-medium">Utenti Stimati</div>
-                <div className="text-lg">{request.estimatedUsers}</div>
-              </div>
-              {request.fleetSize && (
-                <div>
-                  <div className="font-medium">Dimensione Flotta</div>
-                  <div className="text-lg">{request.fleetSize}</div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Moduli Attivi Previsti */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Moduli che verranno attivati</h3>
-            <div className="flex flex-wrap gap-2">
-              {getActiveModules(request.licenseType).map((module) => (
-                <Badge key={module} variant="secondary">{module}</Badge>
-              ))}
-            </div>
-          </div>
+          <ActiveModulesSection licenseType={request.licenseType} />
 
           {request.notes && (
             <div className="space-y-2">
@@ -205,27 +133,12 @@ export const OrganizationRequestModal = ({
             </div>
           )}
 
-          {/* Azioni */}
-          <div className="flex justify-end space-x-3 pt-4 border-t">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Chiudi
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleReject}
-              disabled={createOrgMutation.isPending}
-            >
-              <X className="w-4 h-4 mr-2" />
-              Rifiuta
-            </Button>
-            <Button 
-              onClick={handleApprove}
-              disabled={createOrgMutation.isPending}
-            >
-              <Check className="w-4 h-4 mr-2" />
-              {createOrgMutation.isPending ? 'Creazione...' : 'Approva e Crea'}
-            </Button>
-          </div>
+          <OrganizationRequestActions
+            onApprove={handleApprove}
+            onReject={handleReject}
+            onClose={() => onOpenChange(false)}
+            isLoading={createOrgMutation.isPending}
+          />
         </div>
       </DialogContent>
     </Dialog>
