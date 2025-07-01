@@ -56,9 +56,9 @@ export const RoleManagement = () => {
         return <Shield className="w-5 h-5 text-red-500" />;
       case 'admin':
         return <Shield className="w-5 h-5 text-orange-500" />;
-      case 'manager':
-        return <Users className="w-5 h-5 text-blue-500" />;
       case 'operator':
+        return <Users className="w-5 h-5 text-blue-500" />;
+      case 'viewer':
         return <Settings className="w-5 h-5 text-green-500" />;
       default:
         return <Users className="w-5 h-5 text-gray-500" />;
@@ -71,9 +71,9 @@ export const RoleManagement = () => {
         return 'destructive';
       case 'admin':
         return 'default';
-      case 'manager':
-        return 'secondary';
       case 'operator':
+        return 'secondary';
+      case 'viewer':
         return 'outline';
       default:
         return 'outline';

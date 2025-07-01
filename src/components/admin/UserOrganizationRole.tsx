@@ -18,7 +18,7 @@ interface UserOrganizationRoleProps {
   onFormDataChange: (updates: Partial<UserOrganizationRoleProps['formData']>) => void;
 }
 
-const AVAILABLE_ROLES = ['super_admin', 'admin', 'manager', 'operator', 'viewer'];
+const AVAILABLE_ROLES = ['super_admin', 'admin', 'operator', 'viewer'];
 
 export const UserOrganizationRole = ({ formData, onFormDataChange }: UserOrganizationRoleProps) => {
   const { data: organizations } = useQuery({
@@ -67,7 +67,7 @@ export const UserOrganizationRole = ({ formData, onFormDataChange }: UserOrganiz
           <SelectContent>
             {AVAILABLE_ROLES.map((role) => (
               <SelectItem key={role} value={role}>
-                {role}
+                {role.replace('_', ' ')}
               </SelectItem>
             ))}
           </SelectContent>
