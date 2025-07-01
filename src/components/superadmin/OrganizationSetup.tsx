@@ -1,67 +1,15 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building, Plus, Mail, Phone, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { Building, Plus, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { NewOrganizationModal } from "./modals/NewOrganizationModal";
+import { PendingOrganizationRequests } from "./PendingOrganizationRequests";
 
 export const OrganizationSetup = () => {
-  const [searchTerm, setSearchTerm] = useState("");
   const [showNewOrganizationModal, setShowNewOrganizationModal] = useState(false);
-
-  const pendingOrganizations = [
-    {
-      id: 1,
-      name: "Mediterranean Airlines",
-      contactPerson: "Marco Rossi",
-      email: "marco.rossi@medair.com",
-      phone: "+39 06 1234567",
-      requestDate: "2024-06-28",
-      licenseType: "Premium",
-      estimatedUsers: 35,
-      status: "pending_review"
-    },
-    {
-      id: 2,
-      name: "Alpine Helicopters",
-      contactPerson: "Anna Bianchi",
-      email: "a.bianchi@alpinehelis.com",
-      phone: "+39 011 987654",
-      requestDate: "2024-06-27",
-      licenseType: "Standard",
-      estimatedUsers: 15,
-      status: "documentation_required"
-    },
-    {
-      id: 3,
-      name: "Sardinia Charter",
-      contactPerson: "Giuseppe Carta",
-      email: "g.carta@sardiniacharter.it",
-      phone: "+39 070 456789",
-      requestDate: "2024-06-26",
-      licenseType: "Enterprise",
-      estimatedUsers: 50,
-      status: "ready_for_setup"
-    }
-  ];
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "pending_review":
-        return <Badge className="bg-yellow-100 text-yellow-800">In Revisione</Badge>;
-      case "documentation_required":
-        return <Badge className="bg-orange-100 text-orange-800">Documentazione Richiesta</Badge>;
-      case "ready_for_setup":
-        return <Badge className="bg-green-100 text-green-800">Pronto per Setup</Badge>;
-      case "setup_complete":
-        return <Badge variant="default">Setup Completato</Badge>;
-      default:
-        return <Badge variant="outline">Sconosciuto</Badge>;
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -80,7 +28,7 @@ export const OrganizationSetup = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Richieste Pendenti</p>
-                <p className="text-2xl font-bold text-blue-600">3</p>
+                <p className="text-2xl font-bold text-blue-600">2</p>
               </div>
               <Clock className="w-8 h-8 text-blue-600" />
             </div>
@@ -92,7 +40,7 @@ export const OrganizationSetup = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pronte per Setup</p>
-                <p className="text-2xl font-bold text-green-600">1</p>
+                <p className="text-2xl font-bold text-green-600">0</p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
@@ -116,7 +64,7 @@ export const OrganizationSetup = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Setup Questa Settimana</p>
-                <p className="text-2xl font-bold text-purple-600">2</p>
+                <p className="text-2xl font-bold text-purple-600">3</p>
               </div>
               <Building className="w-8 h-8 text-purple-600" />
             </div>
@@ -132,69 +80,7 @@ export const OrganizationSetup = () => {
         </TabsList>
 
         <TabsContent value="pending">
-          <Card>
-            <CardHeader>
-              <CardTitle>Richieste di Nuove Organizzazioni</CardTitle>
-              <CardDescription>
-                Gestisci le richieste di setup per nuove organizzazioni
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Organizzazione</TableHead>
-                    <TableHead>Contatto</TableHead>
-                    <TableHead>Data Richiesta</TableHead>
-                    <TableHead>Tipo Licenza</TableHead>
-                    <TableHead>Utenti Stimati</TableHead>
-                    <TableHead>Stato</TableHead>
-                    <TableHead>Azioni</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingOrganizations.map((org) => (
-                    <TableRow key={org.id}>
-                      <TableCell className="font-medium">
-                        {org.name}
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="font-medium">{org.contactPerson}</div>
-                          <div className="text-sm text-gray-500 flex items-center">
-                            <Mail className="w-3 h-3 mr-1" />
-                            {org.email}
-                          </div>
-                          <div className="text-sm text-gray-500 flex items-center">
-                            <Phone className="w-3 h-3 mr-1" />
-                            {org.phone}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>{org.requestDate}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{org.licenseType}</Badge>
-                      </TableCell>
-                      <TableCell>{org.estimatedUsers}</TableCell>
-                      <TableCell>
-                        {getStatusBadge(org.status)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Button variant="outline" size="sm">
-                            Revisiona
-                          </Button>
-                          <Button variant="default" size="sm">
-                            Approva
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <PendingOrganizationRequests />
         </TabsContent>
 
         <TabsContent value="setup">
@@ -206,7 +92,10 @@ export const OrganizationSetup = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-500">Nessun setup in corso al momento</p>
+              <div className="text-center py-8">
+                <Building className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">Nessun setup in corso al momento</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -220,7 +109,29 @@ export const OrganizationSetup = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-500">Nessun setup completato di recente</p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <div>
+                      <div className="font-medium">AlidaSoft Aviation</div>
+                      <div className="text-sm text-gray-500">Setup completato - Licenza Demo</div>
+                    </div>
+                  </div>
+                  <Badge className="bg-green-100 text-green-800">Attivo</Badge>
+                </div>
+                
+                <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <div>
+                      <div className="font-medium">Alidaunia</div>
+                      <div className="text-sm text-gray-500">Setup completato - Licenza Attiva</div>
+                    </div>
+                  </div>
+                  <Badge className="bg-green-100 text-green-800">Attivo</Badge>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
