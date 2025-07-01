@@ -21,7 +21,6 @@ export const TicketDetailModal = ({ ticketId, open, onOpenChange }: TicketDetail
   const { data: ticket } = useQuery({
     queryKey: ['ticket-detail', ticketId],
     queryFn: async () => {
-      // Using any type to bypass TypeScript errors until tables are created
       const { data, error } = await (supabase as any)
         .from('support_tickets')
         .select('*')
@@ -97,4 +96,3 @@ export const TicketDetailModal = ({ ticketId, open, onOpenChange }: TicketDetail
     </Dialog>
   );
 };
-</TicketDetailModal>
