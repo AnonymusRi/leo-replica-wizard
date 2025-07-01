@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,9 +31,11 @@ import { SystemErrors } from "@/components/superadmin/SystemErrors";
 import { TicketManagement } from "@/components/superadmin/TicketManagement";
 import { PaymentManagement } from "@/components/superadmin/PaymentManagement";
 import { OrganizationManagement } from "@/components/admin/OrganizationManagement";
+import { CreateCrewAccountModal } from "@/components/admin/CreateCrewAccountModal";
 
 const SuperAdmin = () => {
   const [activeModule, setActiveModule] = useState("dashboard");
+  const [showCreateCrewModal, setShowCreateCrewModal] = useState(false);
 
   const modules = [
     { id: "dashboard", label: "Dashboard", icon: BarChart3 },
@@ -87,6 +88,15 @@ const SuperAdmin = () => {
 
           {/* Right Side Controls */}
           <div className="flex items-center space-x-3">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowCreateCrewModal(true)}
+              className="text-green-300 border-green-500 hover:bg-green-800"
+            >
+              <User className="w-4 h-4 mr-1" />
+              Crea Account Crew
+            </Button>
             <Badge variant="outline" className="text-xs bg-slate-800 border-slate-600">
               <TrendingUp className="w-3 h-3 mr-1" />
               SUPER ADMIN
@@ -122,6 +132,11 @@ const SuperAdmin = () => {
         {activeModule === "guide" && <SoftwareGuide />}
         {activeModule === "errors" && <SystemErrors />}
       </main>
+
+      <CreateCrewAccountModal 
+        open={showCreateCrewModal} 
+        onOpenChange={setShowCreateCrewModal} 
+      />
     </div>
   );
 };
