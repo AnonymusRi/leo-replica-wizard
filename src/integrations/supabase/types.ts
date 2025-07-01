@@ -2835,6 +2835,81 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          attachments: Json | null
+          category: string
+          created_at: string
+          created_by_super_admin: boolean | null
+          description: string
+          id: string
+          is_general_announcement: boolean | null
+          organization_id: string | null
+          priority: string
+          resolved_at: string | null
+          status: string
+          target_organization_id: string | null
+          ticket_number: string
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          attachments?: Json | null
+          category: string
+          created_at?: string
+          created_by_super_admin?: boolean | null
+          description: string
+          id?: string
+          is_general_announcement?: boolean | null
+          organization_id?: string | null
+          priority: string
+          resolved_at?: string | null
+          status?: string
+          target_organization_id?: string | null
+          ticket_number: string
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          attachments?: Json | null
+          category?: string
+          created_at?: string
+          created_by_super_admin?: boolean | null
+          description?: string
+          id?: string
+          is_general_announcement?: boolean | null
+          organization_id?: string | null
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          target_organization_id?: string | null
+          ticket_number?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_target_organization_id_fkey"
+            columns: ["target_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sync_status: {
         Row: {
           created_at: string
@@ -2924,6 +2999,80 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      ticket_comments: {
+        Row: {
+          attachments: Json | null
+          content: string
+          created_at: string
+          id: string
+          is_internal: boolean | null
+          ticket_id: string
+          user_id: string | null
+        }
+        Insert: {
+          attachments?: Json | null
+          content: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean | null
+          ticket_id: string
+          user_id?: string | null
+        }
+        Update: {
+          attachments?: Json | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_internal?: boolean | null
+          ticket_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_comments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_organization_targets: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_organization_targets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_organization_targets_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       training_records: {
         Row: {
@@ -3208,6 +3357,10 @@ export type Database = {
         Returns: string
       }
       generate_otp_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_ticket_number: {
         Args: Record<PropertyKey, never>
         Returns: string
       }

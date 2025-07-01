@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -18,6 +17,9 @@ export interface SupportTicket {
   updated_at: string;
   resolved_at?: string;
   attachments?: any[];
+  target_organization_id?: string;
+  is_general_announcement?: boolean;
+  created_by_super_admin?: boolean;
 }
 
 export interface TicketComment {
@@ -30,12 +32,18 @@ export interface TicketComment {
   attachments?: any[];
 }
 
+export interface TicketOrganizationTarget {
+  id: string;
+  ticket_id: string;
+  organization_id: string;
+  created_at: string;
+}
+
 export const useSupportTickets = () => {
   return useQuery({
     queryKey: ['support-tickets'],
     queryFn: async () => {
-      // Using any type to bypass TypeScript errors until tables are created
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('support_tickets')
         .select('*')
         .order('created_at', { ascending: false });
@@ -50,16 +58,39 @@ export const useCreateTicket = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (ticket: Partial<SupportTicket>) => {
-      // Using any type to bypass TypeScript errors until tables are created
-      const { data, error } = await (supabase as any)
+    mutationFn: async ({ 
+      ticket, 
+      targetOrganizations 
+    }: { 
+      ticket: Partial<SupportTicket>; 
+      targetOrganizations?: string[]; 
+    }) => {
+      const { data: newTicket, error } = await supabase
         .from('support_tickets')
-        .insert(ticket)
+        .insert({
+          ...ticket,
+          created_by_super_admin: true
+        })
         .select()
         .single();
       
       if (error) throw error;
-      return data;
+
+      // Se ci sono organizzazioni target specifiche, aggiungile alla tabella di mapping
+      if (targetOrganizations && targetOrganizations.length > 0 && !ticket.is_general_announcement) {
+        const targetRecords = targetOrganizations.map(orgId => ({
+          ticket_id: newTicket.id,
+          organization_id: orgId
+        }));
+
+        const { error: targetError } = await supabase
+          .from('ticket_organization_targets')
+          .insert(targetRecords);
+
+        if (targetError) throw targetError;
+      }
+
+      return newTicket;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['support-tickets'] });

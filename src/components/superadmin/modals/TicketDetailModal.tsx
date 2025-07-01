@@ -1,6 +1,7 @@
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUpdateTicket, useCreateComment, useTicketComments, SupportTicket } from "@/hooks/useSupportTickets";
@@ -21,7 +22,7 @@ export const TicketDetailModal = ({ ticketId, open, onOpenChange }: TicketDetail
   const { data: ticket } = useQuery({
     queryKey: ['ticket-detail', ticketId],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('support_tickets')
         .select('*')
         .eq('id', ticketId)
@@ -31,6 +32,23 @@ export const TicketDetailModal = ({ ticketId, open, onOpenChange }: TicketDetail
       return data as SupportTicket;
     },
     enabled: !!ticketId
+  });
+
+  const { data: targetOrganizations = [] } = useQuery({
+    queryKey: ['ticket-target-organizations', ticketId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ticket_organization_targets')
+        .select(`
+          organization_id,
+          organizations!inner(name)
+        `)
+        .eq('ticket_id', ticketId);
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!ticketId && !!ticket && !ticket.is_general_announcement
   });
 
   const { data: comments = [] } = useTicketComments(ticketId);
@@ -73,6 +91,26 @@ export const TicketDetailModal = ({ ticketId, open, onOpenChange }: TicketDetail
             category={ticket.category}
             createdAt={ticket.created_at}
           />
+
+          {/* Informazioni sul targeting delle organizzazioni */}
+          <div>
+            <h4 className="font-semibold mb-2">Destinatari</h4>
+            {ticket.is_general_announcement ? (
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                📢 Avviso Generale - Tutte le Organizzazioni
+              </Badge>
+            ) : targetOrganizations.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {targetOrganizations.map((target: any) => (
+                  <Badge key={target.organization_id} variant="outline">
+                    🏢 {target.organizations.name}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <Badge variant="outline">Nessuna organizzazione specifica</Badge>
+            )}
+          </div>
 
           <TicketDescription description={ticket.description} />
 
