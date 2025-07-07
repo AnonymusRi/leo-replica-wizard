@@ -89,6 +89,9 @@ export const LicenseOverview = () => {
   const isExpiringSoon = license.expires_at && new Date(license.expires_at) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   const daysUntilExpiry = license.expires_at ? Math.ceil((new Date(license.expires_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : null;
 
+  // Type guard and cast for active_modules
+  const activeModules = Array.isArray(license.active_modules) ? license.active_modules : [];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -152,7 +155,7 @@ export const LicenseOverview = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Moduli Attivi</p>
-                <p className="text-2xl font-bold text-purple-600">{license.active_modules?.length || 0}</p>
+                <p className="text-2xl font-bold text-purple-600">{activeModules.length}</p>
               </div>
               <CheckCircle className="w-8 h-8 text-purple-600" />
             </div>
@@ -170,7 +173,7 @@ export const LicenseOverview = () => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            {license.active_modules?.map((module: string, index: number) => (
+            {activeModules.map((module: string, index: number) => (
               <Badge key={index} variant="outline" className="text-sm">
                 {module}
               </Badge>
@@ -202,38 +205,50 @@ export const LicenseOverview = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users?.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">
-                    {user.first_name} {user.last_name}
-                  </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">
-                      {user.user_roles?.[0]?.role || 'viewer'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {user.user_roles?.[0]?.module_permissions?.slice(0, 3).map((perm: string, idx: number) => (
-                        <Badge key={idx} variant="outline" className="text-xs">
-                          {perm}
-                        </Badge>
-                      ))}
-                      {(user.user_roles?.[0]?.module_permissions?.length || 0) > 3 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{(user.user_roles?.[0]?.module_permissions?.length || 0) - 3}
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="outline" size="sm">
-                      Accedi come {user.first_name}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {users?.map((user) => {
+                // Type guard for user_roles
+                const userRoles = Array.isArray(user.user_roles) ? user.user_roles : [];
+                const primaryRole = userRoles[0];
+                
+                return (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">
+                      {user.first_name} {user.last_name}
+                    </TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">
+                        {primaryRole?.role || 'viewer'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {primaryRole?.module_permissions && Array.isArray(primaryRole.module_permissions) ? (
+                          <>
+                            {primaryRole.module_permissions.slice(0, 3).map((perm: string, idx: number) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {perm}
+                              </Badge>
+                            ))}
+                            {primaryRole.module_permissions.length > 3 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{primaryRole.module_permissions.length - 3}
+                              </Badge>
+                            )}
+                          </>
+                        ) : (
+                          <Badge variant="outline" className="text-xs">Nessun permesso</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="outline" size="sm">
+                        Accedi come {user.first_name}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
@@ -264,45 +279,51 @@ export const LicenseOverview = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {crewMembers?.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell className="font-medium">
-                    {member.first_name} {member.last_name}
-                  </TableCell>
-                  <TableCell>{member.email}</TableCell>
-                  <TableCell>
-                    <Badge variant={member.position === 'captain' ? 'default' : 'secondary'}>
-                      {member.position === 'captain' ? 'Comandante' : 'Primo Ufficiale'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {member.license_number}
-                    <div className="text-xs text-gray-500">
-                      Scad: {member.license_expiry ? format(new Date(member.license_expiry), 'dd/MM/yy') : 'N/A'}
-                    </div>
-                  </TableCell>
-                  <TableCell>{member.base_location}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {member.crew_certifications?.filter(cert => cert.is_active).slice(0, 2).map((cert: any, idx: number) => (
-                        <Badge key={idx} variant="outline" className="text-xs">
-                          {cert.certification_type}
-                        </Badge>
-                      ))}
-                      {(member.crew_certifications?.filter(cert => cert.is_active).length || 0) > 2 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{(member.crew_certifications?.filter(cert => cert.is_active).length || 0) - 2}
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="outline" size="sm">
-                      Dashboard Pilota
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {crewMembers?.map((member) => {
+                // Type guard for crew_certifications
+                const certifications = Array.isArray(member.crew_certifications) ? member.crew_certifications : [];
+                const activeCertifications = certifications.filter((cert: any) => cert.is_active);
+                
+                return (
+                  <TableRow key={member.id}>
+                    <TableCell className="font-medium">
+                      {member.first_name} {member.last_name}
+                    </TableCell>
+                    <TableCell>{member.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={member.position === 'captain' ? 'default' : 'secondary'}>
+                        {member.position === 'captain' ? 'Comandante' : 'Primo Ufficiale'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {member.license_number}
+                      <div className="text-xs text-gray-500">
+                        Scad: {member.license_expiry ? format(new Date(member.license_expiry), 'dd/MM/yy') : 'N/A'}
+                      </div>
+                    </TableCell>
+                    <TableCell>{member.base_location}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {activeCertifications.slice(0, 2).map((cert: any, idx: number) => (
+                          <Badge key={idx} variant="outline" className="text-xs">
+                            {cert.certification_type}
+                          </Badge>
+                        ))}
+                        {activeCertifications.length > 2 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{activeCertifications.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="outline" size="sm">
+                        Dashboard Pilota
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>
