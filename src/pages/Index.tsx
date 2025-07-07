@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,10 +27,16 @@ import { AircraftModule } from "@/components/aircraft/AircraftModule";
 import { PilotTimeTableModule } from "@/components/crew/PilotTimeTableModule";
 import { OpsModule } from "@/components/ops/OpsModule";
 import { AdminModule } from "@/components/admin/AdminModule";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("SCHED");
+  const navigate = useNavigate();
+
+  const handleLoginClick = () => {
+    console.log('Navigating to /auth');
+    navigate('/auth');
+  };
 
   const modules = [
     { id: "SCHED", label: "SCHED", icon: Calendar },
@@ -95,16 +100,15 @@ const Index = () => {
               <User className="w-3 h-3 mr-1" />
               TEST USER
             </Badge>
-            <Link to="/auth">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-gray-300"
-              >
-                <User className="w-4 h-4 mr-2" />
-                Accesso
-              </Button>
-            </Link>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-gray-300"
+              onClick={handleLoginClick}
+            >
+              <User className="w-4 h-4 mr-2" />
+              Accesso
+            </Button>
             <Button variant="ghost" size="sm" className="text-gray-300">
               <Settings className="w-4 h-4" />
             </Button>
