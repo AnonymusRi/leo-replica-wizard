@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,8 +35,15 @@ const Index = () => {
   const navigate = useNavigate();
 
   const handleLoginClick = () => {
-    console.log('Navigating to /auth');
-    navigate('/auth');
+    console.log('Login button clicked');
+    console.log('Navigate function:', navigate);
+    try {
+      console.log('Attempting to navigate to /auth');
+      navigate('/auth');
+      console.log('Navigation completed');
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
   };
 
   const modules = [
@@ -103,8 +111,9 @@ const Index = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="text-gray-300"
+              className="text-gray-300 hover:text-white hover:bg-slate-700"
               onClick={handleLoginClick}
+              type="button"
             >
               <User className="w-4 h-4 mr-2" />
               Accesso
