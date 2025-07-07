@@ -28,6 +28,7 @@ import { AircraftModule } from "@/components/aircraft/AircraftModule";
 import { PilotTimeTableModule } from "@/components/crew/PilotTimeTableModule";
 import { OpsModule } from "@/components/ops/OpsModule";
 import { AdminModule } from "@/components/admin/AdminModule";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const [activeModule, setActiveModule] = useState("SCHED");
@@ -94,15 +95,16 @@ const Index = () => {
               <User className="w-3 h-3 mr-1" />
               TEST USER
             </Badge>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-gray-300"
-              onClick={() => window.location.href = '/auth'}
-            >
-              <User className="w-4 h-4 mr-2" />
-              Accesso
-            </Button>
+            <Link to="/auth">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-gray-300"
+              >
+                <User className="w-4 h-4 mr-2" />
+                Accesso
+              </Button>
+            </Link>
             <Button variant="ghost" size="sm" className="text-gray-300">
               <Settings className="w-4 h-4" />
             </Button>
