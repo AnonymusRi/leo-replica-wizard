@@ -21,19 +21,28 @@ export const useCreateCrewAuth = () => {
         .eq('id', data.crewMemberId)
         .single();
 
-      if (fetchError || !crewMember) {
+      if (fetchError) {
+        console.error('Error fetching crew member:', fetchError);
         throw new Error('Crew member non trovato');
       }
 
-      // Crea l'account di autenticazione
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      if (!crewMember) {
+        throw new Error('Crew member non trovato');
+      }
+
+      console.log('Found crew member:', crewMember);
+
+      // Crea l'account di autenticazione con signUp normale
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
-        email_confirm: true,
-        user_metadata: {
-          first_name: crewMember.first_name,
-          last_name: crewMember.last_name,
-          user_type: 'crew'
+        options: {
+          emailRedirectTo: `${window.location.origin}/crew-dashboard`,
+          data: {
+            first_name: crewMember.first_name,
+            last_name: crewMember.last_name,
+            user_type: 'crew'
+          }
         }
       });
 
@@ -46,26 +55,32 @@ export const useCreateCrewAuth = () => {
         throw new Error('Account creato ma dati utente non disponibili');
       }
 
-      // Crea il profilo utente
-      const { error: profileError } = await supabase
+      console.log('Auth account created successfully:', authData.user.id);
+
+      // Crea il profilo utente se non esiste già
+      const { data: existingProfile } = await supabase
         .from('profiles')
-        .upsert({
-          id: authData.user.id,
-          email: data.email,
-          first_name: crewMember.first_name,
-          last_name: crewMember.last_name,
-          organization_id: crewMember.organization_id,
-          is_active: true
-        });
+        .select('id')
+        .eq('id', authData.user.id)
+        .maybeSingle();
 
-      if (profileError) {
-        console.warn('Errore creazione profilo:', profileError);
+      if (!existingProfile) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            email: data.email,
+            first_name: crewMember.first_name,
+            last_name: crewMember.last_name,
+            organization_id: crewMember.organization_id,
+            is_active: true
+          });
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+          // Non bloccare il processo per errori di profilo
+        }
       }
-
-      console.log('Crew auth account created successfully:', {
-        user: authData.user.id,
-        email: data.email
-      });
 
       return { user: authData.user, crewMember };
     },

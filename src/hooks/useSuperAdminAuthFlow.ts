@@ -19,11 +19,13 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
     try {
       console.log('🔐 Inizio processo autenticazione SuperAdmin per:', email);
       
+      const emailLower = email.toLowerCase();
+      
       // Verifichiamo se l'email è un SuperAdmin
       const { data: superAdminCheck, error: checkError } = await supabase
         .from('super_admins')
         .select('email, phone_number, is_active, two_factor_enabled')
-        .eq('email', email.toLowerCase())
+        .eq('email', emailLower)
         .maybeSingle();
 
       console.log('📧 Verifica SuperAdmin:', { superAdminCheck, checkError });
@@ -42,7 +44,7 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
         console.log('⚠️ Email non trovata nella tabella super_admins');
         toast({
           title: "❌ Accesso Negato",
-          description: "Email non autorizzata per l'accesso SuperAdmin. Contatta l'amministratore di sistema.",
+          description: "Email non autorizzata per l'accesso SuperAdmin.",
           variant: "destructive"
         });
         return;
@@ -58,45 +60,49 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
         return;
       }
 
-      // Proviamo prima a fare il login con una password temporanea
-      console.log('🔑 Tentativo di autenticazione...');
+      // Tentiamo di creare o fare login con l'account
+      console.log('🔑 Tentativo di autenticazione/creazione account...');
       
-      // Tentiamo il login con password predefinita
+      // Prima proviamo a fare login
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.toLowerCase(),
+        email: emailLower,
         password: 'SuperAdmin123!'
       });
 
-      // Se l'utente non esiste o la password è sbagliata, creiamo/resettiamo l'account
-      if (signInError) {
-        console.log('🔄 Tentativo di reset password per SuperAdmin...');
+      if (signInError && signInError.message.includes('Invalid login credentials')) {
+        // L'account non esiste, proviamo a crearlo
+        console.log('📝 Account non esistente, creazione in corso...');
         
-        // Proviamo a registrare l'utente (questo funziona solo se non esiste)
         const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: email.toLowerCase(),
+          email: emailLower,
           password: 'SuperAdmin123!',
           options: {
-            emailRedirectTo: window.location.origin
+            emailRedirectTo: `${window.location.origin}/superadmin`,
+            data: {
+              user_type: 'super_admin'
+            }
           }
         });
 
-        // Se l'utente esiste già, proviamo un reset password
-        if (signUpError && signUpError.message.includes('User already registered')) {
-          console.log('👤 Utente esistente, tentativo reset password...');
-          
-          // Per il momento, procediamo comunque con l'OTP dato che è un SuperAdmin verificato
-          console.log('✅ Procedura SuperAdmin verificata, passaggio a OTP');
-        } else if (signUpError) {
-          console.error('❌ Errore nella registrazione:', signUpError);
+        if (signUpError) {
+          console.error('❌ Errore nella creazione account:', signUpError);
           toast({
             title: "❌ Errore di Autenticazione",
             description: `Errore: ${signUpError.message}`,
             variant: "destructive"
           });
           return;
-        } else {
-          console.log('✅ Nuovo utente SuperAdmin creato');
         }
+        
+        console.log('✅ Account SuperAdmin creato con successo');
+      } else if (signInError) {
+        console.error('❌ Errore nel login:', signInError);
+        toast({
+          title: "❌ Errore di Login",
+          description: `Errore: ${signInError.message}`,
+          variant: "destructive"
+        });
+        return;
       } else {
         console.log('✅ Login SuperAdmin effettuato con successo');
       }
@@ -107,24 +113,10 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
       
       console.log('📱 Codice OTP generato:', generatedOtpCode);
       
-      // Salviamo il codice OTP nel database
-      const { error: otpError } = await supabase
-        .from('otp_codes')
-        .insert({
-          phone_number: superAdminCheck.phone_number,
-          code: generatedOtpCode,
-          expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString()
-        });
-
-      if (otpError) {
-        console.error('❌ Errore inserimento OTP:', otpError);
-        // Non blocchiamo il processo, continuiamo comunque
-      }
-
-      setPhoneNumber(superAdminCheck.phone_number);
+      setPhoneNumber(superAdminCheck.phone_number || '+39 123 456 7890');
       setStep('otp');
       
-      // Mostriamo il codice OTP nel toast per la modalità simulazione
+      // Mostriamo il codice OTP nel toast per la modalità test
       toast({
         title: "🔐 Codice OTP (MODALITÀ TEST)",
         description: `Il tuo codice di verifica è: ${generatedOtpCode}`,
@@ -137,7 +129,7 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
       console.error('💥 Errore critico nel processo di autenticazione:', error);
       toast({
         title: "❌ Errore Critico",
-        description: "Si è verificato un errore imprevisto. Riprova o contatta il supporto.",
+        description: "Si è verificato un errore imprevisto. Riprova.",
         variant: "destructive"
       });
     } finally {
@@ -155,76 +147,57 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
       return;
     }
 
+    // Verifica che il codice OTP sia corretto (modalità simulazione)
+    if (otpCode !== simulatedOtpCode) {
+      toast({
+        title: "❌ Codice Non Valido",
+        description: "Il codice OTP inserito non è corretto. Riprova.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
     
     try {
-      console.log('🔍 Verifica codice OTP:', { otpCode, phoneNumber });
-      
-      // Verifichiamo il codice OTP
-      const { data: otpRecord, error: otpError } = await supabase
-        .from('otp_codes')
-        .select('*')
-        .eq('code', otpCode)
-        .eq('phone_number', phoneNumber)
-        .eq('verified', false)
-        .gt('expires_at', new Date().toISOString())
-        .maybeSingle();
+      console.log('🔍 Verifica codice OTP completata con successo');
 
-      console.log('📋 Risultato verifica OTP:', { otpRecord, otpError });
-
-      if (otpError || !otpRecord) {
-        toast({
-          title: "❌ Codice Non Valido",
-          description: "Il codice OTP inserito non è valido o è scaduto. Riprova.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Marchiamo l'OTP come verificato
-      const { error: markError } = await supabase
-        .from('otp_codes')
-        .update({ verified: true })
-        .eq('id', otpRecord.id);
-
-      if (markError) {
-        console.error('⚠️ Errore marcatura OTP:', markError);
-      }
-
-      // Otteniamo l'utente corrente (se esiste una sessione)
+      // Recuperiamo l'utente corrente
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
-      if (userError && !userError.message.includes('session missing')) {
+      if (userError || !user) {
         console.error('❌ Errore recupero utente:', userError);
-        toast({
-          title: "❌ Errore Sessione",
-          description: "Impossibile verificare la sessione utente.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Se non c'è un utente loggato, tentiamo di fare il login
-      if (!user) {
-        console.log('🔑 Nessun utente loggato, tentativo di login automatico...');
-        
-        const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+        // Tentiamo di fare login nuovamente
+        const { error: loginError } = await supabase.auth.signInWithPassword({
           email: email.toLowerCase(),
           password: 'SuperAdmin123!'
         });
-
+        
         if (loginError) {
-          console.log('⚠️ Login automatico fallito, procediamo comunque con la sessione SuperAdmin');
-        } else {
-          console.log('✅ Login automatico completato');
+          toast({
+            title: "❌ Errore Sessione",
+            description: "Impossibile verificare la sessione utente.",
+            variant: "destructive"
+          });
+          return;
         }
       }
 
-      // Recuperiamo nuovamente l'utente dopo il tentativo di login
+      // Recuperiamo nuovamente l'utente dopo il login
       const { data: { user: finalUser } } = await supabase.auth.getUser();
       
       if (finalUser) {
         console.log('👤 Utente autenticato:', finalUser.email);
+
+        // Aggiorniamo il record super_admin con l'user_id
+        const { error: updateError } = await supabase
+          .from('super_admins')
+          .update({ user_id: finalUser.id })
+          .eq('email', email.toLowerCase());
+
+        if (updateError) {
+          console.warn('⚠️ Errore aggiornamento super_admin:', updateError);
+        }
 
         // Creiamo la sessione SuperAdmin
         const { error: sessionError } = await supabase
@@ -236,17 +209,7 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
           });
 
         if (sessionError) {
-          console.error('⚠️ Errore creazione sessione SuperAdmin:', sessionError);
-        }
-
-        // Aggiorniamo il record super_admin con l'user_id se necessario
-        const { error: updateError } = await supabase
-          .from('super_admins')
-          .update({ user_id: finalUser.id })
-          .eq('email', email.toLowerCase());
-
-        if (updateError) {
-          console.error('⚠️ Errore aggiornamento super_admin:', updateError);
+          console.warn('⚠️ Errore creazione sessione SuperAdmin:', sessionError);
         }
       }
 
@@ -254,7 +217,7 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
       
       toast({
         title: "✅ Accesso Autorizzato",
-        description: "Benvenuto nell'area SuperAdmin! Accesso confermato.",
+        description: "Benvenuto nell'area SuperAdmin!",
       });
 
       // Chiamiamo il callback di autenticazione completata
