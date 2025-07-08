@@ -72,7 +72,7 @@ const SuperAdminAuthPage = () => {
         error: superAdminError?.message 
       });
 
-      if (superAdminError) {
+      if (superAdminError && superAdminError.code !== 'PGRST116') {
         console.error('❌ Errore verifica SuperAdmin:', superAdminError);
         setIsAuthenticated(false);
         return;
@@ -82,6 +82,18 @@ const SuperAdminAuthPage = () => {
         console.log('🚫 Utente non è un SuperAdmin');
         setIsAuthenticated(false);
         return;
+      }
+
+      // Aggiorniamo il record con l'user_id se necessario
+      if (!superAdmin.user_id) {
+        const { error: updateError } = await supabase
+          .from('super_admins')
+          .update({ user_id: user.id })
+          .eq('email', user.email);
+        
+        if (updateError) {
+          console.warn('⚠️ Errore aggiornamento user_id:', updateError);
+        }
       }
 
       console.log('✅ SuperAdmin autenticato con successo');

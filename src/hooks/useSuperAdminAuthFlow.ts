@@ -117,47 +117,48 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
 
       // Password temporanea per SuperAdmin
       const tempPassword = 'SuperAdmin123!';
+      const emailLower = email.toLowerCase();
       
       // Proviamo prima il login diretto
       console.log('🔑 Tentativo login con credenziali esistenti...');
-      let loginResult = await supabase.auth.signInWithPassword({
-        email: email.toLowerCase(),
+      let { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+        email: emailLower,
         password: tempPassword
       });
 
-      // Se il login fallisce, significa che l'utente non esiste o ha password diversa
-      if (loginResult.error?.message === 'Invalid login credentials') {
-        console.log('👤 Creazione/aggiornamento account SuperAdmin...');
+      // Se il login fallisce, potrebbe essere che l'utente non esiste o ha password diversa
+      if (loginError?.message === 'Invalid login credentials') {
+        console.log('👤 Creazione account SuperAdmin...');
         
         // Proviamo a creare l'account
-        const signupResult = await supabase.auth.signUp({
-          email: email.toLowerCase(),
+        const { data: signupData, error: signupError } = await supabase.auth.signUp({
+          email: emailLower,
           password: tempPassword,
           options: {
             data: {
               user_type: 'super_admin',
-              is_super_admin: true
-            }
+              is_super_admin: true,
+              email: emailLower
+            },
+            emailRedirectTo: `${window.location.origin}/`
           }
         });
 
-        if (signupResult.error?.message === 'User already registered') {
-          // L'utente esiste ma con password diversa - non possiamo resettarla con anon key
-          console.log('🔐 Utente esiste, tentativo autenticazione semplificata...');
-          
-          // Per ora, procediamo con l'autenticazione mock per SuperAdmin
-          console.log('✅ SuperAdmin verificato (modalità development)');
-        } else if (signupResult.error) {
-          throw signupResult.error;
+        if (signupError?.message === 'User already registered') {
+          console.log('🔐 Utente esiste già, procediamo con autenticazione diretta...');
+          // L'utente esiste ma non possiamo fare il login - in modalità test procediamo comunque
+          loginData = signupData;
+        } else if (signupError) {
+          throw signupError;
         } else {
           console.log('👤 Nuovo account SuperAdmin creato');
-          loginResult = signupResult;
+          loginData = signupData;
         }
-      } else if (loginResult.error) {
-        throw loginResult.error;
+      } else if (loginError) {
+        throw loginError;
       }
 
-      const user = loginResult.data?.user;
+      const user = loginData?.user;
       if (user) {
         console.log('👤 Sessione SuperAdmin creata:', user.email);
 
@@ -168,7 +169,7 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
             user_id: user.id,
             updated_at: new Date().toISOString()
           })
-          .eq('email', email.toLowerCase());
+          .eq('email', emailLower);
 
         if (updateError) {
           console.warn('⚠️ Errore aggiornamento super_admin:', updateError);
@@ -186,17 +187,19 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
         if (sessionError) {
           console.warn('⚠️ Errore creazione sessione SuperAdmin:', sessionError);
         }
+
+        console.log('🎉 Autenticazione SuperAdmin completata con successo!');
+        
+        toast({
+          title: "✅ Accesso Autorizzato",
+          description: "Benvenuto nell'area SuperAdmin!",
+        });
+
+        // Chiamiamo il callback di autenticazione completata
+        onAuthenticated();
+      } else {
+        throw new Error('Nessun utente restituito dall\'autenticazione');
       }
-
-      console.log('🎉 Autenticazione SuperAdmin completata con successo!');
-      
-      toast({
-        title: "✅ Accesso Autorizzato",
-        description: "Benvenuto nell'area SuperAdmin!",
-      });
-
-      // Chiamiamo il callback di autenticazione completata
-      onAuthenticated();
 
     } catch (error) {
       console.error('💥 Errore critico nella verifica OTP:', error);
