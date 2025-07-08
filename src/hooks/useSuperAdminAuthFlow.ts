@@ -60,54 +60,7 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
         return;
       }
 
-      // Tentiamo di creare o fare login con l'account
-      console.log('🔑 Tentativo di autenticazione/creazione account...');
-      
-      // Prima proviamo a fare login
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: emailLower,
-        password: 'SuperAdmin123!'
-      });
-
-      if (signInError && signInError.message.includes('Invalid login credentials')) {
-        // L'account non esiste, proviamo a crearlo
-        console.log('📝 Account non esistente, creazione in corso...');
-        
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email: emailLower,
-          password: 'SuperAdmin123!',
-          options: {
-            emailRedirectTo: `${window.location.origin}/superadmin`,
-            data: {
-              user_type: 'super_admin'
-            }
-          }
-        });
-
-        if (signUpError) {
-          console.error('❌ Errore nella creazione account:', signUpError);
-          toast({
-            title: "❌ Errore di Autenticazione",
-            description: `Errore: ${signUpError.message}`,
-            variant: "destructive"
-          });
-          return;
-        }
-        
-        console.log('✅ Account SuperAdmin creato con successo');
-      } else if (signInError) {
-        console.error('❌ Errore nel login:', signInError);
-        toast({
-          title: "❌ Errore di Login",
-          description: `Errore: ${signInError.message}`,
-          variant: "destructive"
-        });
-        return;
-      } else {
-        console.log('✅ Login SuperAdmin effettuato con successo');
-      }
-
-      // Generiamo il codice OTP simulato
+      // Generiamo il codice OTP simulato (modalità test)
       const generatedOtpCode = Math.floor(100000 + Math.random() * 900000).toString();
       setSimulatedOtpCode(generatedOtpCode);
       
@@ -160,57 +113,42 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
     setIsLoading(true);
     
     try {
-      console.log('🔍 Verifica codice OTP completata con successo');
+      console.log('🔍 Verifica codice OTP completata con successo per:', email);
 
-      // Recuperiamo l'utente corrente
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        console.error('❌ Errore recupero utente:', userError);
-        // Tentiamo di fare login nuovamente
-        const { error: loginError } = await supabase.auth.signInWithPassword({
-          email: email.toLowerCase(),
-          password: 'SuperAdmin123!'
-        });
-        
-        if (loginError) {
-          toast({
-            title: "❌ Errore Sessione",
-            description: "Impossibile verificare la sessione utente.",
-            variant: "destructive"
-          });
-          return;
-        }
+      // Simuliamo la creazione di una sessione temporanea per SuperAdmin
+      // In modalità test, creiamo una sessione fittizia
+      const mockUser = {
+        id: 'super-admin-' + Date.now(),
+        email: email.toLowerCase(),
+        user_metadata: { user_type: 'super_admin' }
+      };
+
+      console.log('👤 Sessione SuperAdmin simulata creata:', mockUser.email);
+
+      // Aggiorniamo il record super_admin
+      const { error: updateError } = await supabase
+        .from('super_admins')
+        .update({ 
+          user_id: mockUser.id,
+          updated_at: new Date().toISOString()
+        })
+        .eq('email', email.toLowerCase());
+
+      if (updateError) {
+        console.warn('⚠️ Errore aggiornamento super_admin:', updateError);
       }
 
-      // Recuperiamo nuovamente l'utente dopo il login
-      const { data: { user: finalUser } } = await supabase.auth.getUser();
-      
-      if (finalUser) {
-        console.log('👤 Utente autenticato:', finalUser.email);
+      // Creiamo la sessione SuperAdmin
+      const { error: sessionError } = await supabase
+        .from('super_admin_sessions')
+        .insert({
+          user_id: mockUser.id,
+          ip_address: '127.0.0.1',
+          user_agent: navigator.userAgent || 'Unknown'
+        });
 
-        // Aggiorniamo il record super_admin con l'user_id
-        const { error: updateError } = await supabase
-          .from('super_admins')
-          .update({ user_id: finalUser.id })
-          .eq('email', email.toLowerCase());
-
-        if (updateError) {
-          console.warn('⚠️ Errore aggiornamento super_admin:', updateError);
-        }
-
-        // Creiamo la sessione SuperAdmin
-        const { error: sessionError } = await supabase
-          .from('super_admin_sessions')
-          .insert({
-            user_id: finalUser.id,
-            ip_address: '127.0.0.1',
-            user_agent: navigator.userAgent || 'Unknown'
-          });
-
-        if (sessionError) {
-          console.warn('⚠️ Errore creazione sessione SuperAdmin:', sessionError);
-        }
+      if (sessionError) {
+        console.warn('⚠️ Errore creazione sessione SuperAdmin:', sessionError);
       }
 
       console.log('🎉 Autenticazione SuperAdmin completata con successo!');
