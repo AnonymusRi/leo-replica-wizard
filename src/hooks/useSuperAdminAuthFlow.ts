@@ -115,20 +115,23 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
     try {
       console.log('🔍 Verifica codice OTP completata con successo per:', email);
 
-      // Creiamo una vera sessione Supabase usando signInWithPassword con credenziali temporanee
-      // Per i Super Admin, creiamo un utente temporaneo se non esiste
-      const tempPassword = 'SuperAdmin123!'; // Password temporanea per SuperAdmin
+      // Password temporanea per SuperAdmin
+      const tempPassword = 'SuperAdmin123!';
       
-      // Prima proviamo il login
-      let authResult = await supabase.auth.signInWithPassword({
+      // Prima proviamo il login diretto
+      console.log('🔑 Tentativo login diretto...');
+      const loginResult = await supabase.auth.signInWithPassword({
         email: email.toLowerCase(),
         password: tempPassword
       });
 
-      // Se il login fallisce, creiamo l'account
-      if (authResult.error) {
-        console.log('👤 Creazione account SuperAdmin temporaneo...');
-        authResult = await supabase.auth.signUp({
+      let user = loginResult.data.user;
+
+      // Se il login fallisce con "Invalid login credentials", l'utente potrebbe non esistere
+      if (loginResult.error && loginResult.error.message === 'Invalid login credentials') {
+        console.log('👤 Utente non trovato, creazione nuovo account...');
+        
+        const signupResult = await supabase.auth.signUp({
           email: email.toLowerCase(),
           password: tempPassword,
           options: {
@@ -138,21 +141,49 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
             }
           }
         });
+
+        if (signupResult.error) {
+          // Se l'errore è "User already registered", proviamo reset password
+          if (signupResult.error.message === 'User already registered') {
+            console.log('🔄 Utente già registrato, tentativo reset password...');
+            
+            // Resettiamo la password dell'utente esistente
+            const { error: updateError } = await supabase.auth.admin.updateUserById(
+              (await supabase.auth.signInWithPassword({
+                email: email.toLowerCase(),
+                password: 'any-wrong-password' // Questo fallirà ma ci darà l'errore per capire se l'utente esiste
+              })).error?.message === 'Invalid login credentials' ? '' : '',
+              { password: tempPassword }
+            );
+
+            // Proviamo di nuovo il login
+            const retryLogin = await supabase.auth.signInWithPassword({
+              email: email.toLowerCase(),
+              password: tempPassword
+            });
+
+            if (retryLogin.error) {
+              throw new Error('Impossibile autenticare l\'utente SuperAdmin');
+            }
+
+            user = retryLogin.data.user;
+          } else {
+            throw signupResult.error;
+          }
+        } else {
+          user = signupResult.data.user;
+        }
+      } else if (loginResult.error) {
+        throw loginResult.error;
       }
 
-      if (authResult.error) {
-        console.error('❌ Errore autenticazione:', authResult.error);
-        throw authResult.error;
-      }
-
-      const user = authResult.data.user;
       if (!user) {
         throw new Error('Nessun utente restituito dall\'autenticazione');
       }
 
       console.log('👤 Sessione SuperAdmin creata:', user.email);
 
-      // Aggiorniamo il record super_admin
+      // Aggiorniamo il record super_admin con l'user_id se necessario
       const { error: updateError } = await supabase
         .from('super_admins')
         .update({ 
@@ -192,7 +223,7 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
       console.error('💥 Errore critico nella verifica OTP:', error);
       toast({
         title: "❌ Errore Critico",
-        description: "Si è verificato un errore durante la verifica. Riprova.",
+        description: `Si è verificato un errore durante la verifica: ${error instanceof Error ? error.message : 'Errore sconosciuto'}`,
         variant: "destructive"
       });
     } finally {
