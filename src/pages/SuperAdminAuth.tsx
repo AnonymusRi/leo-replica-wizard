@@ -10,6 +10,20 @@ const SuperAdminAuthPage = () => {
 
   useEffect(() => {
     checkAuthentication();
+    
+    // Ascoltiamo i cambiamenti di autenticazione
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('🔄 Cambio stato auth:', event, session?.user?.email);
+        if (event === 'SIGNED_IN' && session?.user) {
+          await checkSuperAdminStatus(session.user);
+        } else if (event === 'SIGNED_OUT') {
+          setIsAuthenticated(false);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const checkAuthentication = async () => {
@@ -32,6 +46,18 @@ const SuperAdminAuthPage = () => {
         return;
       }
 
+      await checkSuperAdminStatus(user);
+
+    } catch (error) {
+      console.error('💥 Errore critico nella verifica autenticazione:', error);
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const checkSuperAdminStatus = async (user: any) => {
+    try {
       // Verifichiamo se l'utente è un SuperAdmin
       const { data: superAdmin, error: superAdminError } = await supabase
         .from('super_admins')
@@ -58,42 +84,12 @@ const SuperAdminAuthPage = () => {
         return;
       }
 
-      // Verifichiamo se ha una sessione SuperAdmin attiva recente (ultime 24 ore)
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      
-      const { data: session, error: sessionError } = await supabase
-        .from('super_admin_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .gte('login_at', oneDayAgo)
-        .order('login_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      console.log('📅 Verifica sessione SuperAdmin:', { 
-        hasSession: !!session, 
-        error: sessionError?.message 
-      });
-
-      if (sessionError) {
-        console.error('❌ Errore verifica sessione:', sessionError);
-        // Non blocchiamo per errori di sessione, procediamo comunque
-      }
-
-      if (session) {
-        console.log('✅ Sessione SuperAdmin valida trovata');
-        setIsAuthenticated(true);
-      } else {
-        console.log('⏰ Nessuna sessione SuperAdmin recente, richiesta nuova autenticazione');
-        setIsAuthenticated(false);
-      }
+      console.log('✅ SuperAdmin autenticato con successo');
+      setIsAuthenticated(true);
 
     } catch (error) {
-      console.error('💥 Errore critico nella verifica autenticazione:', error);
+      console.error('💥 Errore nella verifica SuperAdmin:', error);
       setIsAuthenticated(false);
-    } finally {
-      setIsLoading(false);
     }
   };
 

@@ -115,21 +115,48 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
     try {
       console.log('🔍 Verifica codice OTP completata con successo per:', email);
 
-      // Simuliamo la creazione di una sessione temporanea per SuperAdmin
-      // In modalità test, creiamo una sessione fittizia
-      const mockUser = {
-        id: 'super-admin-' + Date.now(),
+      // Creiamo una vera sessione Supabase usando signInWithPassword con credenziali temporanee
+      // Per i Super Admin, creiamo un utente temporaneo se non esiste
+      const tempPassword = 'SuperAdmin123!'; // Password temporanea per SuperAdmin
+      
+      // Prima proviamo il login
+      let authResult = await supabase.auth.signInWithPassword({
         email: email.toLowerCase(),
-        user_metadata: { user_type: 'super_admin' }
-      };
+        password: tempPassword
+      });
 
-      console.log('👤 Sessione SuperAdmin simulata creata:', mockUser.email);
+      // Se il login fallisce, creiamo l'account
+      if (authResult.error) {
+        console.log('👤 Creazione account SuperAdmin temporaneo...');
+        authResult = await supabase.auth.signUp({
+          email: email.toLowerCase(),
+          password: tempPassword,
+          options: {
+            data: {
+              user_type: 'super_admin',
+              is_super_admin: true
+            }
+          }
+        });
+      }
+
+      if (authResult.error) {
+        console.error('❌ Errore autenticazione:', authResult.error);
+        throw authResult.error;
+      }
+
+      const user = authResult.data.user;
+      if (!user) {
+        throw new Error('Nessun utente restituito dall\'autenticazione');
+      }
+
+      console.log('👤 Sessione SuperAdmin creata:', user.email);
 
       // Aggiorniamo il record super_admin
       const { error: updateError } = await supabase
         .from('super_admins')
         .update({ 
-          user_id: mockUser.id,
+          user_id: user.id,
           updated_at: new Date().toISOString()
         })
         .eq('email', email.toLowerCase());
@@ -142,7 +169,7 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
       const { error: sessionError } = await supabase
         .from('super_admin_sessions')
         .insert({
-          user_id: mockUser.id,
+          user_id: user.id,
           ip_address: '127.0.0.1',
           user_agent: navigator.userAgent || 'Unknown'
         });
