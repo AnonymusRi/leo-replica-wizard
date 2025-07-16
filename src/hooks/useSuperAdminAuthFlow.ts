@@ -115,80 +115,14 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
     try {
       console.log('🔍 Verifica codice OTP completata con successo per:', email);
 
-      const emailLower = email.toLowerCase();
-      
-      // Prima verifichiamo se esiste già una sessione attiva
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      
-      if (currentSession?.user) {
-        console.log('✅ Sessione esistente trovata, procediamo con autenticazione');
-        await completeSuperAdminAuth(currentSession.user);
-        return;
-      }
-
-      // Strategia di autenticazione per SuperAdmin esistenti
-      console.log('🔑 Avvio processo di autenticazione SuperAdmin');
-      
-      // Password temporanea per SuperAdmin
-      const tempPassword = 'SuperAdmin123!';
-      
-      // Tentiamo prima il login
-      const { data: loginResult, error: loginError } = await supabase.auth.signInWithPassword({
-        email: emailLower,
-        password: tempPassword
+      toast({
+        title: "✅ Codice Verificato",
+        description: "Autenticazione in corso...",
       });
 
-      if (loginResult?.user && !loginError) {
-        console.log('✅ Login SuperAdmin riuscito');
-        await completeSuperAdminAuth(loginResult.user);
-        return;
-      }
-
-      console.log('⚠️ Login fallito, verifichiamo se utente esiste già:', loginError?.message);
-
-      // Se il login fallisce, potrebbe essere che la password sia diversa
-      // Tentiamo di aggiornare la password dell'utente esistente tramite admin
+      // Chiamiamo il callback di autenticazione completata
+      onAuthenticated();
       
-      // Per utenti SuperAdmin esistenti, usiamo una strategia diversa
-      // Creiamo una sessione temporanea usando magic link
-      const { error: magicLinkError } = await supabase.auth.signInWithOtp({
-        email: emailLower,
-        options: {
-          shouldCreateUser: false // Non creare nuovo utente se non esiste
-        }
-      });
-
-      if (!magicLinkError) {
-        console.log('📧 Magic link inviato, ma in modalità test procediamo direttamente');
-        // In modalità test, simuliamo il login riuscito
-        await simulateSuccessfulAuth();
-      } else {
-        console.log('⚠️ Magic link fallito, procediamo con creazione account:', magicLinkError.message);
-        
-        // Come ultima risorsa, tentiamo la creazione account
-        const { data: signupResult, error: signupError } = await supabase.auth.signUp({
-          email: emailLower,
-          password: tempPassword,
-          options: {
-            data: {
-              user_type: 'super_admin',
-              is_super_admin: true,
-              email: emailLower
-            }
-          }
-        });
-
-        if (signupResult?.user && !signupError) {
-          console.log('✅ Account SuperAdmin creato');
-          await completeSuperAdminAuth(signupResult.user);
-        } else if (signupError?.message.includes('User already registered')) {
-          console.log('✅ Utente già registrato, simuliamo autenticazione riuscita');
-          await simulateSuccessfulAuth();
-        } else {
-          throw signupError || new Error('Errore nella creazione account SuperAdmin');
-        }
-      }
-
     } catch (error) {
       console.error('💥 Errore critico nella verifica OTP:', error);
       toast({
@@ -198,80 +132,6 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const simulateSuccessfulAuth = async () => {
-    try {
-      console.log('🎭 Simulazione autenticazione riuscita per SuperAdmin');
-      
-      // Aggiorniamo il record super_admin 
-      const { error: updateError } = await supabase
-        .from('super_admins')
-        .update({ updated_at: new Date().toISOString() })
-        .eq('email', email.toLowerCase());
-
-      if (updateError) {
-        console.warn('⚠️ Errore aggiornamento super_admin:', updateError);
-      }
-
-      toast({
-        title: "✅ Accesso Autorizzato",
-        description: "Benvenuto nell'area SuperAdmin!",
-      });
-
-      // Chiamiamo il callback di autenticazione completata
-      onAuthenticated();
-      
-    } catch (error) {
-      console.error('💥 Errore nella simulazione autenticazione:', error);
-      throw error;
-    }
-  };
-
-  const completeSuperAdminAuth = async (user: any) => {
-    try {
-      console.log('👤 Completamento autenticazione SuperAdmin per:', user.email);
-
-      // Aggiorniamo il record super_admin con l'user_id se necessario
-      const { error: updateError } = await supabase
-        .from('super_admins')
-        .update({ 
-          user_id: user.id,
-          updated_at: new Date().toISOString()
-        })
-        .eq('email', email.toLowerCase());
-
-      if (updateError) {
-        console.warn('⚠️ Errore aggiornamento super_admin:', updateError);
-      }
-
-      // Creiamo la sessione SuperAdmin
-      const { error: sessionError } = await supabase
-        .from('super_admin_sessions')
-        .insert({
-          user_id: user.id,
-          ip_address: '127.0.0.1',
-          user_agent: navigator.userAgent || 'Unknown'
-        });
-
-      if (sessionError) {
-        console.warn('⚠️ Errore creazione sessione SuperAdmin:', sessionError);
-      }
-
-      console.log('🎉 Autenticazione SuperAdmin completata con successo!');
-      
-      toast({
-        title: "✅ Accesso Autorizzato",
-        description: "Benvenuto nell'area SuperAdmin!",
-      });
-
-      // Chiamiamo il callback di autenticazione completata
-      onAuthenticated();
-      
-    } catch (error) {
-      console.error('💥 Errore nel completamento autenticazione:', error);
-      throw error;
     }
   };
 
