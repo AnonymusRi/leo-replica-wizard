@@ -85,6 +85,11 @@ export const useCreateNotification = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['system-notifications'] });
+      toast.success('Notifica creata con successo');
+    },
+    onError: (error) => {
+      console.error('Errore creazione notifica:', error);
+      toast.error('Errore nella creazione della notifica');
     }
   });
 };
