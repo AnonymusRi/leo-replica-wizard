@@ -113,18 +113,6 @@ const SuperAdminAuthPage = () => {
     
     if (user) {
       console.log('✅ Sessione utente confermata:', user.email);
-      
-      // Impostiamo temporaneamente un flag per bypassare RLS durante l'autenticazione SuperAdmin
-      try {
-        await supabase.rpc('set_config', {
-          setting_name: 'app.current_user_role',  
-          setting_value: 'super_admin'
-        });
-        console.log('🔧 Flag SuperAdmin temporaneo impostato');
-      } catch (error) {
-        console.warn('⚠️ Impossibile impostare flag SuperAdmin:', error);
-      }
-      
       setIsAuthenticated(true);
     } else {
       console.log('⚠️ Nessuna sessione utente trovata dopo autenticazione');
