@@ -102,6 +102,25 @@ export const PendingOrganizationRequests = () => {
         console.log('🔄 Tentativo inserimento diretto bypassando RLS...');
         
         try {
+          const organizationData = {
+            name: request.organizationName,
+            slug: generateSlug(request.organizationName),
+            email: request.email,
+            phone: request.phone,
+            city: request.city,
+            country: request.country,
+            subscription_status: 'active',
+            active_modules: getActiveModules(request.licenseType),
+            settings: {
+              default_timezone: 'Europe/Rome',
+              language: 'it',
+              license_type: request.licenseType.toLowerCase(),
+              estimated_users: request.estimatedUsers,
+              business_type: request.businessType,
+              contact_person: request.contactPerson
+            }
+          };
+
           // Tentativo di inserimento diretto
           const { data, error: directError } = await supabase
             .from('organizations')
