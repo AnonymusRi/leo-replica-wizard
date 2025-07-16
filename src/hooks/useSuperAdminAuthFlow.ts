@@ -9,7 +9,6 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
   const [otpCode, setOtpCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [simulatedOtpCode, setSimulatedOtpCode] = useState('');
   const { toast } = useToast();
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -60,23 +59,34 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
         return;
       }
 
-      // Generiamo il codice OTP simulato (modalità test)
-      const generatedOtpCode = Math.floor(100000 + Math.random() * 900000).toString();
-      setSimulatedOtpCode(generatedOtpCode);
-      
-      console.log('📱 Codice OTP generato:', generatedOtpCode);
-      
+      // Ora implementiamo una vera autenticazione con OTP via email
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: emailLower,
+        options: {
+          emailRedirectTo: window.location.origin + '/superadmin'
+        }
+      });
+
+      if (otpError) {
+        console.error('❌ Errore invio OTP:', otpError);
+        toast({
+          title: "❌ Errore OTP",
+          description: "Impossibile inviare il codice OTP. Riprova.",
+          variant: "destructive"
+        });
+        return;
+      }
+
       setPhoneNumber(superAdminCheck.phone_number || '+39 123 456 7890');
       setStep('otp');
       
-      // Mostriamo il codice OTP nel toast per la modalità test
       toast({
-        title: "🔐 Codice OTP (MODALITÀ TEST)",
-        description: `Il tuo codice di verifica è: ${generatedOtpCode}`,
-        duration: 15000
+        title: "📧 OTP Inviato",
+        description: "Controlla la tua email per il codice di verifica.",
+        duration: 10000
       });
       
-      console.log('🎯 Processo completato, passaggio a step OTP');
+      console.log('🎯 OTP inviato via email');
 
     } catch (error) {
       console.error('💥 Errore critico nel processo di autenticazione:', error);
@@ -100,28 +110,39 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
       return;
     }
 
-    // Verifica che il codice OTP sia corretto (modalità simulazione)
-    if (otpCode !== simulatedOtpCode) {
-      toast({
-        title: "❌ Codice Non Valido",
-        description: "Il codice OTP inserito non è corretto. Riprova.",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsLoading(true);
     
     try {
-      console.log('🔍 Verifica codice OTP completata con successo per:', email);
+      console.log('🔍 Verifica codice OTP per:', email);
 
-      toast({
-        title: "✅ Codice Verificato",
-        description: "Autenticazione in corso...",
+      // Verifica il codice OTP con Supabase
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email.toLowerCase(),
+        token: otpCode,
+        type: 'email'
       });
 
-      // Chiamiamo il callback di autenticazione completata
-      onAuthenticated();
+      if (error) {
+        console.error('❌ Errore verifica OTP:', error);
+        toast({
+          title: "❌ Codice Non Valido",
+          description: "Il codice OTP inserito non è corretto. Riprova.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (data.user) {
+        console.log('✅ Autenticazione SuperAdmin completata:', data.user.email);
+        
+        toast({
+          title: "✅ Accesso Autorizzato",
+          description: "Benvenuto nel pannello SuperAdmin!",
+        });
+
+        // Chiamiamo il callback di autenticazione completata
+        onAuthenticated();
+      }
       
     } catch (error) {
       console.error('💥 Errore critico nella verifica OTP:', error);
@@ -145,7 +166,6 @@ export const useSuperAdminAuthFlow = (onAuthenticated: () => void) => {
     isLoading,
     phoneNumber,
     handleEmailSubmit,
-    handleOtpVerify,
-    simulatedOtpCode
+    handleOtpVerify
   };
 };

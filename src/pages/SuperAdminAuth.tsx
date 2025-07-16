@@ -15,6 +15,7 @@ const SuperAdminAuthPage = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔄 Cambio stato auth:', event, session?.user?.email);
+        
         if (event === 'SIGNED_IN' && session?.user) {
           await checkSuperAdminStatus(session.user);
         } else if (event === 'SIGNED_OUT') {
@@ -105,76 +106,9 @@ const SuperAdminAuthPage = () => {
     }
   };
 
-  const handleAuthenticated = async () => {
-    console.log('🎉 Inizio processo autenticazione SuperAdmin');
-    
-    try {
-      // Creiamo un account reale per il SuperAdmin
-      const superAdminEmail = 'riccardo.cirulli@gmail.com';
-      const superAdminPassword = 'SuperAdmin123!';
-      
-      // Prima tentiamo il login
-      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-        email: superAdminEmail,
-        password: superAdminPassword
-      });
-
-      if (loginData.user && !loginError) {
-        console.log('✅ Login SuperAdmin riuscito');
-        // L'autenticazione viene gestita automaticamente dall'onAuthStateChange
-        return;
-      }
-
-      console.log('⚠️ Login fallito, creiamo account SuperAdmin:', loginError?.message);
-      
-      // Se il login fallisce, creiamo l'account
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: superAdminEmail,
-        password: superAdminPassword,
-        options: {
-          data: {
-            first_name: 'Super',
-            last_name: 'Admin',
-            user_type: 'super_admin'
-          }
-        }
-      });
-
-      if (signUpError) {
-        if (signUpError.message.includes('User already registered')) {
-          console.log('✅ Utente già registrato, tentiamo reset password');
-          
-          // Tentiamo il reset password
-          const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-            superAdminEmail,
-            { redirectTo: window.location.origin }
-          );
-          
-          if (!resetError) {
-            console.log('📧 Email di reset inviata');
-          }
-          
-          // Per ora procediamo con l'autenticazione simulata
-          console.log('🎭 Procedendo con autenticazione simulata per SuperAdmin');
-          setIsAuthenticated(true);
-          return;
-        }
-        
-        throw signUpError;
-      }
-
-      if (signUpData.user) {
-        console.log('✅ Account SuperAdmin creato con successo');
-        // L'autenticazione viene gestita automaticamente dall'onAuthStateChange
-      }
-
-    } catch (error) {
-      console.error('💥 Errore durante la creazione account SuperAdmin:', error);
-      
-      // Come fallback, procediamo con l'autenticazione simulata
-      console.log('🎭 Fallback: autenticazione simulata per SuperAdmin');
-      setIsAuthenticated(true);
-    }
+  const handleAuthenticated = () => {
+    console.log('🎉 Autenticazione SuperAdmin completata');
+    // Non facciamo nulla qui, la gestione è già nell'onAuthStateChange
   };
 
   if (isLoading) {
