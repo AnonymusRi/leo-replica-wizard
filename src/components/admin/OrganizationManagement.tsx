@@ -3,9 +3,9 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building, Users, Settings, Plus } from "lucide-react";
+import { Building, Users, Settings, Plus, AlertCircle } from "lucide-react";
 import { OrganizationModal } from "./OrganizationModal";
-import { useOrganizations } from "@/hooks/useOrganizations";
+import { useOrganizations, useCheckSuperAdminStatus } from "@/hooks/useOrganizations";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,28 +28,43 @@ export const OrganizationManagement = () => {
   const [selectedOrg, setSelectedOrg] = useState<OrganizationWithUserCount | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { data: organizationsData, isLoading: orgsLoading, refetch } = useOrganizations();
+  const { data: organizationsData, isLoading: orgsLoading, refetch, error: orgsError } = useOrganizations();
+  const { data: isSuperAdmin } = useCheckSuperAdminStatus();
 
   const { data: organizations, isLoading } = useQuery({
     queryKey: ['organizations-with-user-count'],
     queryFn: async () => {
-      if (!organizationsData) return [];
+      if (!organizationsData) {
+        console.log('⚠️ No organizations data available');
+        return [];
+      }
 
+      console.log('📊 Processing organizations with user count...');
       const orgsWithUserCount = await Promise.all(
         organizationsData.map(async (org) => {
-          const { count } = await supabase
-            .from('profiles')
-            .select('*', { count: 'exact', head: true })
-            .eq('organization_id', org.id);
-          
-          return {
-            ...org,
-            active_modules: Array.isArray(org.active_modules) ? org.active_modules : [],
-            user_count: count || 0
-          } as OrganizationWithUserCount;
+          try {
+            const { count } = await supabase
+              .from('profiles')
+              .select('*', { count: 'exact', head: true })
+              .eq('organization_id', org.id);
+            
+            return {
+              ...org,
+              active_modules: Array.isArray(org.active_modules) ? org.active_modules : [],
+              user_count: count || 0
+            } as OrganizationWithUserCount;
+          } catch (error) {
+            console.error('❌ Error counting users for org:', org.id, error);
+            return {
+              ...org,
+              active_modules: Array.isArray(org.active_modules) ? org.active_modules : [],
+              user_count: 0
+            } as OrganizationWithUserCount;
+          }
         })
       );
 
+      console.log('✅ Organizations with user count processed:', orgsWithUserCount.length);
       return orgsWithUserCount;
     },
     enabled: !!organizationsData
@@ -69,27 +84,61 @@ export const OrganizationManagement = () => {
   };
 
   const handleCreateOrg = () => {
+    if (!isSuperAdmin) {
+      console.warn('⚠️ Non-SuperAdmin attempting to create organization');
+      return;
+    }
     setSelectedOrg(null);
     setIsModalOpen(true);
   };
 
   const handleEditOrg = (org: OrganizationWithUserCount) => {
+    if (!isSuperAdmin) {
+      console.warn('⚠️ Non-SuperAdmin attempting to edit organization');
+      return;
+    }
     setSelectedOrg(org);
     setIsModalOpen(true);
   };
 
   if (isLoading || orgsLoading) {
-    return <div>Caricamento organizzazioni...</div>;
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-2">Caricamento organizzazioni...</span>
+      </div>
+    );
+  }
+
+  if (orgsError) {
+    return (
+      <Card>
+        <CardContent className="text-center py-8">
+          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Errore nel caricamento
+          </h3>
+          <p className="text-gray-500 mb-4">
+            Errore nel caricamento delle organizzazioni: {orgsError.message}
+          </p>
+          <Button onClick={() => refetch()}>
+            Riprova
+          </Button>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Organizzazioni Registrate</h3>
-        <Button onClick={handleCreateOrg}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nuova Organizzazione
-        </Button>
+        <h3 className="text-lg font-medium">Organizzazioni Registrate ({organizations?.length || 0})</h3>
+        {isSuperAdmin && (
+          <Button onClick={handleCreateOrg}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nuova Organizzazione
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -138,14 +187,16 @@ export const OrganizationManagement = () => {
                 )}
 
                 <div className="flex justify-between items-center pt-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleEditOrg(org)}
-                  >
-                    <Settings className="w-3 h-3 mr-1" />
-                    Gestisci
-                  </Button>
+                  {isSuperAdmin && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleEditOrg(org)}
+                    >
+                      <Settings className="w-3 h-3 mr-1" />
+                      Gestisci
+                    </Button>
+                  )}
                   <span className="text-xs text-gray-500">
                     Creata: {new Date(org.created_at).toLocaleDateString('it-IT')}
                   </span>
@@ -164,25 +215,31 @@ export const OrganizationManagement = () => {
               Nessuna organizzazione trovata
             </h3>
             <p className="text-gray-500 mb-4">
-              Crea la prima organizzazione per iniziare.
+              {isSuperAdmin 
+                ? "Crea la prima organizzazione per iniziare." 
+                : "Non hai accesso a nessuna organizzazione."}
             </p>
-            <Button onClick={handleCreateOrg}>
-              <Plus className="w-4 h-4 mr-2" />
-              Crea Organizzazione
-            </Button>
+            {isSuperAdmin && (
+              <Button onClick={handleCreateOrg}>
+                <Plus className="w-4 h-4 mr-2" />
+                Crea Organizzazione
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
 
-      <OrganizationModal
-        organization={selectedOrg}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={() => {
-          refetch();
-          setIsModalOpen(false);
-        }}
-      />
+      {isSuperAdmin && (
+        <OrganizationModal
+          organization={selectedOrg}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={() => {
+            refetch();
+            setIsModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 };
