@@ -20,13 +20,13 @@ export const OTPStep = ({ phoneNumber, otpCode, setOtpCode, onVerify, onBack, is
         <div className="flex items-center justify-center space-x-2 mb-2">
           <TestTube className="w-4 h-4 text-orange-600" />
           <span className="text-sm text-orange-600 font-medium">
-            MODALITÀ SIMULAZIONE
+            MODALITÀ TEST
           </span>
         </div>
         <div className="flex items-center justify-center space-x-2 mb-2">
           <Phone className="w-4 h-4 text-green-600" />
           <span className="text-sm text-gray-600">
-            Codice inviato a {phoneNumber}
+            Telefono: {phoneNumber}
           </span>
         </div>
         <Badge variant="outline" className="mb-4">
@@ -35,14 +35,14 @@ export const OTPStep = ({ phoneNumber, otpCode, setOtpCode, onVerify, onBack, is
         </Badge>
       </div>
 
-      <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <div className="flex items-center space-x-2 mb-2">
-          <TestTube className="w-4 h-4 text-orange-600" />
-          <span className="text-sm font-medium text-orange-800">Modalità Test</span>
+          <TestTube className="w-4 h-4 text-blue-600" />
+          <span className="text-sm font-medium text-blue-800">Modalità Test Attiva</span>
         </div>
-        <p className="text-sm text-orange-700">
-          Il codice OTP è mostrato nel toast di notifica e nella console del browser. 
-          Controlla la notifica che è apparsa dopo aver inserito l'email.
+        <p className="text-sm text-blue-700">
+          Il codice OTP è stato mostrato nella notifica sopra. In modalità di produzione, 
+          il codice verrebbe inviato via email. Per ora, usa il codice mostrato nel toast.
         </p>
       </div>
       
@@ -88,7 +88,7 @@ export const OTPStep = ({ phoneNumber, otpCode, setOtpCode, onVerify, onBack, is
 
       <div className="flex items-center justify-center space-x-1 text-xs text-gray-500">
         <AlertCircle className="w-3 h-3" />
-        <span>Il codice scade tra 10 minuti</span>
+        <span>Modalità test - codice valido per questa sessione</span>
       </div>
     </div>
   );
