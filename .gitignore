@@ -35,3 +35,4 @@ dist-ssr
 # Database
 *.sql.backup
 *.sql.bak
+test-push.ps1

@@ -1,0 +1,38 @@
+# Variabili d'ambiente per Railway - Raw Editor
+# Copia e incolla queste variabili nel Raw Editor di Railway
+
+# ============================================
+# BUILD CONFIGURATION (Risolve conflitto dipendenze)
+# ============================================
+NPM_CONFIG_LEGACY_PEER_DEPS=true
+NIXPACKS_PKG_MGR=npm
+
+# ============================================
+# DATABASE CONFIGURATION
+# ============================================
+# Se usi il database PostgreSQL di Railway, usa queste variabili:
+# (Railway le popola automaticamente quando aggiungi un database PostgreSQL)
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+
+# Oppure se vuoi usare variabili separate:
+# DB_HOST=${{Postgres.PGHOST}}
+# DB_PORT=${{Postgres.PGPORT}}
+# DB_NAME=${{Postgres.PGDATABASE}}
+# DB_USER=${{Postgres.PGUSER}}
+# DB_PASSWORD=${{Postgres.PGPASSWORD}}
+# DB_SSL=true
+
+# ============================================
+# APPLICATION CONFIGURATION
+# ============================================
+NODE_ENV=production
+PORT=8080
+
+# ============================================
+# NOTA IMPORTANTE
+# ============================================
+# 1. Se aggiungi un database PostgreSQL in Railway, le variabili ${{Postgres.*}} 
+#    vengono popolate automaticamente
+# 2. NPM_CONFIG_LEGACY_PEER_DEPS risolve il conflitto tra react-day-picker e date-fns
+# 3. NIXPACKS_PKG_MGR forza l'uso di npm invece di bun
+
