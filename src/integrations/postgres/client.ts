@@ -233,6 +233,10 @@ class PostgresQueryBuilder {
     if (this.whereConditions.length > 0) {
       const conditions = this.whereConditions.map(cond => {
         if (cond.operator === 'IN') {
+          // Ensure we have values for IN clause
+          if (!Array.isArray(cond.value) || cond.value.length === 0) {
+            throw new Error(`IN operator requires a non-empty array, got: ${JSON.stringify(cond.value)}`);
+          }
           const placeholders = cond.value.map(() => `$${paramIndex++}`).join(', ');
           params.push(...cond.value);
           return `${cond.field} IN (${placeholders})`;
@@ -240,8 +244,10 @@ class PostgresQueryBuilder {
           params.push(cond.value);
           return `${cond.field} ${cond.operator} $${paramIndex++}`;
         }
-      });
-      sql += ` WHERE ${conditions.join(' AND ')}`;
+      }).filter(c => c); // Filter out any empty conditions
+      if (conditions.length > 0) {
+        sql += ` WHERE ${conditions.join(' AND ')}`;
+      }
     }
 
     // Build ORDER BY clause
