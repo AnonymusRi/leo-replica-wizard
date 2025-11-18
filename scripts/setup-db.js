@@ -32,6 +32,12 @@ if (process.env.DATABASE_URL) {
   }
   // Railway DATABASE_URL includes SSL, so enable it
   dbConfig.ssl = { rejectUnauthorized: false };
+  // Clear individual config when using DATABASE_URL to avoid conflicts
+  delete dbConfig.host;
+  delete dbConfig.port;
+  delete dbConfig.database;
+  delete dbConfig.user;
+  delete dbConfig.password;
 } else {
   // Fallback to individual variables if DATABASE_URL is not available
   dbConfig = {
@@ -60,6 +66,13 @@ if (process.env.DATABASE_URL) {
 async function waitForDatabase(maxRetries = 30, delayMs = 2000) {
   console.log('🔌 Waiting for database to be ready...');
   
+  // Log environment variables for debugging
+  console.log('🔍 Environment check:');
+  console.log(`   DATABASE_URL: ${process.env.DATABASE_URL ? '✅ Set' : '❌ Not set'}`);
+  console.log(`   PGHOST: ${process.env.PGHOST || 'Not set'}`);
+  console.log(`   DB_HOST: ${process.env.DB_HOST || 'Not set'}`);
+  console.log(`   RAILWAY_ENVIRONMENT: ${process.env.RAILWAY_ENVIRONMENT || 'Not set'}`);
+  
   for (let i = 0; i < maxRetries; i++) {
     try {
       const testPool = new Pool(dbConfig);
@@ -71,10 +84,18 @@ async function waitForDatabase(maxRetries = 30, delayMs = 2000) {
       return true;
     } catch (error) {
       if (i < maxRetries - 1) {
-        console.log(`⏳ Database not ready yet (attempt ${i + 1}/${maxRetries}), retrying in ${delayMs}ms...`);
+        // Only log every 5 attempts to reduce noise
+        if (i % 5 === 0 || i < 3) {
+          console.log(`⏳ Database not ready yet (attempt ${i + 1}/${maxRetries}), retrying in ${delayMs}ms...`);
+          if (error.code) {
+            console.log(`   Error: ${error.code} - ${error.message.substring(0, 100)}`);
+          }
+        }
         await new Promise(resolve => setTimeout(resolve, delayMs));
       } else {
         console.error('❌ Database connection failed after all retries');
+        console.error(`   Final error: ${error.code} - ${error.message}`);
+        console.error(`   Address: ${error.address || 'N/A'}:${error.port || 'N/A'}`);
         throw error;
       }
     }
