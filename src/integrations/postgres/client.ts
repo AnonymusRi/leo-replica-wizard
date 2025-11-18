@@ -679,7 +679,13 @@ class PostgresClient {
         const userStr = localStorage.getItem('mock_user');
         const sessionStr = localStorage.getItem('mock_session');
         const session = sessionStr ? JSON.parse(sessionStr) : null;
-        callback('SIGNED_IN', session);
+        
+        // Call callback immediately with current state
+        if (session) {
+          callback('SIGNED_IN', session);
+        } else {
+          callback('SIGNED_OUT', null);
+        }
         
         // Listen for storage changes
         const handleStorageChange = () => {
@@ -693,17 +699,25 @@ class PostgresClient {
         };
         window.addEventListener('storage', handleStorageChange);
         
-        return {
-          data: { subscription: { id: 'mock-sub' } },
+        // Return Supabase-compatible subscription object
+        const subscription = {
+          id: 'mock-sub-' + Date.now(),
           unsubscribe: () => {
             window.removeEventListener('storage', handleStorageChange);
           },
         };
+        
+        return {
+          data: { subscription },
+        };
       }
       // Server-side: implement your auth state change listener here
-      return {
-        data: { subscription: null },
+      const subscription = {
+        id: 'server-sub',
         unsubscribe: () => {},
+      };
+      return {
+        data: { subscription },
       };
     },
   };
