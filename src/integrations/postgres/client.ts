@@ -92,9 +92,16 @@ class PostgresQueryBuilder {
             }
             
             // Skip joins for complex relationships that require junction tables
-            if (this.tableName === 'flights' && table === 'crew_members') {
-              // Skip crew_members join for flights as it requires junction table (flight_crew, flight_assignments)
-              console.warn(`⚠️ Skipping join for ${this.tableName}.${table} - requires junction table`);
+            const skipJoin = 
+              (this.tableName === 'flights' && table === 'crew_members') ||
+              (this.tableName === 'flights' && table === 'flight_legs') ||
+              (this.tableName === 'flights' && table === 'schedule_changes') ||
+              (this.tableName === 'maintenance_records' && table === 'crew_members') ||
+              (this.tableName === 'flight_assignments' && table === 'flights') ||
+              (this.tableName === 'schedule_versions' && table === 'clients');
+            
+            if (skipJoin) {
+              // Skip these joins as they require junction tables or don't have direct foreign keys
               continue;
             }
             
@@ -223,7 +230,12 @@ class PostgresQueryBuilder {
 
     // Build ORDER BY clause
     if (this.orderByField) {
-      sql += ` ORDER BY ${this.orderByField} ${this.orderByDirection.toUpperCase()}`;
+      // Qualify column name with table name if there are joins to avoid ambiguity
+      let orderByField = this.orderByField;
+      if (this.joins.length > 0 && !this.orderByField.includes('.')) {
+        orderByField = `${this.tableName}.${this.orderByField}`;
+      }
+      sql += ` ORDER BY ${orderByField} ${this.orderByDirection.toUpperCase()}`;
     }
 
     // Build LIMIT clause
