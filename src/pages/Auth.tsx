@@ -22,25 +22,26 @@ export default function Auth() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
-        // Redirect based on user type after login
-        if (userType === 'crew') {
-          navigate('/crew-dashboard');
-        } else {
-          navigate('/');
-        }
+      // Solo per gestire cambiamenti di stato (logout, refresh, ecc.)
+      // Il redirect dopo login viene gestito direttamente in handleSignIn
+      if (event === 'SIGNED_OUT') {
+        // Opzionale: redirect alla pagina di login se l'utente esce
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [navigate, userType]);
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
+  }, [navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -55,6 +56,13 @@ export default function Auth() {
       }
 
       toast.success('Accesso effettuato con successo!');
+      
+      // Redirect immediato basato sul tipo di utente
+      if (userType === 'crew') {
+        navigate('/crew-dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (error) {
       toast.error('Errore imprevisto durante l\'accesso');
     } finally {
