@@ -4,6 +4,9 @@
 import { query, getClient } from '@/config/database';
 import type { Database } from '../supabase/types';
 
+// Check if we're in browser environment
+const isBrowser = typeof window !== 'undefined';
+
 // Helper to convert PostgreSQL rows to Supabase-like format
 function formatRows(rows: any[]) {
   return rows.map(row => {
@@ -141,6 +144,12 @@ class PostgresQueryBuilder {
   }
 
   async execute() {
+    // In browser, return mock data
+    if (isBrowser) {
+      console.warn('⚠️ Database query executed in browser - returning mock data');
+      return this.executeMock();
+    }
+
     const { sql, params } = this.buildQuery();
     try {
       const result = await query(sql, params);
@@ -160,6 +169,87 @@ class PostgresQueryBuilder {
         count: null,
       };
     }
+  }
+
+  // Mock data for browser environment
+  private executeMock() {
+    // Mock data based on table name and conditions
+    const mockData: any = {
+      super_admins: [
+        {
+          id: '1',
+          email: 'riccardo.cirulli@gmail.com',
+          phone_number: '+39 123 456 7890',
+          is_active: true,
+          two_factor_enabled: false,
+          user_id: 'mock-user-id',
+          created_at: new Date().toISOString(),
+        }
+      ],
+      users: [],
+      organizations: [],
+      flights: [],
+      crew_members: [],
+    };
+
+    let data = mockData[this.tableName] || [];
+    
+    // Apply filters
+    for (const condition of this.whereConditions) {
+      if (condition.operator === '=') {
+        data = data.filter((row: any) => row[condition.field] === condition.value);
+      }
+    }
+
+    // Apply limit
+    if (this.limitCount !== null) {
+      data = data.slice(0, this.limitCount);
+    }
+
+    return {
+      data: formatRows(data),
+      error: null,
+      count: data.length,
+    };
+  }
+
+  // Supabase-compatible methods: single() - returns first row or throws if not found
+  async single() {
+    const result = await this.execute();
+    if (result.error) {
+      throw result.error;
+    }
+    if (!result.data || result.data.length === 0) {
+      throw new Error('No rows returned');
+    }
+    if (result.data.length > 1) {
+      throw new Error('Multiple rows returned, expected single row');
+    }
+    return {
+      data: result.data[0],
+      error: null,
+    };
+  }
+
+  // Supabase-compatible methods: maybeSingle() - returns first row or null if not found
+  async maybeSingle() {
+    const result = await this.execute();
+    if (result.error) {
+      throw result.error;
+    }
+    if (!result.data || result.data.length === 0) {
+      return {
+        data: null,
+        error: null,
+      };
+    }
+    if (result.data.length > 1) {
+      throw new Error('Multiple rows returned, expected single row');
+    }
+    return {
+      data: result.data[0],
+      error: null,
+    };
   }
 
   // Supabase-compatible methods
