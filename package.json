@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview --host 0.0.0.0 --port ${PORT:-4173}",
     "setup:db": "node scripts/setup-db.js",
-    "start": "vite preview --host 0.0.0.0 --port ${PORT:-8080}"
+    "start": "node scripts/start-server.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
