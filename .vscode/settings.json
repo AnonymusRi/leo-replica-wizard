@@ -1,0 +1,48 @@
+{
+  // Configurazione workspace per Leo Replica Wizard
+  // IMPORTANTE: Apri sempre la cartella ROOT del progetto, non la cartella .git!
+  
+  // TypeScript
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  
+  // Editor
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  
+  // File associations
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  
+  // Path aliases per TypeScript
+  "typescript.preferences.importModuleSpecifier": "relative",
+  
+  // Escludi cartelle dal file explorer
+  "files.exclude": {
+    "**/.git": false,
+    "**/node_modules": true,
+    "**/dist": true
+  },
+  
+  // Search exclude
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.git": true
+  },
+  
+  // Tailwind CSS IntelliSense
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+    ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^\"'`]*)(?:'|\"|`)"]
+  ],
+  
+  // Git
+  "git.ignoreLimitWarning": true,
+  "git.autofetch": true
+}
+
