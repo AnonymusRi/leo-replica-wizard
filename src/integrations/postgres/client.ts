@@ -362,26 +362,95 @@ class PostgresClient {
     }
   }
 
-  // Auth methods (placeholder - implement your own auth system)
+  // Auth methods (mock for browser, real implementation for server)
   auth = {
     getUser: async () => {
-      // Implement your auth logic here
+      if (isBrowser) {
+        // Mock user from localStorage
+        const userStr = localStorage.getItem('mock_user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        return { data: { user }, error: null };
+      }
+      // Server-side: implement your auth logic here
       return { data: { user: null }, error: null };
     },
     signUp: async (credentials: { email: string; password: string }) => {
-      // Implement your auth logic here
+      if (isBrowser) {
+        // Mock signup - store in localStorage
+        const mockUser = {
+          id: 'mock-' + Date.now(),
+          email: credentials.email,
+          created_at: new Date().toISOString(),
+        };
+        localStorage.setItem('mock_user', JSON.stringify(mockUser));
+        localStorage.setItem('mock_session', JSON.stringify({ access_token: 'mock-token' }));
+        return { 
+          data: { user: mockUser, session: { access_token: 'mock-token' } }, 
+          error: null 
+        };
+      }
+      // Server-side: implement your auth logic here
       return { data: { user: null, session: null }, error: null };
     },
     signInWithPassword: async (credentials: { email: string; password: string }) => {
-      // Implement your auth logic here
+      if (isBrowser) {
+        // Mock signin - store in localStorage
+        const mockUser = {
+          id: 'mock-user-id',
+          email: credentials.email,
+          created_at: new Date().toISOString(),
+        };
+        localStorage.setItem('mock_user', JSON.stringify(mockUser));
+        localStorage.setItem('mock_session', JSON.stringify({ access_token: 'mock-token' }));
+        
+        // Simulate delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        return { 
+          data: { user: mockUser, session: { access_token: 'mock-token' } }, 
+          error: null 
+        };
+      }
+      // Server-side: implement your auth logic here
       return { data: { user: null, session: null }, error: null };
     },
     signOut: async () => {
-      // Implement your auth logic here
+      if (isBrowser) {
+        localStorage.removeItem('mock_user');
+        localStorage.removeItem('mock_session');
+        return { error: null };
+      }
+      // Server-side: implement your auth logic here
       return { error: null };
     },
     onAuthStateChange: (callback: (event: string, session: any) => void) => {
-      // Implement your auth state change listener here
+      if (isBrowser) {
+        // Mock auth state change
+        const userStr = localStorage.getItem('mock_user');
+        const sessionStr = localStorage.getItem('mock_session');
+        const session = sessionStr ? JSON.parse(sessionStr) : null;
+        callback('SIGNED_IN', session);
+        
+        // Listen for storage changes
+        const handleStorageChange = () => {
+          const newUserStr = localStorage.getItem('mock_user');
+          const newSessionStr = localStorage.getItem('mock_session');
+          if (newUserStr && newSessionStr) {
+            callback('SIGNED_IN', JSON.parse(newSessionStr));
+          } else {
+            callback('SIGNED_OUT', null);
+          }
+        };
+        window.addEventListener('storage', handleStorageChange);
+        
+        return {
+          data: { subscription: { id: 'mock-sub' } },
+          unsubscribe: () => {
+            window.removeEventListener('storage', handleStorageChange);
+          },
+        };
+      }
+      // Server-side: implement your auth state change listener here
       return {
         data: { subscription: null },
         unsubscribe: () => {},
