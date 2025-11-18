@@ -9,10 +9,8 @@
 # ============================================
 
 # ============================================
-# DATABASE - PostgreSQL (Referenze al servizio Postgres)
+# DATABASE - PostgreSQL
 # ============================================
-# Railway fornisce automaticamente queste variabili quando aggiungi un database PostgreSQL
-# Usa la sintassi ${{ServiceName.VariableName}} per referenziare le variabili del servizio Postgres
 DATABASE_URL=${{Postgres.DATABASE_URL}}
 PGHOST=${{Postgres.PGHOST}}
 PGPORT=${{Postgres.PGPORT}}
@@ -22,10 +20,6 @@ PGPASSWORD=${{Postgres.PGPASSWORD}}
 POSTGRES_DB=${{Postgres.PGDATABASE}}
 POSTGRES_USER=${{Postgres.PGUSER}}
 POSTGRES_PASSWORD=${{Postgres.PGPASSWORD}}
-
-# ============================================
-# DATABASE - Variabili Alternative (per compatibilità con codice che usa DB_*)
-# ============================================
 DB_HOST=${{Postgres.PGHOST}}
 DB_PORT=${{Postgres.PGPORT}}
 DB_NAME=${{Postgres.PGDATABASE}}
@@ -34,32 +28,21 @@ DB_PASSWORD=${{Postgres.PGPASSWORD}}
 DB_SSL=true
 
 # ============================================
-# APPLICATION - Node.js
+# APPLICATION
 # ============================================
 NODE_ENV=production
 PORT=5000
 RAILWAY_ENVIRONMENT=true
 
 # ============================================
-# VITE - URL dell'Applicazione
+# VITE
 # ============================================
-# ⚠️ SOSTITUISCI con il tuo dominio Railway (es: alidaunia-production.up.railway.app)
 VITE_PUBLIC_URL=https://alidaunia-production.up.railway.app
 VITE_API_URL=https://alidaunia-production.up.railway.app/api
 VITE_APP_ENV=production
 
 # ============================================
-# BUILD CONFIGURATION
+# BUILD
 # ============================================
 NPM_CONFIG_LEGACY_PEER_DEPS=true
 NIXPACKS_PKG_MGR=npm
-
-# ============================================
-# NOTE IMPORTANTI
-# ============================================
-# 1. Sostituisci "Postgres" con il nome esatto del tuo servizio PostgreSQL (case-sensitive)
-# 2. Sostituisci "alidaunia-production.up.railway.app" con il tuo dominio Railway
-# 3. La porta 5432 è la porta standard di PostgreSQL (inclusa in PGPORT)
-# 4. DATABASE_URL include già host, porta, database, user e password
-# 5. Le variabili VITE_* sono necessarie per il build di Vite e per le chiamate API dal browser
-
