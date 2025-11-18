@@ -38,6 +38,32 @@ if (process.env.DB_SSL === 'true' ||
   dbConfig.ssl = false;
 }
 
+// Helper function to wait for database to be ready
+async function waitForDatabase(maxRetries = 30, delayMs = 2000) {
+  console.log('🔌 Waiting for database to be ready...');
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const testPool = new Pool(dbConfig);
+      const client = await testPool.connect();
+      await client.query('SELECT 1');
+      client.release();
+      await testPool.end();
+      console.log('✅ Database is ready!');
+      return true;
+    } catch (error) {
+      if (i < maxRetries - 1) {
+        console.log(`⏳ Database not ready yet (attempt ${i + 1}/${maxRetries}), retrying in ${delayMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      } else {
+        console.error('❌ Database connection failed after all retries');
+        throw error;
+      }
+    }
+  }
+  return false;
+}
+
 const pool = new Pool(dbConfig);
 
 // Split SQL file into individual statements
@@ -114,6 +140,9 @@ function splitSQLStatements(sql) {
 }
 
 async function setupDatabase() {
+  // Wait for database to be ready before proceeding
+  await waitForDatabase();
+  
   const client = await pool.connect();
   
   try {
