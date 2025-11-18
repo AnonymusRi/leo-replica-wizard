@@ -220,6 +220,14 @@ class PostgresQueryBuilder {
       throw result.error;
     }
     if (!result.data || result.data.length === 0) {
+      // In browser with mock data, return null instead of throwing
+      if (isBrowser) {
+        console.warn('⚠️ single() called but no data found - returning null (browser mock)');
+        return {
+          data: null,
+          error: null,
+        };
+      }
       throw new Error('No rows returned');
     }
     if (result.data.length > 1) {
