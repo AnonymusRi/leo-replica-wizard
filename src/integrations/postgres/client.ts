@@ -43,26 +43,71 @@ class PostgresQueryBuilder {
       const mainFields: string[] = [];
       const joins: { alias: string; table: string; foreignKey: string }[] = [];
       
+      // Map of table name to foreign key column name for common relationships
+      const foreignKeyMap: Record<string, Record<string, string>> = {
+        flights: {
+          aircraft: 'aircraft_id',
+          clients: 'client_id',
+          organizations: 'organization_id',
+        },
+        maintenance_records: {
+          aircraft: 'aircraft_id',
+          crew_members: 'technician_id',
+        },
+        aircraft_documents: {
+          aircraft: 'aircraft_id',
+        },
+        quotes: {
+          clients: 'client_id',
+          organizations: 'organization_id',
+        },
+        crew_members: {
+          organizations: 'organization_id',
+        },
+      };
+      
       for (const part of parts) {
         if (part.includes(':')) {
           // Parse relation syntax: "alias:table(*)" or "alias:table(field1, field2)"
           const match = part.match(/(\w+):(\w+)\(([^)]*)\)/);
           if (match) {
             const [, alias, table, selectFields] = match;
-            // Determine foreign key based on table name
+            // Determine foreign key based on current table and target table
             let foreignKey = '';
-            if (table === 'aircraft') foreignKey = 'aircraft_id';
-            else if (table === 'clients') foreignKey = 'client_id';
-            else if (table === 'crew_members') foreignKey = 'crew_id';
-            else if (table === 'organizations') foreignKey = 'organization_id';
-            else foreignKey = `${table.slice(0, -1)}_id`; // Try plural to singular + _id
             
-            joins.push({ alias, table, foreignKey });
-            const fieldsToSelect = selectFields.trim() || '*';
-            if (fieldsToSelect === '*') {
-              mainFields.push(`${table}.* as ${alias}`);
+            // Check if we have a mapping for this relationship
+            if (foreignKeyMap[this.tableName] && foreignKeyMap[this.tableName][table]) {
+              foreignKey = foreignKeyMap[this.tableName][table];
             } else {
-              mainFields.push(`${fieldsToSelect.split(',').map(f => `${table}.${f.trim()} as ${alias}_${f.trim()}`).join(', ')}`);
+              // Try common patterns
+              if (table === 'aircraft') foreignKey = 'aircraft_id';
+              else if (table === 'clients') foreignKey = 'client_id';
+              else if (table === 'organizations') foreignKey = 'organization_id';
+              else if (table.endsWith('s')) {
+                // Try plural to singular + _id
+                foreignKey = `${table.slice(0, -1)}_id`;
+              } else {
+                foreignKey = `${table}_id`;
+              }
+            }
+            
+            // Only add join if we can determine a foreign key
+            // Skip joins for complex relationships (like crew_members through junction tables)
+            if (foreignKey && !table.includes('crew_members') || 
+                (this.tableName === 'flights' && table === 'crew_members')) {
+              // Skip crew_members join for flights as it requires junction table
+              console.warn(`⚠️ Skipping join for ${this.tableName}.${table} - requires junction table`);
+              continue;
+            }
+            
+            if (foreignKey) {
+              joins.push({ alias, table, foreignKey });
+              const fieldsToSelect = selectFields.trim() || '*';
+              if (fieldsToSelect === '*') {
+                mainFields.push(`${table}.* as ${alias}`);
+              } else {
+                mainFields.push(`${fieldsToSelect.split(',').map(f => `${table}.${f.trim()} as ${alias}_${f.trim()}`).join(', ')}`);
+              }
             }
           }
         } else if (part !== '*') {
