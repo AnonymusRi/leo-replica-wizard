@@ -128,6 +128,22 @@ async function setupDatabase() {
     
     console.log(`📝 Executing ${statements.length} SQL statements...`);
     
+    // First, ensure the update_updated_at_column function exists
+    try {
+      await client.query(`
+        CREATE OR REPLACE FUNCTION update_updated_at_column()
+        RETURNS TRIGGER AS $$
+        BEGIN
+            NEW.updated_at = CURRENT_TIMESTAMP;
+            RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+      `);
+      console.log('✅ Created/updated update_updated_at_column function');
+    } catch (error) {
+      console.warn('⚠️  Warning creating function:', error.message);
+    }
+    
     // Execute each statement separately
     for (let i = 0; i < statements.length; i++) {
       const statement = statements[i];
