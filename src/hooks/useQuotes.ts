@@ -12,7 +12,7 @@ export const useQuotes = () => {
         .from('quotes')
         .select(`
           *,
-          client:client_id(company_name, contact_person)
+          client:clients(company_name, contact_person)
         `)
         .order('created_at', { ascending: false });
       
@@ -30,7 +30,7 @@ export const useQuote = (id: string) => {
         .from('quotes')
         .select(`
           *,
-          client:client_id(company_name, contact_person)
+          client:clients(company_name, contact_person)
         `)
         .eq('id', id)
         .single();
