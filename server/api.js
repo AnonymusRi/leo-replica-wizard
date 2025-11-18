@@ -161,6 +161,48 @@ app.post('/api/query', async (req, res) => {
   }
 });
 
+// Endpoint generico per INSERT (per tabelle non specifiche)
+app.post('/api/insert', async (req, res) => {
+  try {
+    const { table, data } = req.body;
+    
+    if (!table || !data) {
+      return res.status(400).json({ error: 'Table name and data are required' });
+    }
+
+    const records = Array.isArray(data) ? data : [data];
+    
+    if (records.length === 0) {
+      return res.status(400).json({ error: 'No data provided' });
+    }
+
+    const columns = Object.keys(records[0]);
+    const placeholders = records.map((_, rowIndex) => {
+      const rowPlaceholders = columns.map((_, colIndex) => 
+        `$${rowIndex * columns.length + colIndex + 1}`
+      ).join(', ');
+      return `(${rowPlaceholders})`;
+    }).join(', ');
+
+    const values = records.flatMap(record => columns.map(col => record[col]));
+    const sql = `INSERT INTO ${table} (${columns.join(', ')}) VALUES ${placeholders} RETURNING *`;
+    
+    const result = await query(sql, values);
+    
+    res.json({ 
+      data: result.rows, 
+      count: result.rowCount,
+      message: `Inserted ${result.rowCount} records into ${table}` 
+    });
+  } catch (error) {
+    console.error('Error inserting data:', error);
+    res.status(500).json({ 
+      error: error.message,
+      code: error.code 
+    });
+  }
+});
+
 export default app;
 
 // Non avviare il server qui - sarà avviato da start-server-with-api.js

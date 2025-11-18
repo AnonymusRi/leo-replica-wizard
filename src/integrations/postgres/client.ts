@@ -144,36 +144,48 @@ class PostgresQueryBuilder {
   }
 
   async execute() {
-    // In browser, try to use API first, fallback to mock data
+    // In browser, always use API - no mock data
     if (isBrowser) {
       const apiUrl = import.meta.env.VITE_API_URL || window.location.origin + '/api';
       
       try {
-        // Try to use API endpoint
+        // Use API endpoint to query PostgreSQL database
+        const { sql, params } = this.buildQuery();
         const response = await fetch(`${apiUrl}/query`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sql: this.buildQuery().sql,
-            params: this.buildQuery().params,
-          }),
+          body: JSON.stringify({ sql, params }),
         });
         
-        if (response.ok) {
-          const result = await response.json();
+        if (!response.ok) {
+          const error = await response.json();
           return {
-            data: result.data || [],
-            error: null,
-            count: result.count || 0,
+            data: null,
+            error: {
+              message: error.error || 'API request failed',
+              code: error.code,
+            },
+            count: null,
           };
         }
-      } catch (error) {
-        // API not available, use mock data
-        console.warn('⚠️ API not available, using mock data:', error);
+        
+        const result = await response.json();
+        return {
+          data: result.data || [],
+          error: null,
+          count: result.count || 0,
+        };
+      } catch (error: any) {
+        console.error('❌ Error calling API:', error);
+        return {
+          data: null,
+          error: {
+            message: error.message || 'Failed to connect to API',
+            code: 'NETWORK_ERROR',
+          },
+          count: null,
+        };
       }
-      
-      console.warn('⚠️ Database query executed in browser - returning mock data');
-      return this.executeMock();
     }
 
     const { sql, params } = this.buildQuery();
@@ -358,7 +370,7 @@ class InsertBuilder {
   }
 
   private async execute(returnSingle: boolean = false) {
-    // In browser, try to use API first, fallback to mock data
+    // In browser, always use API - no mock data
     if (isBrowser) {
       const apiUrl = import.meta.env.VITE_API_URL || window.location.origin + '/api';
       
@@ -369,34 +381,51 @@ class InsertBuilder {
           endpoint = '/api/maintenance-records';
         } else if (this.tableName === 'oil_consumption_records') {
           endpoint = '/api/oil-consumption';
+        } else {
+          // Generic insert endpoint (would need to be added to API)
+          endpoint = '/api/insert';
         }
         
         const response = await fetch(`${apiUrl}${endpoint}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.insertData),
+          body: JSON.stringify({
+            table: this.tableName,
+            data: this.insertData,
+          }),
         });
         
-        if (response.ok) {
-          const result = await response.json();
-          if (returnSingle) {
-            return {
-              data: result.data?.[0] || null,
-              error: null,
-            };
-          }
+        if (!response.ok) {
+          const error = await response.json();
           return {
-            data: result.data || [],
+            data: null,
+            error: {
+              message: error.error || 'API request failed',
+              code: error.code,
+            },
+          };
+        }
+        
+        const result = await response.json();
+        if (returnSingle) {
+          return {
+            data: result.data?.[0] || null,
             error: null,
           };
-        } else {
-          const error = await response.json();
-          throw new Error(error.error || 'API request failed');
         }
-      } catch (error) {
-        // API not available, use mock data
-        console.warn('⚠️ API not available, using mock data:', error);
-        return this.executeMock(returnSingle);
+        return {
+          data: result.data || [],
+          error: null,
+        };
+      } catch (error: any) {
+        console.error('❌ Error calling API:', error);
+        return {
+          data: null,
+          error: {
+            message: error.message || 'Failed to connect to API',
+            code: 'NETWORK_ERROR',
+          },
+        };
       }
     }
 
