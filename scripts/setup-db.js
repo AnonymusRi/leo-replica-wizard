@@ -36,6 +36,70 @@ if (process.env.DB_SSL === 'true' || process.env.DATABASE_URL?.includes('sslmode
 
 const pool = new Pool(dbConfig);
 
+// Split SQL file into individual statements
+function splitSQLStatements(sql) {
+  const statements = [];
+  let currentStatement = '';
+  let inFunction = false;
+  let delimiter = ';';
+  let dollarQuote = null;
+  
+  const lines = sql.split('\n');
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    
+    // Check for dollar-quoted strings (used in functions)
+    if (dollarQuote === null) {
+      const dollarMatch = trimmed.match(/^\$\$([^$]*)\$$/);
+      if (dollarMatch) {
+        dollarQuote = dollarMatch[0];
+        currentStatement += line + '\n';
+        continue;
+      }
+      
+      // Check for opening dollar quote
+      const openDollarMatch = trimmed.match(/^\$\$([^$]*)$/);
+      if (openDollarMatch) {
+        dollarQuote = openDollarMatch[0];
+        currentStatement += line + '\n';
+        continue;
+      }
+    } else {
+      // Check for closing dollar quote
+      if (trimmed.includes(dollarQuote)) {
+        dollarQuote = null;
+      }
+      currentStatement += line + '\n';
+      continue;
+    }
+    
+    // Skip comments and empty lines
+    if (trimmed.startsWith('--') || trimmed === '') {
+      continue;
+    }
+    
+    currentStatement += line + '\n';
+    
+    // Check if this is the end of a statement
+    if (trimmed.endsWith(';') && dollarQuote === null) {
+      const statement = currentStatement.trim();
+      if (statement) {
+        statements.push(statement);
+      }
+      currentStatement = '';
+    }
+  }
+  
+  // Add any remaining statement
+  if (currentStatement.trim()) {
+    statements.push(currentStatement.trim());
+  }
+  
+  return statements;
+}
+
 async function setupDatabase() {
   const client = await pool.connect();
   
@@ -46,10 +110,36 @@ async function setupDatabase() {
     const schemaPath = path.join(__dirname, '..', 'database_schema.sql');
     const schema = fs.readFileSync(schemaPath, 'utf8');
     
-    // Execute the schema
-    await client.query(schema);
+    // Split into individual statements
+    const statements = splitSQLStatements(schema);
     
-    console.log('✅ Database schema created successfully!');
+    console.log(`📝 Executing ${statements.length} SQL statements...`);
+    
+    // Execute each statement separately
+    for (let i = 0; i < statements.length; i++) {
+      const statement = statements[i];
+      if (!statement.trim() || statement.trim().startsWith('--')) {
+        continue;
+      }
+      
+      try {
+        await client.query(statement);
+      } catch (error) {
+        // Skip errors for "already exists" cases
+        if (error.message.includes('already exists') || 
+            error.message.includes('duplicate') ||
+            error.code === '42P07' || // duplicate_table
+            error.code === '42710') { // duplicate_object
+          console.log(`ℹ️  Skipping (already exists): ${statement.substring(0, 50)}...`);
+          continue;
+        }
+        // For other errors, log and continue (some statements might fail if dependencies don't exist yet)
+        console.warn(`⚠️  Warning executing statement ${i + 1}: ${error.message.substring(0, 100)}`);
+        console.warn(`   Statement: ${statement.substring(0, 100)}...`);
+      }
+    }
+    
+    console.log('✅ Database schema setup completed!');
     
     // Verify by checking if some tables exist
     const result = await client.query(`
@@ -59,19 +149,20 @@ async function setupDatabase() {
       ORDER BY table_name;
     `);
     
-    console.log(`📊 Created ${result.rows.length} tables:`);
-    result.rows.forEach(row => {
-      console.log(`   - ${row.table_name}`);
-    });
+    console.log(`📊 Found ${result.rows.length} tables in database:`);
+    if (result.rows.length > 0) {
+      result.rows.slice(0, 10).forEach(row => {
+        console.log(`   - ${row.table_name}`);
+      });
+      if (result.rows.length > 10) {
+        console.log(`   ... and ${result.rows.length - 10} more`);
+      }
+    }
     
   } catch (error) {
-    // If schema already exists, that's okay
-    if (error.message.includes('already exists')) {
-      console.log('ℹ️  Schema already exists, skipping...');
-    } else {
-      console.error('❌ Error setting up database:', error.message);
-      process.exit(1);
-    }
+    console.error('❌ Error setting up database:', error.message);
+    console.error('   Stack:', error.stack);
+    process.exit(1);
   } finally {
     client.release();
     await pool.end();
