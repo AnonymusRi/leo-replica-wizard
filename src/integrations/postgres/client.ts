@@ -265,6 +265,11 @@ class PostgresQueryBuilder {
     return new InsertBuilder(this.tableName, data);
   }
 
+  // Update method - returns a chainable object
+  update(data: any) {
+    return new UpdateBuilder(this.tableName, data, this.whereConditions);
+  }
+
   // Supabase-compatible methods
   async then(resolve?: any, reject?: any) {
     const result = await this.execute();
@@ -379,6 +384,118 @@ class InsertBuilder {
 
     return {
       data: mockData,
+      error: null,
+    };
+  }
+}
+
+// Update builder for chaining .update().eq().select().single()
+class UpdateBuilder {
+  private tableName: string;
+  private updateData: any;
+  private whereConditions: { field: string; operator: string; value: any }[];
+  private selectFields: string = '*';
+
+  constructor(tableName: string, data: any, whereConditions: { field: string; operator: string; value: any }[]) {
+    this.tableName = tableName;
+    this.updateData = data;
+    this.whereConditions = whereConditions;
+  }
+
+  eq(field: string, value: any) {
+    this.whereConditions.push({ field, operator: '=', value });
+    return this;
+  }
+
+  select(fields?: string) {
+    if (fields) {
+      this.selectFields = fields;
+    }
+    return this;
+  }
+
+  async single() {
+    return await this.execute(true);
+  }
+
+  async maybeSingle() {
+    return await this.execute(true);
+  }
+
+  async then(resolve?: any, reject?: any) {
+    const result = await this.execute(false);
+    if (result.error) {
+      if (reject) reject(result.error);
+      return Promise.reject(result.error);
+    }
+    if (resolve) resolve(result);
+    return Promise.resolve(result);
+  }
+
+  private async execute(returnSingle: boolean = false) {
+    // In browser, return mock data
+    if (isBrowser) {
+      console.warn('⚠️ Database update executed in browser - returning mock data');
+      return this.executeMock(returnSingle);
+    }
+
+    const setClause = Object.keys(this.updateData).map((key, index) => 
+      `${key} = $${index + 1}`
+    ).join(', ');
+    
+    const whereClause = this.whereConditions.map((cond, index) => 
+      `${cond.field} = $${Object.keys(this.updateData).length + index + 1}`
+    ).join(' AND ');
+
+    const values = [...Object.values(this.updateData), ...this.whereConditions.map(c => c.value)];
+    const sql = `UPDATE ${this.tableName} SET ${setClause} WHERE ${whereClause} RETURNING ${this.selectFields}`;
+
+    try {
+      const result = await query(sql, values);
+      const formattedData = formatRows(result.rows);
+      
+      if (returnSingle) {
+        if (formattedData.length === 0) {
+          return { data: null, error: null };
+        }
+        return {
+          data: formattedData[0],
+          error: null,
+        };
+      }
+      
+      return {
+        data: formattedData,
+        error: null,
+      };
+    } catch (error: any) {
+      return {
+        data: null,
+        error: {
+          message: error.message,
+          code: error.code,
+        },
+      };
+    }
+  }
+
+  private executeMock(returnSingle: boolean) {
+    // Mock update - return updated data
+    const mockData = {
+      id: 'mock-id',
+      ...this.updateData,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (returnSingle) {
+      return {
+        data: mockData,
+        error: null,
+      };
+    }
+
+    return {
+      data: [mockData],
       error: null,
     };
   }
