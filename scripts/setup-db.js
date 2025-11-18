@@ -146,6 +146,12 @@ async function setupDatabase() {
           console.log(`ℹ️  Skipping (already exists): ${statement.substring(0, 50)}...`);
           continue;
         }
+        // Skip errors for triggers that reference non-existent functions (function will be created later)
+        if (error.message.includes('does not exist') && 
+            (statement.includes('TRIGGER') || statement.includes('FUNCTION'))) {
+          console.log(`ℹ️  Skipping (dependency not ready): ${statement.substring(0, 50)}...`);
+          continue;
+        }
         // For other errors, log and continue (some statements might fail if dependencies don't exist yet)
         console.warn(`⚠️  Warning executing statement ${i + 1}: ${error.message.substring(0, 100)}`);
         console.warn(`   Statement: ${statement.substring(0, 100)}...`);
