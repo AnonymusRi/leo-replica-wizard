@@ -34,7 +34,48 @@ class PostgresQueryBuilder {
   }
 
   select(fields: string) {
-    this.selectFields = fields;
+    // Convert Supabase relation syntax (table:table(*)) to PostgreSQL JOIN syntax
+    // Example: "*, aircraft:aircraft(*), client:clients(*)" 
+    // becomes: "flights.*, aircraft.* as aircraft, clients.* as client"
+    if (fields.includes(':')) {
+      const parts = fields.split(',').map(p => p.trim());
+      const mainFields: string[] = [];
+      const joins: { alias: string; table: string; foreignKey: string }[] = [];
+      
+      for (const part of parts) {
+        if (part.includes(':')) {
+          // Parse relation syntax: "alias:table(*)" or "alias:table(field1, field2)"
+          const match = part.match(/(\w+):(\w+)\(([^)]*)\)/);
+          if (match) {
+            const [, alias, table, selectFields] = match;
+            // Determine foreign key based on table name
+            let foreignKey = '';
+            if (table === 'aircraft') foreignKey = 'aircraft_id';
+            else if (table === 'clients') foreignKey = 'client_id';
+            else if (table === 'crew_members') foreignKey = 'crew_id';
+            else if (table === 'organizations') foreignKey = 'organization_id';
+            else foreignKey = `${table.slice(0, -1)}_id`; // Try plural to singular + _id
+            
+            joins.push({ alias, table, foreignKey });
+            const fieldsToSelect = selectFields.trim() || '*';
+            if (fieldsToSelect === '*') {
+              mainFields.push(`${table}.* as ${alias}`);
+            } else {
+              mainFields.push(`${fieldsToSelect.split(',').map(f => `${table}.${f.trim()} as ${alias}_${f.trim()}`).join(', ')}`);
+            }
+          }
+        } else if (part !== '*') {
+          mainFields.push(part);
+        } else {
+          mainFields.push(`${this.tableName}.*`);
+        }
+      }
+      
+      this.selectFields = mainFields.join(', ');
+      this.joins = joins;
+    } else {
+      this.selectFields = fields;
+    }
     return this;
   }
 
@@ -106,7 +147,15 @@ class PostgresQueryBuilder {
   }
 
   private buildQuery(): { sql: string; params: any[] } {
-    let sql = `SELECT ${this.selectFields} FROM ${this.tableName}`;
+    // Build JOIN clauses if any
+    let joinClauses = '';
+    if (this.joins.length > 0) {
+      for (const join of this.joins) {
+        joinClauses += ` LEFT JOIN ${join.table} ON ${this.tableName}.${join.foreignKey} = ${join.table}.id`;
+      }
+    }
+    
+    let sql = `SELECT ${this.selectFields} FROM ${this.tableName}${joinClauses}`;
     const params: any[] = [];
     let paramIndex = 1;
 
