@@ -12,7 +12,7 @@ async function getPool() {
     // Database connection configuration
     // Railway private networking: use 'postgres' as hostname for internal communication
     const dbConfig = {
-      host: process.env.DB_HOST || process.env.PGHOST || 'postgres' || 'localhost',
+      host: process.env.DB_HOST || process.env.PGHOST || (process.env.RAILWAY_ENVIRONMENT ? 'postgres' : 'localhost'),
       port: parseInt(process.env.DB_PORT || process.env.PGPORT || '5432'),
       database: process.env.DB_NAME || process.env.PGDATABASE || process.env.POSTGRES_DB || 'leo_replica_wizard',
       user: process.env.DB_USER || process.env.PGUSER || process.env.POSTGRES_USER || 'postgres',
