@@ -93,6 +93,19 @@ class PostgresQueryBuilder {
       
       for (const part of parts) {
         if (part.includes(':')) {
+          // Check if this part contains nested relations (has : inside parentheses)
+          // If so, skip it as we don't support nested relations yet
+          const openParen = part.indexOf('(');
+          const closeParen = part.lastIndexOf(')');
+          if (openParen !== -1 && closeParen !== -1) {
+            const insideParens = part.substring(openParen + 1, closeParen);
+            if (insideParens.includes(':')) {
+              // This is a nested relation, skip it
+              console.warn(`⚠️ Skipping nested relation: ${part.substring(0, 50)}...`);
+              continue;
+            }
+          }
+          
           // Parse relation syntax: "alias:table(*)" or "alias:table(field1, field2)"
           const match = part.match(/(\w+):(\w+)\(([^)]*)\)/);
           if (match) {
@@ -118,10 +131,12 @@ class PostgresQueryBuilder {
             
             // Skip joins for complex relationships that require junction tables
             // Note: maintenance_records.crew_members uses technician_id, so it's allowed
+            // flight_assignments requires a junction table (flight_assignments table links flights to crew_members)
             const skipJoin = 
               (this.tableName === 'flights' && table === 'crew_members') ||
               (this.tableName === 'flights' && table === 'flight_legs') ||
               (this.tableName === 'flights' && table === 'schedule_changes') ||
+              (this.tableName === 'flights' && table === 'flight_assignments') ||
               (this.tableName === 'flight_assignments' && table === 'flights') ||
               (this.tableName === 'schedule_versions' && table === 'clients');
             
