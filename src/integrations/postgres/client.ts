@@ -190,6 +190,11 @@ class PostgresQueryBuilder {
       organizations: [],
       flights: [],
       crew_members: [],
+      aircraft_hold_items: [],
+      aircraft_documents: [],
+      crew_flight_assignments: [],
+      training_records: [],
+      pilot_flight_hours: [],
     };
 
     let data = mockData[this.tableName] || [];
@@ -197,7 +202,15 @@ class PostgresQueryBuilder {
     // Apply filters
     for (const condition of this.whereConditions) {
       if (condition.operator === '=') {
-        data = data.filter((row: any) => row[condition.field] === condition.value);
+        data = data.filter((row: any) => {
+          const rowValue = row[condition.field];
+          const conditionValue = condition.value;
+          // Handle case-insensitive string comparison
+          if (typeof rowValue === 'string' && typeof conditionValue === 'string') {
+            return rowValue.toLowerCase() === conditionValue.toLowerCase();
+          }
+          return rowValue === conditionValue;
+        });
       }
     }
 
