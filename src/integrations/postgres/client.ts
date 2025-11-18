@@ -52,7 +52,7 @@ class PostgresQueryBuilder {
         },
         maintenance_records: {
           aircraft: 'aircraft_id',
-          crew_members: 'technician_id',
+          crew_members: 'technician_id', // Note: maintenance_records has technician_id, not crew_id
         },
         aircraft_documents: {
           aircraft: 'aircraft_id',
@@ -92,11 +92,11 @@ class PostgresQueryBuilder {
             }
             
             // Skip joins for complex relationships that require junction tables
+            // Note: maintenance_records.crew_members uses technician_id, so it's allowed
             const skipJoin = 
               (this.tableName === 'flights' && table === 'crew_members') ||
               (this.tableName === 'flights' && table === 'flight_legs') ||
               (this.tableName === 'flights' && table === 'schedule_changes') ||
-              (this.tableName === 'maintenance_records' && table === 'crew_members') ||
               (this.tableName === 'flight_assignments' && table === 'flights') ||
               (this.tableName === 'schedule_versions' && table === 'clients');
             
