@@ -87,6 +87,12 @@ class PostgresQueryBuilder {
         crew_members: {
           organizations: 'organization_id',
         },
+        profiles: {
+          organizations: 'organization_id',
+        },
+        user_roles: {
+          organizations: 'organization_id',
+        },
       };
       
       let hasMainFields = false;

@@ -47,7 +47,7 @@ export const UserManagement = () => {
           organization_id,
           is_active,
           created_at,
-          organizations (name, slug)
+          organization:organizations(name, slug)
         `)
         .order('created_at', { ascending: false });
       
@@ -153,7 +153,7 @@ export const UserManagement = () => {
               </TableCell>
               <TableCell>{user.email}</TableCell>
               <TableCell>
-                {user.organizations?.name || 'Nessuna'}
+                {user.organization?.name || 'Nessuna'}
               </TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-1">

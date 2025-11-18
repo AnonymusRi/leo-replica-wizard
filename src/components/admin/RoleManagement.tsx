@@ -23,7 +23,7 @@ export const RoleManagement = () => {
         .from('user_roles')
         .select(`
           id, role, module_permissions,
-          organizations (name),
+          organization:organizations(name),
           user_id
         `);
       
@@ -31,12 +31,12 @@ export const RoleManagement = () => {
 
       // Raggruppa per ruolo e conta utenti
       const roleGroups = data.reduce((acc: any, curr: any) => {
-        const key = `${curr.role}-${curr.organizations?.name || 'No Org'}`;
+        const key = `${curr.role}-${curr.organization?.name || 'No Org'}`;
         if (!acc[key]) {
           acc[key] = {
             role: curr.role,
             module_permissions: curr.module_permissions || [],
-            organization_name: curr.organizations?.name || 'Nessuna Organizzazione',
+            organization_name: curr.organization?.name || 'Nessuna Organizzazione',
             user_count: 0,
             users: new Set()
           };
