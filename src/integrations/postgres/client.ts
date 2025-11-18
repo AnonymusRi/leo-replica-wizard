@@ -130,11 +130,18 @@ class PostgresQueryBuilder {
       }
       
       // Ensure we have at least the main table fields
-      if (!hasMainFields && mainFields.length === 0) {
+      if (mainFields.length === 0) {
         mainFields.push(`${this.tableName}.*`);
       }
       
-      this.selectFields = mainFields.join(', ');
+      // Filter out any empty strings
+      const validFields = mainFields.filter(f => f.trim().length > 0);
+      
+      if (validFields.length === 0) {
+        validFields.push(`${this.tableName}.*`);
+      }
+      
+      this.selectFields = validFields.join(', ');
       this.joins = joins;
     } else {
       this.selectFields = fields;
