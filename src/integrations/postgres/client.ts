@@ -66,6 +66,8 @@ class PostgresQueryBuilder {
         },
       };
       
+      let hasMainFields = false;
+      
       for (const part of parts) {
         if (part.includes(':')) {
           // Parse relation syntax: "alias:table(*)" or "alias:table(field1, field2)"
@@ -120,9 +122,16 @@ class PostgresQueryBuilder {
           }
         } else if (part !== '*') {
           mainFields.push(part);
+          hasMainFields = true;
         } else {
           mainFields.push(`${this.tableName}.*`);
+          hasMainFields = true;
         }
+      }
+      
+      // Ensure we have at least the main table fields
+      if (!hasMainFields && mainFields.length === 0) {
+        mainFields.push(`${this.tableName}.*`);
       }
       
       this.selectFields = mainFields.join(', ');
