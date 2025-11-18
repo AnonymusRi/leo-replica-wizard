@@ -28,6 +28,7 @@ class PostgresQueryBuilder {
   private orderByDirection: 'asc' | 'desc' = 'asc';
   private limitCount: number | null = null;
   private offsetCount: number | null = null;
+  private joins: { alias: string; table: string; foreignKey: string }[] = [];
 
   constructor(tableName: string) {
     this.tableName = tableName;
