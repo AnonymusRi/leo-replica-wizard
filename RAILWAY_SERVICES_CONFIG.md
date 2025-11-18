@@ -2,7 +2,12 @@
 
 ## 📋 Configurazione Servizio PostgreSQL
 
-Il servizio PostgreSQL **NON richiede variabili d'ambiente manuali**. Railway lo configura automaticamente.
+### ⚠️ Se vedi l'errore "Database is uninitialized and superuser password is not specified":
+
+1. Vai su **Railway Dashboard** → Il tuo progetto → **Servizio PostgreSQL**
+2. Vai su **"Variables"** → **"Raw Editor"**
+3. Copia e incolla il contenuto del file `RAILWAY_POSTGRES_VARIABLES.txt`
+4. Salva
 
 ### Variabili Automatiche del Servizio Postgres:
 Railway fornisce automaticamente queste variabili nel servizio PostgreSQL:
@@ -13,7 +18,7 @@ Railway fornisce automaticamente queste variabili nel servizio PostgreSQL:
 - `PGPASSWORD` - Password del database
 - `DATABASE_URL` - Connection string completa
 
-**Non devi fare nulla nel servizio PostgreSQL!** ✅
+**Nota**: Normalmente Railway gestisce tutto automaticamente, ma se vedi errori di inizializzazione, aggiungi le variabili manualmente.
 
 ---
 
@@ -40,6 +45,8 @@ Copia tutto il contenuto del file `RAILWAY_ENV_COMPLETE_RAW.txt` e incollalo nel
 1. **`Postgres`** → Nome esatto del tuo servizio PostgreSQL
    - Esempio: se il servizio si chiama `postgres`, usa `${{postgres.DATABASE_URL}}`
    - Esempio: se il servizio si chiama `PostgreSQL`, usa `${{PostgreSQL.DATABASE_URL}}`
+   - **IMPORTANTE**: Le variabili `${{Postgres.*}}` sono riferimenti che Railway risolve automaticamente
+   - Queste variabili DEVONO essere nel servizio **Application**, non nel servizio Postgres!
 
 2. **`alidaunia-production.up.railway.app`** → Il tuo dominio Railway
    - Trova il dominio in: Railway Dashboard → Il tuo progetto → Servizio Application → Settings → Domains

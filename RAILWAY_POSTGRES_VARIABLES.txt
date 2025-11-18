@@ -1,0 +1,21 @@
+# ============================================
+# VARIABILI PER IL SERVIZIO POSTGRESQL
+# ============================================
+# ⚠️ IMPORTANTE: Queste variabili vanno nel servizio POSTGRESQL, non nell'Application!
+# ============================================
+# Se Railway non inizializza automaticamente il database, aggiungi queste variabili
+# nel servizio PostgreSQL → Variables → Raw Editor
+# ============================================
+
+POSTGRES_PASSWORD=railway_auto_generated
+POSTGRES_USER=postgres
+POSTGRES_DB=railway
+POSTGRES_HOST_AUTH_METHOD=scram-sha-256
+
+# ============================================
+# NOTA
+# ============================================
+# Normalmente Railway gestisce automaticamente queste variabili.
+# Aggiungi queste solo se vedi l'errore "Database is uninitialized and superuser password is not specified"
+# ============================================
+
