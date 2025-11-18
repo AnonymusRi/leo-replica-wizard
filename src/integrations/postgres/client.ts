@@ -252,6 +252,11 @@ class PostgresQueryBuilder {
     };
   }
 
+  // Insert method - returns a chainable object
+  insert(data: any | any[]) {
+    return new InsertBuilder(this.tableName, data);
+  }
+
   // Supabase-compatible methods
   async then(resolve?: any, reject?: any) {
     const result = await this.execute();
@@ -261,6 +266,113 @@ class PostgresQueryBuilder {
     }
     if (resolve) resolve(result);
     return Promise.resolve(result);
+  }
+}
+
+// Insert builder for chaining .insert().select().single()
+class InsertBuilder {
+  private tableName: string;
+  private insertData: any | any[];
+  private selectFields: string = '*';
+
+  constructor(tableName: string, data: any | any[]) {
+    this.tableName = tableName;
+    this.insertData = data;
+  }
+
+  select(fields?: string) {
+    if (fields) {
+      this.selectFields = fields;
+    }
+    return this;
+  }
+
+  async single() {
+    return await this.execute(true);
+  }
+
+  async maybeSingle() {
+    return await this.execute(true);
+  }
+
+  async then(resolve?: any, reject?: any) {
+    const result = await this.execute(false);
+    if (result.error) {
+      if (reject) reject(result.error);
+      return Promise.reject(result.error);
+    }
+    if (resolve) resolve(result);
+    return Promise.resolve(result);
+  }
+
+  private async execute(returnSingle: boolean = false) {
+    // In browser, return mock data
+    if (isBrowser) {
+      console.warn('⚠️ Database insert executed in browser - returning mock data');
+      return this.executeMock(returnSingle);
+    }
+
+    const rows = Array.isArray(this.insertData) ? this.insertData : [this.insertData];
+    const columns = Object.keys(rows[0]);
+    const placeholders = rows.map((_, rowIndex) => {
+      const rowPlaceholders = columns.map((_, colIndex) => 
+        `$${rowIndex * columns.length + colIndex + 1}`
+      ).join(', ');
+      return `(${rowPlaceholders})`;
+    }).join(', ');
+
+    const values = rows.flatMap(row => columns.map(col => row[col]));
+    const sql = `INSERT INTO ${this.tableName} (${columns.join(', ')}) VALUES ${placeholders} RETURNING ${this.selectFields}`;
+    
+    try {
+      const result = await query(sql, values);
+      const formattedData = formatRows(result.rows);
+      
+      if (returnSingle) {
+        if (formattedData.length === 0) {
+          return { data: null, error: null };
+        }
+        return {
+          data: formattedData[0],
+          error: null,
+        };
+      }
+      
+      return {
+        data: formattedData,
+        error: null,
+      };
+    } catch (error: any) {
+      return {
+        data: null,
+        error: {
+          message: error.message,
+          code: error.code,
+        },
+      };
+    }
+  }
+
+  private executeMock(returnSingle: boolean) {
+    const rows = Array.isArray(this.insertData) ? this.insertData : [this.insertData];
+    const mockData = rows.map((row, index) => ({
+      id: `mock-${Date.now()}-${index}`,
+      ...row,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }));
+
+    if (returnSingle) {
+      return {
+        data: mockData[0] || null,
+        error: null,
+      };
+    }
+
+    return {
+      data: mockData,
+      error: null,
+    };
   }
 }
 
