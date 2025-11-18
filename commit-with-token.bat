@@ -22,7 +22,7 @@ if %errorlevel% neq 0 (
     echo 3. Oppure esegui manualmente da Git Bash:
     echo    git add .
     echo    git commit -m "Migrate from Supabase to PostgreSQL"
-    echo    git push https://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@github.com/AnonymusRi/leo-replica-wizard.git main
+    echo    git push https://YOUR_GITHUB_TOKEN@github.com/AnonymusRi/leo-replica-wizard.git main
     echo.
     pause
     exit /b 1
@@ -61,7 +61,7 @@ if %errorlevel% neq 0 (
 REM Push con token
 echo.
 echo [INFO] Eseguendo push su GitHub con token...
-git push https://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@github.com/AnonymusRi/leo-replica-wizard.git main
+git push https://YOUR_GITHUB_TOKEN@github.com/AnonymusRi/leo-replica-wizard.git main
 
 if %errorlevel% equ 0 (
     echo.

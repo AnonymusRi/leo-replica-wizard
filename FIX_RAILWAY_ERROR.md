@@ -29,7 +29,7 @@ git add bun.lockb package-lock.json package.json
 git commit -m "Update lockfile for Railway deployment"
 
 # Push
-git push https://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@github.com/AnonymusRi/leo-replica-wizard.git main
+git push https://YOUR_GITHUB_TOKEN@github.com/AnonymusRi/leo-replica-wizard.git main
 ```
 
 **Oppure usa lo script:**
@@ -58,7 +58,7 @@ npm install
 # Commit
 git add package-lock.json
 git commit -m "Remove bun.lockb, use npm only"
-git push https://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@github.com/AnonymusRi/leo-replica-wizard.git main
+git push https://YOUR_GITHUB_TOKEN@github.com/AnonymusRi/leo-replica-wizard.git main
 ```
 
 Poi in Railway, aggiungi la variabile `NIXPACKS_PKG_MGR=npm`
@@ -71,7 +71,7 @@ Poi in Railway, aggiungi la variabile `NIXPACKS_PKG_MGR=npm`
    npm install
    git add bun.lockb package-lock.json
    git commit -m "Update lockfile"
-   git push https://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@github.com/AnonymusRi/leo-replica-wizard.git main
+   git push https://YOUR_GITHUB_TOKEN@github.com/AnonymusRi/leo-replica-wizard.git main
    ```
 3. **Ritorna su Railway** e fai "Redeploy"
 

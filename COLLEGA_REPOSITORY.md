@@ -68,7 +68,7 @@ git add .
 git commit -m "Initial commit: Migrate from Supabase to PostgreSQL"
 
 # Push (con token)
-git push https://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@github.com/AnonymusRi/leo-replica-wizard.git main
+git push https://YOUR_GITHUB_TOKEN@github.com/AnonymusRi/leo-replica-wizard.git main
 ```
 
 ## 🎯 Funzionalità Cursor con Git
