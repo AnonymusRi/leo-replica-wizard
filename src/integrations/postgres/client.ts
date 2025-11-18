@@ -39,7 +39,30 @@ class PostgresQueryBuilder {
     // Example: "*, aircraft:aircraft(*), client:clients(*)" 
     // becomes: "flights.*, aircraft.* as aircraft, clients.* as client"
     if (fields.includes(':')) {
-      const parts = fields.split(',').map(p => p.trim());
+      // Split by comma, but respect parentheses to handle nested field lists
+      const parts: string[] = [];
+      let currentPart = '';
+      let parenDepth = 0;
+      
+      for (let i = 0; i < fields.length; i++) {
+        const char = fields[i];
+        if (char === '(') {
+          parenDepth++;
+          currentPart += char;
+        } else if (char === ')') {
+          parenDepth--;
+          currentPart += char;
+        } else if (char === ',' && parenDepth === 0) {
+          parts.push(currentPart.trim());
+          currentPart = '';
+        } else {
+          currentPart += char;
+        }
+      }
+      if (currentPart.trim()) {
+        parts.push(currentPart.trim());
+      }
+      
       const mainFields: string[] = [];
       const joins: { alias: string; table: string; foreignKey: string }[] = [];
       
