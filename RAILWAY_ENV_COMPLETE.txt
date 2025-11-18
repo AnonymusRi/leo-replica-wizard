@@ -1,0 +1,72 @@
+# ============================================
+# VARIABILI D'AMBIENTE PER RAILWAY - RAW EDITOR
+# ============================================
+# Copia e incolla TUTTO questo contenuto nel Raw Editor di Railway
+# Vai su: Railway Dashboard → Il tuo progetto → Variables → Raw Editor
+# ============================================
+
+# ============================================
+# BUILD CONFIGURATION
+# ============================================
+# Risolve il conflitto tra react-day-picker e date-fns
+NPM_CONFIG_LEGACY_PEER_DEPS=true
+
+# Forza l'uso di npm invece di bun
+NIXPACKS_PKG_MGR=npm
+
+# ============================================
+# DATABASE CONFIGURATION
+# ============================================
+# Se hai aggiunto un database PostgreSQL in Railway, usa questa variabile:
+# Railway la popola automaticamente quando aggiungi un database PostgreSQL
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+
+# Oppure se preferisci variabili separate (solo se NON usi il database Railway):
+# DB_HOST=${{Postgres.PGHOST}}
+# DB_PORT=${{Postgres.PGPORT}}
+# DB_NAME=${{Postgres.PGDATABASE}}
+# DB_USER=${{Postgres.PGUSER}}
+# DB_PASSWORD=${{Postgres.PGPASSWORD}}
+# DB_SSL=true
+
+# ============================================
+# APPLICATION CONFIGURATION
+# ============================================
+# Ambiente di esecuzione
+NODE_ENV=production
+
+# Porta dell'applicazione (Railway la imposta automaticamente, ma puoi forzarla)
+# NOTA: Railway imposta automaticamente PORT, ma se vuoi forzare la porta 5000:
+PORT=5000
+
+# Host (opzionale, default è 0.0.0.0)
+HOST=0.0.0.0
+
+# ============================================
+# NOTA IMPORTANTE
+# ============================================
+# 1. Se aggiungi un database PostgreSQL in Railway:
+#    - Vai su: New → Database → Add PostgreSQL
+#    - Railway creerà automaticamente il database
+#    - La variabile ${{Postgres.DATABASE_URL}} verrà popolata automaticamente
+#
+# 2. La variabile PORT viene solitamente impostata automaticamente da Railway
+#    Se vuoi forzare la porta 5000, imposta PORT=5000
+#
+# 3. NPM_CONFIG_LEGACY_PEER_DEPS risolve il conflitto tra:
+#    - react-day-picker@8.10.1 (richiede date-fns v2 o v3)
+#    - date-fns@4.1.0 (versione installata)
+#
+# 4. NIXPACKS_PKG_MGR forza l'uso di npm invece di bun durante il build
+#
+# ============================================
+# VARIABILI OTTIONALI (se necessario)
+# ============================================
+# Se hai altre variabili d'ambiente specifiche per la tua applicazione,
+# aggiungile qui sotto:
+#
+# ESEMPIO:
+# VITE_API_URL=https://api.example.com
+# VITE_APP_NAME=Leo Replica Wizard
+# CUSTOM_VAR=value
+
