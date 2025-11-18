@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Database Setup Script for Railway
- * This script sets up the PostgreSQL database schema
+ * Database Setup Script for Railway with explicit credentials
+ * This script sets up the PostgreSQL database schema using Railway credentials
  */
 
 import pg from 'pg';
@@ -13,29 +13,29 @@ const { Pool } = pg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Get database connection from environment variables
-// Railway provides these variables automatically
+// Railway PostgreSQL credentials
 const dbConfig = {
-  host: process.env.DB_HOST || process.env.PGHOST || process.env.RAILWAY_PRIVATE_DOMAIN || 'localhost',
-  port: parseInt(process.env.DB_PORT || process.env.PGPORT || '5432'),
-  database: process.env.DB_NAME || process.env.PGDATABASE || process.env.POSTGRES_DB || 'leo_replica_wizard',
-  user: process.env.DB_USER || process.env.PGUSER || process.env.POSTGRES_USER || 'postgres',
-  password: process.env.DB_PASSWORD || process.env.PGPASSWORD || process.env.POSTGRES_PASSWORD || '',
+  host: process.env.PGHOST || process.env.RAILWAY_PRIVATE_DOMAIN || 'localhost',
+  port: parseInt(process.env.PGPORT || '5432'),
+  database: process.env.PGDATABASE || process.env.POSTGRES_DB || 'railway',
+  user: process.env.PGUSER || process.env.POSTGRES_USER || 'postgres',
+  password: process.env.PGPASSWORD || process.env.POSTGRES_PASSWORD || '',
+  ssl: {
+    rejectUnauthorized: false
+  }
 };
 
-// Use DATABASE_URL if available (Railway provides this - takes precedence)
+// Use DATABASE_URL if available (takes precedence)
 if (process.env.DATABASE_URL) {
   dbConfig.connectionString = process.env.DATABASE_URL;
+  // Railway DATABASE_URL includes SSL, so enable it
+  dbConfig.ssl = { rejectUnauthorized: false };
 }
 
-// SSL configuration - Railway requires SSL
-if (process.env.DB_SSL === 'true' || 
-    process.env.DATABASE_URL?.includes('sslmode=require') ||
-    process.env.RAILWAY_PRIVATE_DOMAIN) {
-  dbConfig.ssl = { rejectUnauthorized: false };
-} else {
-  dbConfig.ssl = false;
-}
+console.log('🔌 Connecting to database...');
+console.log(`   Host: ${dbConfig.host || 'from DATABASE_URL'}`);
+console.log(`   Database: ${dbConfig.database || 'from DATABASE_URL'}`);
+console.log(`   User: ${dbConfig.user || 'from DATABASE_URL'}`);
 
 const pool = new Pool(dbConfig);
 
@@ -127,6 +127,10 @@ async function setupDatabase() {
     
     console.log(`📝 Executing ${statements.length} SQL statements...`);
     
+    let successCount = 0;
+    let skipCount = 0;
+    let errorCount = 0;
+    
     // Execute each statement separately
     for (let i = 0; i < statements.length; i++) {
       const statement = statements[i];
@@ -136,22 +140,34 @@ async function setupDatabase() {
       
       try {
         await client.query(statement);
+        successCount++;
       } catch (error) {
         // Skip errors for "already exists" cases
         if (error.message.includes('already exists') || 
             error.message.includes('duplicate') ||
             error.code === '42P07' || // duplicate_table
             error.code === '42710') { // duplicate_object
-          console.log(`ℹ️  Skipping (already exists): ${statement.substring(0, 50)}...`);
+          skipCount++;
+          if (i < 5 || i % 10 === 0) {
+            console.log(`ℹ️  Skipping (already exists): ${statement.substring(0, 50)}...`);
+          }
           continue;
         }
-        // For other errors, log and continue (some statements might fail if dependencies don't exist yet)
+        // For other errors, log and continue
+        errorCount++;
         console.warn(`⚠️  Warning executing statement ${i + 1}: ${error.message.substring(0, 100)}`);
-        console.warn(`   Statement: ${statement.substring(0, 100)}...`);
+        if (errorCount <= 5) {
+          console.warn(`   Statement: ${statement.substring(0, 100)}...`);
+        }
       }
     }
     
-    console.log('✅ Database schema setup completed!');
+    console.log('\n✅ Database schema setup completed!');
+    console.log(`   ✓ Successfully executed: ${successCount}`);
+    console.log(`   ℹ️  Skipped (already exists): ${skipCount}`);
+    if (errorCount > 0) {
+      console.log(`   ⚠️  Errors: ${errorCount}`);
+    }
     
     // Verify by checking if some tables exist
     const result = await client.query(`
@@ -161,13 +177,13 @@ async function setupDatabase() {
       ORDER BY table_name;
     `);
     
-    console.log(`📊 Found ${result.rows.length} tables in database:`);
+    console.log(`\n📊 Found ${result.rows.length} tables in database:`);
     if (result.rows.length > 0) {
-      result.rows.slice(0, 10).forEach(row => {
+      result.rows.slice(0, 15).forEach(row => {
         console.log(`   - ${row.table_name}`);
       });
-      if (result.rows.length > 10) {
-        console.log(`   ... and ${result.rows.length - 10} more`);
+      if (result.rows.length > 15) {
+        console.log(`   ... and ${result.rows.length - 15} more`);
       }
     }
     
