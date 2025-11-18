@@ -1,0 +1,13 @@
+# ============================================
+# VARIABILI MINIMALI PER IL SERVIZIO POSTGRESQL
+# ============================================
+# ⚠️ IMPORTANTE: Queste sono le variabili MINIME necessarie
+# Se vedi l'errore "Database is uninitialized and superuser password is not specified"
+# aggiungi SOLO queste variabili nel servizio PostgreSQL → Variables → Raw Editor
+# ============================================
+
+POSTGRES_PASSWORD=railway_auto_generated
+POSTGRES_USER=postgres
+POSTGRES_DB=railway
+POSTGRES_HOST_AUTH_METHOD=scram-sha-256
+

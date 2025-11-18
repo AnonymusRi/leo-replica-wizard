@@ -1,0 +1,112 @@
+# ============================================
+# VARIABILI COMPLETE PER IL SERVIZIO POSTGRESQL
+# ============================================
+# ⚠️ IMPORTANTE: Queste variabili vanno nel servizio POSTGRESQL
+# Vai su: Railway Dashboard → Il tuo progetto → Servizio PostgreSQL → Variables → Raw Editor
+# ============================================
+# Copia e incolla TUTTO questo contenuto nel Raw Editor del servizio PostgreSQL
+# ============================================
+
+# ============================================
+# POSTGRESQL - Configurazione Base (OBBLIGATORIE)
+# ============================================
+POSTGRES_PASSWORD=railway_auto_generated
+POSTGRES_USER=postgres
+POSTGRES_DB=railway
+POSTGRES_HOST_AUTH_METHOD=scram-sha-256
+
+# ============================================
+# POSTGRESQL - Configurazione Avanzata
+# ============================================
+POSTGRES_INITDB_ARGS=--encoding=UTF8 --locale=C
+POSTGRES_INITDB_WALDIR=
+POSTGRES_PASSWORD_FILE=
+POSTGRES_USER_FILE=
+POSTGRES_DB_FILE=
+
+# ============================================
+# POSTGRESQL - Networking
+# ============================================
+POSTGRES_HOST=0.0.0.0
+PGPORT=5432
+
+# ============================================
+# POSTGRESQL - SSL/TLS
+# ============================================
+POSTGRES_SSL_MODE=require
+POSTGRES_SSL_CERT=
+POSTGRES_SSL_KEY=
+POSTGRES_SSL_CA=
+
+# ============================================
+# POSTGRESQL - Performance
+# ============================================
+POSTGRES_SHARED_BUFFERS=256MB
+POSTGRES_EFFECTIVE_CACHE_SIZE=1GB
+POSTGRES_MAINTENANCE_WORK_MEM=64MB
+POSTGRES_CHECKPOINT_COMPLETION_TARGET=0.9
+POSTGRES_WAL_BUFFERS=16MB
+POSTGRES_DEFAULT_STATISTICS_TARGET=100
+POSTGRES_RANDOM_PAGE_COST=1.1
+POSTGRES_EFFECTIVE_IO_CONCURRENCY=200
+POSTGRES_WORK_MEM=4MB
+POSTGRES_MIN_WAL_SIZE=1GB
+POSTGRES_MAX_WAL_SIZE=4GB
+POSTGRES_MAX_CONNECTIONS=100
+
+# ============================================
+# POSTGRESQL - Logging
+# ============================================
+POSTGRES_LOG_STATEMENT=all
+POSTGRES_LOG_DURATION=on
+POSTGRES_LOG_LINE_PREFIX=%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h
+POSTGRES_LOG_TIMEZONE=UTC
+POSTGRES_LOG_MIN_DURATION_STATEMENT=1000
+
+# ============================================
+# POSTGRESQL - Locale e Encoding
+# ============================================
+POSTGRES_LC_ALL=C.UTF-8
+POSTGRES_LC_COLLATE=C.UTF-8
+POSTGRES_LC_CTYPE=C.UTF-8
+POSTGRES_LC_MESSAGES=C.UTF-8
+POSTGRES_LC_MONETARY=C.UTF-8
+POSTGRES_LC_NUMERIC=C.UTF-8
+POSTGRES_LC_TIME=C.UTF-8
+POSTGRES_LANG=C.UTF-8
+
+# ============================================
+# POSTGRESQL - Estensioni
+# ============================================
+POSTGRES_EXTENSIONS=uuid-ossp,pgcrypto,pg_trgm
+
+# ============================================
+# POSTGRESQL - Timezone
+# ============================================
+POSTGRES_TIMEZONE=UTC
+TZ=UTC
+
+# ============================================
+# POSTGRESQL - Data Directory
+# ============================================
+PGDATA=/var/lib/postgresql/data/pgdata
+
+# ============================================
+# RAILWAY - Variabili Specifiche
+# ============================================
+RAILWAY_ENVIRONMENT=production
+RAILWAY_VOLUME_MOUNT_PATH=/var/lib/postgresql/data
+
+# ============================================
+# NOTA IMPORTANTE
+# ============================================
+# Le variabili OBBLIGATORIE sono:
+# - POSTGRES_PASSWORD (deve essere non vuota)
+# - POSTGRES_USER (default: postgres)
+# - POSTGRES_DB (default: railway)
+#
+# Le altre variabili sono opzionali e possono essere omesse se non necessarie.
+# Railway normalmente gestisce automaticamente molte di queste variabili,
+# ma se vedi errori di inizializzazione, aggiungi almeno quelle OBBLIGATORIE.
+# ============================================
+
