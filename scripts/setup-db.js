@@ -40,64 +40,73 @@ const pool = new Pool(dbConfig);
 function splitSQLStatements(sql) {
   const statements = [];
   let currentStatement = '';
-  let inFunction = false;
-  let delimiter = ';';
   let dollarQuote = null;
   
-  const lines = sql.split('\n');
-  
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const trimmed = line.trim();
+  // Process character by character to handle dollar quotes correctly
+  let i = 0;
+  while (i < sql.length) {
+    const char = sql[i];
+    const nextChar = i + 1 < sql.length ? sql[i + 1] : '';
     
-    // Check for dollar-quoted strings (used in functions)
-    if (dollarQuote === null) {
-      const dollarMatch = trimmed.match(/^\$\$([^$]*)\$$/);
-      if (dollarMatch) {
-        dollarQuote = dollarMatch[0];
-        currentStatement += line + '\n';
-        continue;
+    // Check for dollar quote start: $tag$ or $$
+    if (char === '$' && dollarQuote === null) {
+      let j = i + 1;
+      let tag = '$';
+      
+      // Read the tag
+      while (j < sql.length && sql[j] !== '$') {
+        tag += sql[j];
+        j++;
       }
       
-      // Check for opening dollar quote
-      const openDollarMatch = trimmed.match(/^\$\$([^$]*)$/);
-      if (openDollarMatch) {
-        dollarQuote = openDollarMatch[0];
-        currentStatement += line + '\n';
+      if (j < sql.length && sql[j] === '$') {
+        tag += '$';
+        dollarQuote = tag;
+        currentStatement += tag;
+        i = j + 1;
         continue;
       }
-    } else {
-      // Check for closing dollar quote
-      if (trimmed.includes(dollarQuote)) {
-        dollarQuote = null;
+    }
+    
+    // Check for dollar quote end
+    if (dollarQuote !== null && char === '$') {
+      let j = i;
+      let potentialEnd = '';
+      
+      // Check if this matches our dollar quote
+      while (j < sql.length && j < i + dollarQuote.length) {
+        potentialEnd += sql[j];
+        j++;
       }
-      currentStatement += line + '\n';
-      continue;
+      
+      if (potentialEnd === dollarQuote) {
+        dollarQuote = null;
+        currentStatement += potentialEnd;
+        i = j;
+        continue;
+      }
     }
     
-    // Skip comments and empty lines
-    if (trimmed.startsWith('--') || trimmed === '') {
-      continue;
-    }
+    currentStatement += char;
     
-    currentStatement += line + '\n';
-    
-    // Check if this is the end of a statement
-    if (trimmed.endsWith(';') && dollarQuote === null) {
+    // Check for statement end (semicolon outside dollar quotes)
+    if (char === ';' && dollarQuote === null) {
       const statement = currentStatement.trim();
-      if (statement) {
+      if (statement && !statement.match(/^\s*--/)) {
         statements.push(statement);
       }
       currentStatement = '';
     }
+    
+    i++;
   }
   
   // Add any remaining statement
-  if (currentStatement.trim()) {
+  if (currentStatement.trim() && !currentStatement.trim().match(/^\s*--/)) {
     statements.push(currentStatement.trim());
   }
   
-  return statements;
+  return statements.filter(s => s.length > 0 && !s.match(/^\s*--/));
 }
 
 async function setupDatabase() {
