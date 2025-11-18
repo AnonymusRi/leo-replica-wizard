@@ -1,0 +1,43 @@
+===========================================
+COMANDI DA ESEGUIRE IN GIT BASH
+===========================================
+
+1. Apri Git Bash nella cartella del progetto:
+   - Clic destro sulla cartella "leo-replica-wizard"
+   - Seleziona "Git Bash Here"
+
+2. Esegui questi comandi uno alla volta:
+
+# Vai nella directory
+cd /c/Users/Riccardo/leo-replica-wizard
+
+# Aggiungi tutti i file
+git add .
+
+# Verifica cosa verrà committato
+git status
+
+# Crea il commit
+git commit -m "Migrate from Supabase to PostgreSQL - Ready for Railway deployment" -m "- Add complete PostgreSQL database schema" -m "- Replace Supabase with PostgreSQL client wrapper" -m "- Add Railway configuration files" -m "- Add database setup script" -m "- Update documentation" -m "- Maintain backward compatibility"
+
+# Push con token (sostituisci USERNAME con il tuo username GitHub se diverso)
+git push https://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@github.com/AnonymusRi/leo-replica-wizard.git main
+
+# Oppure se hai già configurato il remote:
+git remote set-url origin https://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@github.com/AnonymusRi/leo-replica-wizard.git
+git push origin main
+
+===========================================
+NOTA SICUREZZA
+===========================================
+
+Dopo il push, considera di:
+1. Rimuovere il token dall'URL del remote per sicurezza
+2. Configurare Git Credential Manager per salvare il token in modo sicuro
+
+Per rimuovere il token dall'URL:
+git remote set-url origin https://github.com/AnonymusRi/leo-replica-wizard.git
+
+Poi usa Git Credential Manager per salvare il token:
+git config --global credential.helper manager-core
+
