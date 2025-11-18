@@ -40,9 +40,10 @@ PGPASSWORD=${{Postgres.PGPASSWORD}}
 POSTGRES_DB=${{Postgres.PGDATABASE}}
 POSTGRES_USER=${{Postgres.PGUSER}}
 POSTGRES_PASSWORD=${{Postgres.PGPASSWORD}}
+DB_PORT=${{Postgres.PGPORT}}
 ```
 
-### ✅ Opzione C: Variabili Alternative (se il codice usa DB_*)
+### ✅ Opzione C: Variabili Alternative (se il codice usa DB\_\*)
 
 Se il tuo codice usa variabili con prefisso `DB_*`, aggiungi anche:
 
@@ -54,6 +55,8 @@ DB_USER=${{Postgres.PGUSER}}
 DB_PASSWORD=${{Postgres.PGPASSWORD}}
 DB_SSL=true
 ```
+
+**⚠️ IMPORTANTE**: La porta `5432` è la porta standard di PostgreSQL. Se usi `DATABASE_URL`, la porta è già inclusa nell'URL. Se usi variabili individuali, assicurati di includere `PGPORT` o `DB_PORT`.
 
 ## 📋 Passo 3: Variabili dell'Applicazione
 
@@ -74,6 +77,7 @@ ${{ServiceName.VariableName}}
 ```
 
 **Esempi:**
+
 - `${{Postgres.DATABASE_URL}}` - URL completo del database
 - `${{Postgres.PGHOST}}` - Hostname del database
 - `${{Postgres.PGDATABASE}}` - Nome del database
