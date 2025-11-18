@@ -144,8 +144,34 @@ class PostgresQueryBuilder {
   }
 
   async execute() {
-    // In browser, return mock data
+    // In browser, try to use API first, fallback to mock data
     if (isBrowser) {
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin + '/api';
+      
+      try {
+        // Try to use API endpoint
+        const response = await fetch(`${apiUrl}/query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sql: this.buildQuery().sql,
+            params: this.buildQuery().params,
+          }),
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          return {
+            data: result.data || [],
+            error: null,
+            count: result.count || 0,
+          };
+        }
+      } catch (error) {
+        // API not available, use mock data
+        console.warn('⚠️ API not available, using mock data:', error);
+      }
+      
       console.warn('⚠️ Database query executed in browser - returning mock data');
       return this.executeMock();
     }
@@ -332,10 +358,46 @@ class InsertBuilder {
   }
 
   private async execute(returnSingle: boolean = false) {
-    // In browser, return mock data
+    // In browser, try to use API first, fallback to mock data
     if (isBrowser) {
-      console.warn('⚠️ Database insert executed in browser - returning mock data');
-      return this.executeMock(returnSingle);
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin + '/api';
+      
+      try {
+        // Determine endpoint based on table name
+        let endpoint = '/api/flights';
+        if (this.tableName === 'maintenance_records') {
+          endpoint = '/api/maintenance-records';
+        } else if (this.tableName === 'oil_consumption_records') {
+          endpoint = '/api/oil-consumption';
+        }
+        
+        const response = await fetch(`${apiUrl}${endpoint}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.insertData),
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (returnSingle) {
+            return {
+              data: result.data?.[0] || null,
+              error: null,
+            };
+          }
+          return {
+            data: result.data || [],
+            error: null,
+          };
+        } else {
+          const error = await response.json();
+          throw new Error(error.error || 'API request failed');
+        }
+      } catch (error) {
+        // API not available, use mock data
+        console.warn('⚠️ API not available, using mock data:', error);
+        return this.executeMock(returnSingle);
+      }
     }
 
     const rows = Array.isArray(this.insertData) ? this.insertData : [this.insertData];

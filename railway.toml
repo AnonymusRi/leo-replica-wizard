@@ -12,4 +12,4 @@ restartPolicyMaxRetries = 10
 
 [environments.production]
 [environments.production.deploy]
-startCommand = "npm run build && npm start"
+startCommand = "npm run build && node scripts/start-server-with-api.js"
