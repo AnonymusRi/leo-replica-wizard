@@ -164,11 +164,6 @@ app.post('/api/query', async (req, res) => {
 
 export default app;
 
-// Avvia il server se eseguito direttamente
-if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('api.js')) {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 API Server running on port ${PORT}`);
-    console.log(`   Health check: http://localhost:${PORT}/api/health`);
-  });
-}
+// Non avviare il server qui - sarà avviato da start-server-with-api.js
+// Questo permette di configurare correttamente la porta e servire file statici
 
