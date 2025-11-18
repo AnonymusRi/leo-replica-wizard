@@ -16,26 +16,44 @@ const __dirname = path.dirname(__filename);
 // Get database connection from environment variables
 // Railway provides these variables automatically
 // Railway private networking: use 'postgres' as hostname for internal communication
-const dbConfig = {
-  host: process.env.DB_HOST || process.env.PGHOST || process.env.RAILWAY_PRIVATE_DOMAIN || (process.env.RAILWAY_ENVIRONMENT ? 'postgres' : 'localhost'),
-  port: parseInt(process.env.DB_PORT || process.env.PGPORT || '5432'),
-  database: process.env.DB_NAME || process.env.PGDATABASE || process.env.POSTGRES_DB || 'leo_replica_wizard',
-  user: process.env.DB_USER || process.env.PGUSER || process.env.POSTGRES_USER || 'postgres',
-  password: process.env.DB_PASSWORD || process.env.PGPASSWORD || process.env.POSTGRES_PASSWORD || '',
-};
 
 // Use DATABASE_URL if available (Railway provides this - takes precedence)
-if (process.env.DATABASE_URL) {
-  dbConfig.connectionString = process.env.DATABASE_URL;
-}
+let dbConfig = {};
 
-// SSL configuration - Railway requires SSL
-if (process.env.DB_SSL === 'true' || 
-    process.env.DATABASE_URL?.includes('sslmode=require') ||
-    process.env.RAILWAY_PRIVATE_DOMAIN) {
+if (process.env.DATABASE_URL) {
+  // Use DATABASE_URL directly - Railway provides this with all connection details
+  dbConfig.connectionString = process.env.DATABASE_URL;
+  // Parse DATABASE_URL to extract connection details for logging
+  try {
+    const url = new URL(process.env.DATABASE_URL);
+    console.log(`🔌 Using DATABASE_URL: ${url.protocol}//${url.hostname}:${url.port}/${url.pathname.slice(1)}`);
+  } catch (e) {
+    console.log('🔌 Using DATABASE_URL (connection string)');
+  }
+  // Railway DATABASE_URL includes SSL, so enable it
   dbConfig.ssl = { rejectUnauthorized: false };
 } else {
-  dbConfig.ssl = false;
+  // Fallback to individual variables if DATABASE_URL is not available
+  dbConfig = {
+    host: process.env.DB_HOST || process.env.PGHOST || process.env.RAILWAY_PRIVATE_DOMAIN || (process.env.RAILWAY_ENVIRONMENT ? 'postgres' : 'localhost'),
+    port: parseInt(process.env.DB_PORT || process.env.PGPORT || '5432'),
+    database: process.env.DB_NAME || process.env.PGDATABASE || process.env.POSTGRES_DB || 'leo_replica_wizard',
+    user: process.env.DB_USER || process.env.PGUSER || process.env.POSTGRES_USER || 'postgres',
+    password: process.env.DB_PASSWORD || process.env.PGPASSWORD || process.env.POSTGRES_PASSWORD || '',
+    connectionTimeoutMillis: 5000,
+    query_timeout: 30000,
+  };
+  console.log(`🔌 Database config: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
+  
+  // SSL configuration - Railway requires SSL
+  if (process.env.DB_SSL === 'true' || 
+      process.env.RAILWAY_PRIVATE_DOMAIN ||
+      process.env.RAILWAY_ENVIRONMENT) {
+    dbConfig.ssl = { rejectUnauthorized: false };
+    console.log('🔒 SSL enabled for database connection');
+  } else {
+    dbConfig.ssl = false;
+  }
 }
 
 // Helper function to wait for database to be ready
