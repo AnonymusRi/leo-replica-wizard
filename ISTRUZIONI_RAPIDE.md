@@ -18,7 +18,7 @@ git add .
 git commit -m "Migrate from Supabase to PostgreSQL - Ready for Railway deployment" -m "- Add complete PostgreSQL database schema" -m "- Replace Supabase with PostgreSQL client wrapper" -m "- Add Railway configuration files" -m "- Add database setup script" -m "- Update documentation" -m "- Maintain backward compatibility"
 
 # Push con il tuo token
-git push https://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@github.com/AnonymusRi/leo-replica-wizard.git main
+git push https://YOUR_GITHUB_TOKEN@github.com/AnonymusRi/leo-replica-wizard.git main
 ```
 
 ### Metodo 2: GitHub Desktop
@@ -42,7 +42,7 @@ git push https://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@github.com/AnonymusRi/
 6. Clicca **"..."** → **"Push"**
 7. Quando chiede autenticazione:
    - Username: il tuo username GitHub
-   - Password: il token `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`
+   - Password: il token `YOUR_GITHUB_TOKEN`
 
 ### Metodo 4: Script Batch
 

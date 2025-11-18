@@ -21,10 +21,10 @@ git status
 git commit -m "Migrate from Supabase to PostgreSQL - Ready for Railway deployment" -m "- Add complete PostgreSQL database schema" -m "- Replace Supabase with PostgreSQL client wrapper" -m "- Add Railway configuration files" -m "- Add database setup script" -m "- Update documentation" -m "- Maintain backward compatibility"
 
 # Push con token (sostituisci USERNAME con il tuo username GitHub se diverso)
-git push https://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@github.com/AnonymusRi/leo-replica-wizard.git main
+git push https://YOUR_GITHUB_TOKEN@github.com/AnonymusRi/leo-replica-wizard.git main
 
 # Oppure se hai già configurato il remote:
-git remote set-url origin https://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@github.com/AnonymusRi/leo-replica-wizard.git
+git remote set-url origin https://YOUR_GITHUB_TOKEN@github.com/AnonymusRi/leo-replica-wizard.git
 git push origin main
 
 ===========================================

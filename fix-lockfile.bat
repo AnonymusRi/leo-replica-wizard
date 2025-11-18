@@ -53,7 +53,7 @@ git commit -m "Update lockfile for Railway deployment"
 
 REM Push
 echo [INFO] Eseguendo push...
-git push https://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@github.com/AnonymusRi/leo-replica-wizard.git main
+git push https://YOUR_GITHUB_TOKEN@github.com/AnonymusRi/leo-replica-wizard.git main
 
 if %errorlevel% equ 0 (
     echo.
