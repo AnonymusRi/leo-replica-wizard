@@ -19,4 +19,25 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      external: [
+        'pg',
+        'pg-native',
+        'events',
+        'net',
+        'util',
+        'path',
+        'fs',
+        'tls',
+        'dns',
+        'crypto',
+        'stream',
+        'string_decoder',
+      ],
+    },
+  },
+  optimizeDeps: {
+    exclude: ['pg', 'pg-native'],
+  },
 }));
