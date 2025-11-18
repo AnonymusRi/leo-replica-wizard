@@ -91,15 +91,14 @@ class PostgresQueryBuilder {
               }
             }
             
-            // Only add join if we can determine a foreign key
-            // Skip joins for complex relationships (like crew_members through junction tables)
-            if (foreignKey && !table.includes('crew_members') || 
-                (this.tableName === 'flights' && table === 'crew_members')) {
-              // Skip crew_members join for flights as it requires junction table
+            // Skip joins for complex relationships that require junction tables
+            if (this.tableName === 'flights' && table === 'crew_members') {
+              // Skip crew_members join for flights as it requires junction table (flight_crew, flight_assignments)
               console.warn(`⚠️ Skipping join for ${this.tableName}.${table} - requires junction table`);
               continue;
             }
             
+            // Only add join if we can determine a foreign key
             if (foreignKey) {
               joins.push({ alias, table, foreignKey });
               const fieldsToSelect = selectFields.trim() || '*';
@@ -108,6 +107,8 @@ class PostgresQueryBuilder {
               } else {
                 mainFields.push(`${fieldsToSelect.split(',').map(f => `${table}.${f.trim()} as ${alias}_${f.trim()}`).join(', ')}`);
               }
+            } else {
+              console.warn(`⚠️ Could not determine foreign key for ${this.tableName}.${table} - skipping join`);
             }
           }
         } else if (part !== '*') {
