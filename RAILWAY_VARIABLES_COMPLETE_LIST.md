@@ -99,12 +99,15 @@ Per la maggior parte dei casi, questa configurazione minima è sufficiente:
 
 ```
 DATABASE_URL=${{Postgres.DATABASE_URL}}
+PGPORT=${{Postgres.PGPORT}}
 NODE_ENV=production
 PORT=5000
 RAILWAY_ENVIRONMENT=true
 ```
 
-**Solo 4 variabili!** 🎉
+**5 variabili!** 🎉
+
+**Nota**: `PGPORT` è opzionale se usi `DATABASE_URL` (che include già la porta), ma è consigliato includerlo per compatibilità. La porta standard di PostgreSQL è `5432`.
 
 ---
 
