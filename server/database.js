@@ -10,24 +10,27 @@ let poolInstance = null;
 async function getPool() {
   if (!poolInstance) {
     // Database connection configuration
+    // Railway private networking: use 'postgres' as hostname for internal communication
     const dbConfig = {
-      host: process.env.DB_HOST || process.env.PGHOST || 'localhost',
+      host: process.env.DB_HOST || process.env.PGHOST || 'postgres' || 'localhost',
       port: parseInt(process.env.DB_PORT || process.env.PGPORT || '5432'),
-      database: process.env.DB_NAME || process.env.PGDATABASE || 'leo_replica_wizard',
-      user: process.env.DB_USER || process.env.PGUSER || 'postgres',
-      password: process.env.DB_PASSWORD || process.env.PGPASSWORD || '',
+      database: process.env.DB_NAME || process.env.PGDATABASE || process.env.POSTGRES_DB || 'leo_replica_wizard',
+      user: process.env.DB_USER || process.env.PGUSER || process.env.POSTGRES_USER || 'postgres',
+      password: process.env.DB_PASSWORD || process.env.PGPASSWORD || process.env.POSTGRES_PASSWORD || '',
       max: 20,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 2000,
     };
 
-    // Use DATABASE_URL if available (Railway provides this)
+    // Use DATABASE_URL if available (Railway provides this - takes precedence)
     if (process.env.DATABASE_URL) {
       dbConfig.connectionString = process.env.DATABASE_URL;
     }
 
-    // SSL configuration
-    if (process.env.DB_SSL === 'true' || process.env.DATABASE_URL?.includes('sslmode=require')) {
+    // SSL configuration - Railway requires SSL for database connections
+    if (process.env.DB_SSL === 'true' || 
+        process.env.DATABASE_URL?.includes('sslmode=require') ||
+        process.env.DATABASE_URL?.includes('railway')) {
       dbConfig.ssl = { rejectUnauthorized: false };
     } else {
       dbConfig.ssl = false;
