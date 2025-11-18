@@ -11,9 +11,10 @@
 # ============================================
 # DATABASE - PostgreSQL
 # ============================================
+# ⚠️ IMPORTANTE: Sostituisci "Postgres" con il nome esatto del tuo servizio PostgreSQL
 DATABASE_URL=${{Postgres.DATABASE_URL}}
 PGHOST=${{Postgres.PGHOST}}
-PGPORT=${{Postgres.PGPORT}}
+PGPORT=5432
 PGDATABASE=${{Postgres.PGDATABASE}}
 PGUSER=${{Postgres.PGUSER}}
 PGPASSWORD=${{Postgres.PGPASSWORD}}
@@ -21,7 +22,7 @@ POSTGRES_DB=${{Postgres.PGDATABASE}}
 POSTGRES_USER=${{Postgres.PGUSER}}
 POSTGRES_PASSWORD=${{Postgres.PGPASSWORD}}
 DB_HOST=${{Postgres.PGHOST}}
-DB_PORT=${{Postgres.PGPORT}}
+DB_PORT=5432
 DB_NAME=${{Postgres.PGDATABASE}}
 DB_USER=${{Postgres.PGUSER}}
 DB_PASSWORD=${{Postgres.PGPASSWORD}}
