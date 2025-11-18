@@ -9,9 +9,8 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Import database functions
-const databasePath = join(__dirname, '..', 'src', 'config', 'database.js');
-const { query } = await import(databasePath);
+// Import database functions from server database.js
+import { query } from './database.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
