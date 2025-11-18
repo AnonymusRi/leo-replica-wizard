@@ -741,6 +741,25 @@ CREATE TABLE email_templates (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Ops Checklist Items (created after email_templates)
+CREATE TABLE ops_checklist_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    checklist_id UUID REFERENCES sales_checklists(id) ON DELETE CASCADE,
+    item_text TEXT NOT NULL,
+    checklist_section VARCHAR(100) NOT NULL,
+    sales_ops VARCHAR(50) NOT NULL,
+    attach_to VARCHAR(50) NOT NULL,
+    is_required BOOLEAN NOT NULL DEFAULT false,
+    visible_on_crew_app BOOLEAN NOT NULL DEFAULT false,
+    auto_add_to_log BOOLEAN NOT NULL DEFAULT false,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    cql_condition TEXT,
+    due_dates TEXT,
+    email_template_id UUID REFERENCES email_templates(id) ON DELETE SET NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Checklist Email Templates
 CREATE TABLE checklist_email_templates (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
