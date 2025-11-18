@@ -14,11 +14,27 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Get database connection from environment variables
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 
-    `postgresql://${process.env.DB_USER || 'postgres'}:${process.env.DB_PASSWORD}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME || 'leo_replica_wizard'}`,
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-});
+const dbConfig = {
+  host: process.env.DB_HOST || process.env.PGHOST || 'localhost',
+  port: parseInt(process.env.DB_PORT || process.env.PGPORT || '5432'),
+  database: process.env.DB_NAME || process.env.PGDATABASE || 'leo_replica_wizard',
+  user: process.env.DB_USER || process.env.PGUSER || 'postgres',
+  password: process.env.DB_PASSWORD || process.env.PGPASSWORD || '',
+};
+
+// Use DATABASE_URL if available (Railway provides this)
+if (process.env.DATABASE_URL) {
+  dbConfig.connectionString = process.env.DATABASE_URL;
+}
+
+// SSL configuration
+if (process.env.DB_SSL === 'true' || process.env.DATABASE_URL?.includes('sslmode=require')) {
+  dbConfig.ssl = { rejectUnauthorized: false };
+} else {
+  dbConfig.ssl = false;
+}
+
+const pool = new Pool(dbConfig);
 
 async function setupDatabase() {
   const client = await pool.connect();
