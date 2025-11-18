@@ -45,25 +45,10 @@ app.get('*', (req, res, next) => {
   }
 });
 
-// Server is already started in api.js, but we need to make sure it uses the right port
-// The api.js file exports the app, but we need to start it here with the correct port
-if (!app.listening) {
-  app.listen(PORT, HOST, () => {
-    console.log(`✅ Server running on http://${HOST}:${PORT}`);
-    console.log(`   API: http://${HOST}:${PORT}/api`);
-    console.log(`   App: http://${HOST}:${PORT}/`);
-  });
-}
-
-vitePreview.on('error', (error) => {
-  console.error('❌ Error starting Vite preview:', error);
-  process.exit(1);
-});
-
-vitePreview.on('exit', (code) => {
-  if (code !== 0) {
-    console.error(`❌ Vite preview exited with code ${code}`);
-    process.exit(code);
-  }
+// Start the server
+app.listen(PORT, HOST, () => {
+  console.log(`✅ Server running on http://${HOST}:${PORT}`);
+  console.log(`   API: http://${HOST}:${PORT}/api`);
+  console.log(`   App: http://${HOST}:${PORT}/`);
 });
 
