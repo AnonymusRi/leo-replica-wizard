@@ -512,6 +512,11 @@ export const useHelicopterSimulation = () => {
       
       console.log(`✅ Trovati ${existingCrewMembers.length} crew members totali per assegnazione dati`);
 
+      // Separa piloti dagli altri crew members (usato in più sezioni)
+      const pilots = existingCrewMembers.filter(c => c.position === 'captain' || c.position === 'first_officer');
+      const otherCrew = existingCrewMembers.filter(c => c.position !== 'captain' && c.position !== 'first_officer');
+      console.log(`👨‍✈️ Trovati ${pilots.length} piloti e ${otherCrew.length} altri crew members`);
+
       // Creiamo certificazioni per i crew members con vari stati (valide, in scadenza, scadute)
       console.log('📜 Creando certificazioni per crew members...');
       const certificationTypes = [
@@ -593,7 +598,7 @@ export const useHelicopterSimulation = () => {
       ];
       
       let trainingsCreated = 0;
-      const pilots = existingCrewMembers.filter(c => c.position === 'captain' || c.position === 'first_officer');
+      // Usa la variabile pilots già dichiarata sopra
       
       for (const pilot of pilots) {
         // 1-3 addestramenti da fare per pilota
@@ -728,12 +733,6 @@ export const useHelicopterSimulation = () => {
       console.log('  📅 Creando assegnazioni voli...');
       const allFlights = data.flights;
       let assignmentsCreated = 0;
-      
-      // Separa piloti dagli altri crew members
-      const pilots = existingCrewMembers.filter(c => c.position === 'captain' || c.position === 'first_officer');
-      const otherCrew = existingCrewMembers.filter(c => c.position !== 'captain' && c.position !== 'first_officer');
-      
-      console.log(`    👨‍✈️ Trovati ${pilots.length} piloti e ${otherCrew.length} altri crew members`);
       
       if (pilots.length === 0) {
         throw new Error('Nessun pilota trovato! Assicurati che ci siano crew members con position "captain" o "first_officer"');
