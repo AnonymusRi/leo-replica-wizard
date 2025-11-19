@@ -320,7 +320,13 @@ class PostgresQueryBuilder {
   async execute() {
     // In browser, always use API - no mock data
     if (isBrowser) {
-      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin + '/api';
+      // Get base API URL - VITE_API_URL might already include /api
+      let baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
+      // Ensure baseUrl doesn't end with /api (we'll add it)
+      if (baseUrl.endsWith('/api')) {
+        baseUrl = baseUrl.slice(0, -4);
+      }
+      const apiUrl = baseUrl + '/api';
       
       try {
         // Use API endpoint to query PostgreSQL database
@@ -573,18 +579,24 @@ class InsertBuilder {
   private async execute(returnSingle: boolean = false) {
     // In browser, always use API - no mock data
     if (isBrowser) {
-      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin + '/api';
+      // Get base API URL - VITE_API_URL might already include /api
+      let baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
+      // Ensure baseUrl doesn't end with /api (we'll add it)
+      if (baseUrl.endsWith('/api')) {
+        baseUrl = baseUrl.slice(0, -4);
+      }
+      const apiUrl = baseUrl + '/api';
       
       try {
         // Determine endpoint based on table name
-        let endpoint = '/api/flights';
+        let endpoint = '/flights';
         if (this.tableName === 'maintenance_records') {
-          endpoint = '/api/maintenance-records';
+          endpoint = '/maintenance-records';
         } else if (this.tableName === 'oil_consumption_records') {
-          endpoint = '/api/oil-consumption';
+          endpoint = '/oil-consumption';
         } else {
-          // Generic insert endpoint (would need to be added to API)
-          endpoint = '/api/insert';
+          // Generic insert endpoint
+          endpoint = '/insert';
         }
         
         const response = await fetch(`${apiUrl}${endpoint}`, {
