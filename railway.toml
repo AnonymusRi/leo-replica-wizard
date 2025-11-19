@@ -12,4 +12,5 @@ restartPolicyMaxRetries = 10
 
 [environments.production]
 [environments.production.deploy]
-startCommand = "npm run build && npm run setup:db && node scripts/start-server-with-api.js"
+# Avvia PostgreSQL in background, poi setup database e server
+startCommand = "bash -c 'if [ -d \"/var/lib/postgresql/data\" ]; then (./scripts/start-postgres.sh &) && sleep 5; fi && npm run build && npm run setup:db && node scripts/start-server-with-api.js'"

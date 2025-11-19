@@ -1,0 +1,61 @@
+# ============================================
+# VARIABILI D'AMBIENTE RAILWAY - DATABASE LOCALE
+# ============================================
+# Usa questo file se il database PostgreSQL è integrato nel servizio Application
+# con volume montato su /var/lib/postgresql/data
+# ============================================
+# Copia e incolla TUTTO questo contenuto nel Raw Editor di Railway
+# Vai su: Railway Dashboard → Il tuo progetto → Servizio Applicazione → Variables → Raw Editor
+# ============================================
+
+# ============================================
+# DATABASE - PostgreSQL (Locale/Integrato)
+# ============================================
+# Il database è locale (localhost) quando il volume è montato sul servizio Application
+DATABASE_URL=postgresql://postgres:railway_auto_generated@localhost:5432/railway
+PGHOST=localhost
+PGPORT=5432
+PGDATABASE=railway
+PGUSER=postgres
+PGPASSWORD=railway_auto_generated
+POSTGRES_DB=railway
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=railway_auto_generated
+POSTGRES_HOST_AUTH_METHOD=scram-sha-256
+PGDATA=/var/lib/postgresql/data
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=railway
+DB_USER=postgres
+DB_PASSWORD=railway_auto_generated
+DB_SSL=false
+
+# ============================================
+# APPLICATION
+# ============================================
+NODE_ENV=production
+PORT=5000
+RAILWAY_ENVIRONMENT=true
+
+# ============================================
+# VITE
+# ============================================
+VITE_PUBLIC_URL=https://alidaunia-production.up.railway.app
+VITE_API_URL=https://alidaunia-production.up.railway.app/api
+VITE_APP_ENV=production
+
+# ============================================
+# BUILD
+# ============================================
+NPM_CONFIG_LEGACY_PEER_DEPS=true
+NIXPACKS_PKG_MGR=npm
+
+# ============================================
+# NOTA IMPORTANTE
+# ============================================
+# - Il database è locale (localhost:5432)
+# - SSL è disabilitato per connessioni localhost
+# - Il volume è montato su /var/lib/postgresql/data
+# - PostgreSQL deve essere avviato nel container (vedi scripts/start-postgres.sh)
+# ============================================
+

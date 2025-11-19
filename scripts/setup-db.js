@@ -14,8 +14,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Get database connection from environment variables
-// Railway provides these variables automatically
-// Railway private networking: use 'postgres' as hostname for internal communication
+// Check if PostgreSQL volume is mounted (integrated database)
+const isIntegratedDB = process.env.RAILWAY_ENVIRONMENT && !process.env.PGHOST?.includes('railway.internal');
 
 // Use DATABASE_URL if available (Railway provides this - takes precedence)
 let dbConfig = {};
@@ -30,8 +30,12 @@ if (process.env.DATABASE_URL) {
   } catch (e) {
     console.log('🔌 Using DATABASE_URL (connection string)');
   }
-  // Railway DATABASE_URL includes SSL, so enable it
-  dbConfig.ssl = { rejectUnauthorized: false };
+  // Railway DATABASE_URL includes SSL for remote connections, but not for localhost
+  if (process.env.DATABASE_URL.includes('localhost') || process.env.DATABASE_URL.includes('127.0.0.1')) {
+    dbConfig.ssl = false;
+  } else {
+    dbConfig.ssl = { rejectUnauthorized: false };
+  }
   // Clear individual config when using DATABASE_URL to avoid conflicts
   delete dbConfig.host;
   delete dbConfig.port;
@@ -40,8 +44,11 @@ if (process.env.DATABASE_URL) {
   delete dbConfig.password;
 } else {
   // Fallback to individual variables if DATABASE_URL is not available
+  // If database is integrated (volume mounted), use localhost
+  const defaultHost = isIntegratedDB ? 'localhost' : (process.env.RAILWAY_ENVIRONMENT ? 'postgres' : 'localhost');
+  
   dbConfig = {
-    host: process.env.DB_HOST || process.env.PGHOST || process.env.RAILWAY_PRIVATE_DOMAIN || (process.env.RAILWAY_ENVIRONMENT ? 'postgres' : 'localhost'),
+    host: process.env.DB_HOST || process.env.PGHOST || defaultHost,
     port: parseInt(process.env.DB_PORT || process.env.PGPORT || '5432'),
     database: process.env.DB_NAME || process.env.PGDATABASE || process.env.POSTGRES_DB || 'leo_replica_wizard',
     user: process.env.DB_USER || process.env.PGUSER || process.env.POSTGRES_USER || 'postgres',
@@ -51,8 +58,11 @@ if (process.env.DATABASE_URL) {
   };
   console.log(`🔌 Database config: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
   
-  // SSL configuration - Railway requires SSL
-  if (process.env.DB_SSL === 'true' || 
+  // SSL configuration - Only for remote connections, not for localhost
+  if (dbConfig.host === 'localhost' || dbConfig.host === '127.0.0.1') {
+    dbConfig.ssl = false;
+    console.log('🔒 SSL disabled for localhost connection');
+  } else if (process.env.DB_SSL === 'true' || 
       process.env.RAILWAY_PRIVATE_DOMAIN ||
       process.env.RAILWAY_ENVIRONMENT) {
     dbConfig.ssl = { rejectUnauthorized: false };
