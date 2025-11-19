@@ -18,5 +18,6 @@ COPY . .
 EXPOSE 5000
 
 # Comando di avvio (PostgreSQL è un servizio separato)
-CMD ["bash", "-c", "npm run build && npm run setup:db && node scripts/start-server-with-api.js"]
+# Build è fatto durante il build step, quindi qui eseguiamo solo setup:db e start
+CMD ["bash", "-c", "npm run setup:db && node scripts/start-server-with-api.js"]
 
