@@ -538,10 +538,25 @@ export const useHelicopterSimulation = () => {
           .slice(0, numAssignments);
         
         for (const flight of selectedFlights) {
+          if (!flight.departure_time || !flight.arrival_time || !flight.id) {
+            continue; // Salta voli senza dati validi
+          }
+          
           const departureTime = new Date(flight.departure_time);
           const arrivalTime = new Date(flight.arrival_time);
+          
+          // Verifica che le date siano valide
+          if (isNaN(departureTime.getTime()) || isNaN(arrivalTime.getTime())) {
+            continue; // Salta date non valide
+          }
+          
           const flightHours = (arrivalTime.getTime() - departureTime.getTime()) / (1000 * 60 * 60);
           const dutyHours = flightHours + 0.5;
+          
+          // Verifica che flightHours sia un numero valido
+          if (isNaN(flightHours) || !isFinite(flightHours) || flightHours <= 0) {
+            continue; // Salta calcoli non validi
+          }
           
           // Verifica se l'assegnazione esiste già
           const { data: existingAssignment } = await supabase
@@ -561,8 +576,8 @@ export const useHelicopterSimulation = () => {
                 reporting_time: new Date(departureTime.getTime() - 30 * 60 * 1000).toISOString(),
                 duty_start_time: departureTime.toISOString(),
                 duty_end_time: new Date(arrivalTime.getTime() + 30 * 60 * 1000).toISOString(),
-                flight_time_hours: parseFloat(flightHours.toFixed(2)),
-                duty_time_hours: parseFloat(dutyHours.toFixed(2)),
+                flight_time_hours: parseFloat(Number(flightHours).toFixed(2)),
+                duty_time_hours: parseFloat(Number(dutyHours).toFixed(2)),
                 rest_time_hours: 12.0,
                 ftl_compliant: true,
                 airport_recency_valid: true,
@@ -648,9 +663,24 @@ export const useHelicopterSimulation = () => {
             .slice(0, numRecords);
           
           for (const flight of selectedFlights) {
+            if (!flight.departure_time || !flight.arrival_time || !flight.id) {
+              continue; // Salta voli senza dati validi
+            }
+            
             const departureTime = new Date(flight.departure_time);
             const arrivalTime = new Date(flight.arrival_time);
+            
+            // Verifica che le date siano valide
+            if (isNaN(departureTime.getTime()) || isNaN(arrivalTime.getTime())) {
+              continue; // Salta date non valide
+            }
+            
             const flightHours = (arrivalTime.getTime() - departureTime.getTime()) / (1000 * 60 * 60);
+            
+            // Verifica che flightHours sia un numero valido
+            if (isNaN(flightHours) || !isFinite(flightHours) || flightHours <= 0) {
+              continue; // Salta calcoli non validi
+            }
             
             // Verifica se esiste già
             const { data: existingHours } = await supabase
@@ -668,7 +698,7 @@ export const useHelicopterSimulation = () => {
                   flight_id: flight.id,
                   flight_date: departureTime.toISOString().split('T')[0],
                   flight_type: 'commercial',
-                  flight_hours: parseFloat(flightHours.toFixed(2))
+                  flight_hours: parseFloat(Number(flightHours).toFixed(2))
                 })
                 .then(() => {
                   hoursCreated++;
