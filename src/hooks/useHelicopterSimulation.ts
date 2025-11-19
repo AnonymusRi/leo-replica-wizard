@@ -318,8 +318,10 @@ export const useHelicopterSimulation = () => {
       // Assegniamo aircraft_id alle manutenzioni
       data.maintenanceRecords.forEach(record => {
         record.aircraft_id = aircraft[Math.floor(Math.random() * aircraft.length)]?.id;
-        const mechanics = crewMembers.filter(c => c.position === 'mechanic');
-        record.technician_id = mechanics[Math.floor(Math.random() * mechanics.length)]?.id;
+        const mechanics = existingCrewMembers.filter(c => c.position === 'mechanic');
+        if (mechanics.length > 0) {
+          record.technician_id = mechanics[Math.floor(Math.random() * mechanics.length)]?.id;
+        }
       });
       
       // Assegniamo aircraft_id ai record olio
