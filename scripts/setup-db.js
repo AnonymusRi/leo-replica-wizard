@@ -43,13 +43,13 @@ if (process.env.DATABASE_URL) {
   delete dbConfig.password;
 } else {
   // Fallback to individual variables if DATABASE_URL is not available
-  // If database is integrated (volume mounted), use localhost
-  const defaultHost = isIntegratedDB ? 'localhost' : (process.env.RAILWAY_ENVIRONMENT ? 'postgres' : 'localhost');
+  // PostgreSQL è un servizio separato, usa postgres.railway.internal o PGHOST
+  const defaultHost = process.env.DB_HOST || process.env.PGHOST || (process.env.RAILWAY_ENVIRONMENT ? 'postgres.railway.internal' : 'localhost');
   
   dbConfig = {
-    host: process.env.DB_HOST || process.env.PGHOST || defaultHost,
+    host: defaultHost,
     port: parseInt(process.env.DB_PORT || process.env.PGPORT || '5432'),
-    database: process.env.DB_NAME || process.env.PGDATABASE || process.env.POSTGRES_DB || 'leo_replica_wizard',
+    database: process.env.DB_NAME || process.env.PGDATABASE || process.env.POSTGRES_DB || 'railway',
     user: process.env.DB_USER || process.env.PGUSER || process.env.POSTGRES_USER || 'postgres',
     password: process.env.DB_PASSWORD || process.env.PGPASSWORD || process.env.POSTGRES_PASSWORD || '',
     connectionTimeoutMillis: 5000,
@@ -57,12 +57,11 @@ if (process.env.DATABASE_URL) {
   };
   console.log(`🔌 Database config: ${dbConfig.host}:${dbConfig.port}/${dbConfig.database}`);
   
-  // SSL configuration - Only for remote connections, not for localhost
-  if (dbConfig.host === 'localhost' || dbConfig.host === '127.0.0.1') {
-    dbConfig.ssl = false;
-    console.log('🔒 SSL disabled for localhost connection');
+  // SSL configuration - Railway richiede SSL per connessioni al database
+  if (dbConfig.host.includes('railway.internal')) {
+    dbConfig.ssl = { rejectUnauthorized: false };
+    console.log('🔒 SSL enabled for Railway internal connection');
   } else if (process.env.DB_SSL === 'true' || 
-      process.env.RAILWAY_PRIVATE_DOMAIN ||
       process.env.RAILWAY_ENVIRONMENT) {
     dbConfig.ssl = { rejectUnauthorized: false };
     console.log('🔒 SSL enabled for database connection');
