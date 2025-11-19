@@ -11,25 +11,24 @@
 # ============================================
 # DATABASE - PostgreSQL
 # ============================================
-# Il servizio PostgreSQL si chiama "postgres" e usa postgres.railway.internal
-# Railway fornisce DATABASE_URL per connessioni private (consigliato - no egress costs)
-# Usa Private Network per evitare costi di egress
-DATABASE_URL=${{postgres.DATABASE_URL}}
-DATABASE_PRIVATE_URL=${{postgres.DATABASE_URL}}
-PGHOST=${{postgres.PGHOST}}
+# Variabili dirette (hardcoded) per connessione al database
+# Usa postgres.railway.internal per Private Network (no egress costs)
+DATABASE_URL=postgresql://postgres:vbhdKvSPFYkTySnfEqXjLCJibVJygGDm@postgres.railway.internal:5432/railway
+DATABASE_PRIVATE_URL=postgresql://postgres:vbhdKvSPFYkTySnfEqXjLCJibVJygGDm@postgres.railway.internal:5432/railway
+PGHOST=postgres.railway.internal
 PGPORT=5432
-PGDATABASE=${{postgres.PGDATABASE}}
-PGUSER=${{postgres.PGUSER}}
-PGPASSWORD=${{postgres.PGPASSWORD}}
-POSTGRES_DB=${{postgres.PGDATABASE}}
-POSTGRES_USER=${{postgres.PGUSER}}
-POSTGRES_PASSWORD=${{postgres.PGPASSWORD}}
-DB_HOST=${{postgres.PGHOST}}
+PGDATABASE=railway
+PGUSER=postgres
+PGPASSWORD=vbhdKvSPFYkTySnfEqXjLCJibVJygGDm
+POSTGRES_DB=railway
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=vbhdKvSPFYkTySnfEqXjLCJibVJygGDm
+DB_HOST=postgres.railway.internal
 DB_PORT=5432
-DB_NAME=${{postgres.PGDATABASE}}
-DB_USER=${{postgres.PGUSER}}
-DB_PASSWORD=${{postgres.PGPASSWORD}}
-DB_SSL=true
+DB_NAME=railway
+DB_USER=postgres
+DB_PASSWORD=vbhdKvSPFYkTySnfEqXjLCJibVJygGDm
+DB_SSL=false
 
 # ============================================
 # APPLICATION
