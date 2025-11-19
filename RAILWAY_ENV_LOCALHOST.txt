@@ -12,6 +12,7 @@
 # DATABASE - PostgreSQL (Locale/Integrato)
 # ============================================
 # Il database usa il networking privato Railway quando il volume è montato sul servizio Application
+# Volume montato: postgres-volume su /var/lib/postgresql/data
 # Sostituisci "leo-replica-wizard" con il nome del tuo servizio
 DATABASE_URL=postgresql://postgres:railway_auto_generated@leo-replica-wizard.railway.internal:5432/railway
 PGHOST=leo-replica-wizard.railway.internal
