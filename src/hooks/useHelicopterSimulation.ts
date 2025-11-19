@@ -724,6 +724,50 @@ export const useHelicopterSimulation = () => {
       }
       console.log(`    ✅ Creati ${hoursCreated} record ore di volo`);
       
+      // 4. Crea pilot_schedule per ogni pilota (schedule mensili)
+      console.log('  📅 Creando schedule per piloti...');
+      let schedulesCreated = 0;
+      
+      for (const crewMember of existingCrewMembers) {
+        if (crewMember.position === 'captain' || crewMember.position === 'first_officer') {
+          // Crea schedule per i prossimi 3 mesi
+          for (let i = 0; i < 3; i++) {
+            const monthDate = new Date(today.getFullYear(), today.getMonth() + i, 1);
+            const startDate = new Date(monthDate);
+            const endDate = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+            
+            // Verifica se lo schedule esiste già
+            const { data: existingSchedule } = await supabase
+              .from('pilot_schedule')
+              .select('id')
+              .eq('pilot_id', crewMember.id)
+              .eq('schedule_type', 'monthly')
+              .gte('start_date', startDate.toISOString().split('T')[0])
+              .lte('end_date', endDate.toISOString().split('T')[0])
+              .maybeSingle();
+            
+            if (!existingSchedule) {
+              await supabase
+                .from('pilot_schedule')
+                .insert({
+                  pilot_id: crewMember.id,
+                  schedule_type: 'monthly',
+                  start_date: startDate.toISOString().split('T')[0],
+                  end_date: endDate.toISOString().split('T')[0],
+                  notes: `Schedule mensile ${monthDate.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`
+                })
+                .then(() => {
+                  schedulesCreated++;
+                })
+                .catch(() => {
+                  // Ignora errori
+                });
+            }
+          }
+        }
+      }
+      console.log(`    ✅ Creati ${schedulesCreated} schedule per piloti`);
+      
       return {
         totalFlights: data.flights.length,
         totalMaintenance: data.maintenanceRecords.length,
@@ -731,7 +775,8 @@ export const useHelicopterSimulation = () => {
         crewMembersWithData: existingCrewMembers.length,
         assignmentsCreated,
         statsCreated,
-        hoursCreated
+        hoursCreated,
+        schedulesCreated
       };
     },
     onSuccess: (result) => {
@@ -744,7 +789,7 @@ export const useHelicopterSimulation = () => {
       toast.success(
         `Simulazione completata! ${result.totalFlights} voli, ${result.totalMaintenance} manutenzioni, ${result.totalOilRecords} record olio. ` +
         `${result.crewMembersWithData} crew members con dati associati (password: crew123). ` +
-        `${result.assignmentsCreated} assegnazioni, ${result.statsCreated} statistiche, ${result.hoursCreated} record ore di volo.`
+        `${result.assignmentsCreated} assegnazioni, ${result.statsCreated} statistiche, ${result.hoursCreated} record ore di volo, ${result.schedulesCreated} schedule.`
       );
     },
     onError: (error) => {
