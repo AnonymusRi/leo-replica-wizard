@@ -12,9 +12,10 @@
 # DATABASE - PostgreSQL
 # ============================================
 # Il servizio PostgreSQL si chiama "postgres" e usa postgres.railway.internal
-# Railway fornisce DATABASE_PRIVATE_URL per connessioni interne tra servizi
-DATABASE_URL=${{postgres.DATABASE_PRIVATE_URL}}
-DATABASE_PRIVATE_URL=${{postgres.DATABASE_PRIVATE_URL}}
+# Railway fornisce DATABASE_URL per connessioni private (consigliato - no egress costs)
+# Usa Private Network per evitare costi di egress
+DATABASE_URL=${{postgres.DATABASE_URL}}
+DATABASE_PRIVATE_URL=${{postgres.DATABASE_URL}}
 PGHOST=${{postgres.PGHOST}}
 PGPORT=5432
 PGDATABASE=${{postgres.PGDATABASE}}
