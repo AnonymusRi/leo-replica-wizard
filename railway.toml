@@ -1,9 +1,7 @@
 [build]
 builder = "DOCKERFILE"
 # Usa Dockerfile per avere PostgreSQL installato
-# Se preferisci NIXPACKS, decommenta le righe seguenti e commenta builder = "DOCKERFILE"
-# builder = "NIXPACKS"
-# buildCommand = "npm install"
+# Railway rileva automaticamente il Dockerfile nella root
 [build.environment]
 NIXPACKS_PKG_MGR = "npm"
 
