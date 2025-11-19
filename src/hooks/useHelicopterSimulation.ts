@@ -154,6 +154,133 @@ export const useHelicopterSimulation = () => {
     mutationFn: async () => {
       console.log('Iniziando simulazione dati per 5 mesi...');
       
+      // Prima creiamo/verifichiamo il superadmin
+      console.log('🔐 Verificando/creando SuperAdmin...');
+      const { data: existingSuperAdmin } = await supabase
+        .from('super_admins')
+        .select('id')
+        .eq('email', 'riccardo.cirulli@gmail.com')
+        .maybeSingle();
+      
+      if (!existingSuperAdmin) {
+        const { error: superAdminError } = await supabase
+          .from('super_admins')
+          .insert({
+            email: 'riccardo.cirulli@gmail.com',
+            phone_number: '+39 123 456 7890',
+            is_active: true,
+            two_factor_enabled: false
+          });
+        
+        if (superAdminError) {
+          console.warn('⚠️ Errore creazione SuperAdmin:', superAdminError);
+        } else {
+          console.log('✅ SuperAdmin creato: riccardo.cirulli@gmail.com');
+        }
+      } else {
+        console.log('✅ SuperAdmin già esistente: riccardo.cirulli@gmail.com');
+      }
+      
+      // Recuperiamo o creiamo organizzazioni
+      console.log('🏢 Verificando organizzazioni...');
+      let { data: organizations } = await supabase
+        .from('organizations')
+        .select('id, name');
+      
+      if (!organizations || organizations.length === 0) {
+        console.log('📦 Creando organizzazioni di default...');
+        const defaultOrgs = [
+          { name: 'Alidaunia', slug: 'alidaunia' },
+          { name: 'Elisoccorso Puglia', slug: 'elisoccorso-puglia' },
+          { name: 'Elisoccorso Campania', slug: 'elisoccorso-campania' }
+        ];
+        
+        const { data: newOrgs, error: orgError } = await supabase
+          .from('organizations')
+          .insert(defaultOrgs)
+          .select('id, name');
+        
+        if (orgError) {
+          console.error('❌ Errore creazione organizzazioni:', orgError);
+          throw orgError;
+        }
+        organizations = newOrgs;
+        console.log(`✅ Create ${organizations.length} organizzazioni`);
+      }
+      
+      // Creiamo profili crew associati alle organizzazioni
+      console.log('👥 Creando profili crew associati alle organizzazioni...');
+      const crewProfiles = [];
+      const firstNames = ['Marco', 'Giuseppe', 'Francesco', 'Antonio', 'Luca', 'Andrea', 'Roberto', 'Alessandro', 'Stefano', 'Paolo'];
+      const lastNames = ['Rossi', 'Bianchi', 'Ferrari', 'Russo', 'Romano', 'Colombo', 'Ricci', 'Marino', 'Greco', 'Bruno'];
+      const positions = ['captain', 'first_officer', 'cabin_crew', 'mechanic'];
+      
+      for (let i = 0; i < 20; i++) {
+        const org = organizations[Math.floor(Math.random() * organizations.length)];
+        const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+        const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+        const position = positions[Math.floor(Math.random() * positions.length)];
+        const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@${org.slug}.it`;
+        
+        crewProfiles.push({
+          id: crypto.randomUUID(),
+          email: email,
+          first_name: firstName,
+          last_name: lastName,
+          phone: `+39 3${Math.floor(Math.random() * 10)}${Math.floor(Math.random() * 10)} ${Math.floor(Math.random() * 1000)} ${Math.floor(Math.random() * 1000)}`,
+          organization_id: org.id,
+          is_active: true
+        });
+      }
+      
+      // Inseriamo i profili crew in batch
+      const PROFILE_BATCH_SIZE = 20;
+      for (let i = 0; i < crewProfiles.length; i += PROFILE_BATCH_SIZE) {
+        const batch = crewProfiles.slice(i, i + PROFILE_BATCH_SIZE);
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert(batch);
+        
+        if (profileError) {
+          console.warn(`⚠️ Errore inserimento profili batch ${Math.floor(i / PROFILE_BATCH_SIZE) + 1}:`, profileError);
+        } else {
+          console.log(`  ✓ Inseriti profili ${i + 1}-${Math.min(i + PROFILE_BATCH_SIZE, crewProfiles.length)}/${crewProfiles.length}`);
+        }
+      }
+      
+      // Creiamo anche i crew_members corrispondenti
+      console.log('👨‍✈️ Creando crew_members...');
+      const crewMembers = [];
+      for (let i = 0; i < crewProfiles.length; i++) {
+        const profile = crewProfiles[i];
+        const position = positions[Math.floor(Math.random() * positions.length)];
+        crewMembers.push({
+          id: crypto.randomUUID(),
+          organization_id: profile.organization_id,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          email: profile.email,
+          position: position,
+          license_number: `LIC-${Math.floor(Math.random() * 10000)}`,
+          license_expiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          is_active: true
+        });
+      }
+      
+      // Inseriamo i crew_members in batch
+      for (let i = 0; i < crewMembers.length; i += PROFILE_BATCH_SIZE) {
+        const batch = crewMembers.slice(i, i + PROFILE_BATCH_SIZE);
+        const { error: crewError } = await supabase
+          .from('crew_members')
+          .insert(batch);
+        
+        if (crewError) {
+          console.warn(`⚠️ Errore inserimento crew_members batch ${Math.floor(i / PROFILE_BATCH_SIZE) + 1}:`, crewError);
+        } else {
+          console.log(`  ✓ Inseriti crew_members ${i + 1}-${Math.min(i + PROFILE_BATCH_SIZE, crewMembers.length)}/${crewMembers.length}`);
+        }
+      }
+      
       const data = generateSimulationData();
       
       // Prima recuperiamo gli ID degli elicotteri e crew
@@ -162,12 +289,16 @@ export const useHelicopterSimulation = () => {
         .select('id, tail_number')
         .eq('aircraft_type', 'helicopter');
       
-      const { data: crewMembers } = await supabase
+      const { data: existingCrewMembers } = await supabase
         .from('crew_members')
         .select('id, position, first_name, last_name');
       
-      if (!aircraft || !crewMembers) {
-        throw new Error('Impossibile recuperare dati base');
+      if (!aircraft || aircraft.length === 0) {
+        throw new Error('Nessun elicottero trovato. Crea prima gli elicotteri.');
+      }
+      
+      if (!existingCrewMembers || existingCrewMembers.length === 0) {
+        throw new Error('Nessun crew member trovato. I crew members sono stati creati sopra.');
       }
       
       // Assegniamo aircraft_id ai voli
