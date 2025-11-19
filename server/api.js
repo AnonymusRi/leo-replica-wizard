@@ -187,17 +187,29 @@ app.post('/api/insert', async (req, res) => {
     }).join(', ');
 
     const values = records.flatMap(record => columns.map(col => record[col]));
-    const sql = `INSERT INTO ${table} (${columns.join(', ')}) VALUES ${placeholders} RETURNING *`;
+    
+    // Sanitize table name to prevent SQL injection
+    const sanitizedTable = table.replace(/[^a-zA-Z0-9_]/g, '');
+    if (sanitizedTable !== table) {
+      return res.status(400).json({ error: 'Invalid table name' });
+    }
+    
+    const sql = `INSERT INTO ${sanitizedTable} (${columns.join(', ')}) VALUES ${placeholders} RETURNING *`;
+    
+    console.log(`📝 Inserting into ${sanitizedTable}: ${records.length} records`);
+    console.log(`   Columns: ${columns.join(', ')}`);
     
     const result = await query(sql, values);
     
     res.json({ 
       data: result.rows, 
       count: result.rowCount,
-      message: `Inserted ${result.rowCount} records into ${table}` 
+      message: `Inserted ${result.rowCount} records into ${sanitizedTable}` 
     });
   } catch (error) {
-    console.error('Error inserting data:', error);
+    console.error(`❌ Error inserting into ${req.body?.table || 'unknown table'}:`, error.message);
+    console.error('   Error code:', error.code);
+    console.error('   SQL state:', error.code);
     res.status(500).json({ 
       error: error.message,
       code: error.code 
