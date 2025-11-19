@@ -17,12 +17,32 @@ echo "   Database: $POSTGRES_DB"
 mkdir -p "$PGDATA"
 chmod 700 "$PGDATA" 2>/dev/null || true
 
+# Trova il percorso di initdb
+INITDB_PATH=$(which initdb || find /usr -name initdb 2>/dev/null | head -1)
+PG_CTL_PATH=$(which pg_ctl || find /usr -name pg_ctl 2>/dev/null | head -1)
+PSQL_PATH=$(which psql || find /usr -name psql 2>/dev/null | head -1)
+PG_ISREADY_PATH=$(which pg_isready || find /usr -name pg_isready 2>/dev/null | head -1)
+
+if [ -z "$INITDB_PATH" ] || [ -z "$PG_CTL_PATH" ]; then
+    echo "❌ PostgreSQL binaries not found!"
+    echo "   INITDB: $INITDB_PATH"
+    echo "   PG_CTL: $PG_CTL_PATH"
+    echo "   PATH: $PATH"
+    exit 1
+fi
+
+echo "✅ Found PostgreSQL binaries:"
+echo "   INITDB: $INITDB_PATH"
+echo "   PG_CTL: $PG_CTL_PATH"
+echo "   PSQL: $PSQL_PATH"
+echo "   PG_ISREADY: $PG_ISREADY_PATH"
+
 # Inizializza il database se non esiste
 if [ ! -f "$PGDATA/PG_VERSION" ]; then
     echo "📦 Initializing PostgreSQL database..."
     
     # Inizializza il database
-    initdb -D "$PGDATA" --encoding=UTF8 --locale=C -U "$POSTGRES_USER" || {
+    "$INITDB_PATH" -D "$PGDATA" --encoding=UTF8 --locale=C -U "$POSTGRES_USER" || {
         echo "⚠️  initdb failed, trying with existing data..."
     }
     
@@ -32,29 +52,29 @@ if [ ! -f "$PGDATA/PG_VERSION" ]; then
     echo "port = 5432" >> "$PGDATA/postgresql.conf"
     
     # Avvia PostgreSQL per configurazione iniziale
-    pg_ctl -D "$PGDATA" -o "-c listen_addresses='*' -c port=5432" -l "$PGDATA/postgres.log" start || {
+    "$PG_CTL_PATH" -D "$PGDATA" -o "-c listen_addresses='*' -c port=5432" -l "$PGDATA/postgres.log" start || {
         echo "⚠️  Failed to start PostgreSQL for initial setup"
     }
     
     # Attendi che PostgreSQL sia pronto
     sleep 3
-    until pg_isready -h localhost -p 5432 -U "$POSTGRES_USER" 2>/dev/null; do
+    until "$PG_ISREADY_PATH" -h localhost -p 5432 -U "$POSTGRES_USER" 2>/dev/null; do
         echo "⏳ Waiting for PostgreSQL to be ready for setup..."
         sleep 1
     done
     
     # Crea database se non esiste
-    psql -h localhost -p 5432 -U "$POSTGRES_USER" -d postgres -c "CREATE DATABASE $POSTGRES_DB;" 2>/dev/null || {
+    "$PSQL_PATH" -h localhost -p 5432 -U "$POSTGRES_USER" -d postgres -c "CREATE DATABASE $POSTGRES_DB;" 2>/dev/null || {
         echo "ℹ️  Database $POSTGRES_DB might already exist"
     }
     
     # Imposta password
-    psql -h localhost -p 5432 -U "$POSTGRES_USER" -d postgres -c "ALTER USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';" 2>/dev/null || {
+    "$PSQL_PATH" -h localhost -p 5432 -U "$POSTGRES_USER" -d postgres -c "ALTER USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';" 2>/dev/null || {
         echo "⚠️  Failed to set password"
     }
     
     # Ferma PostgreSQL per riavviarlo con la configurazione corretta
-    pg_ctl -D "$PGDATA" -m fast stop || {
+    "$PG_CTL_PATH" -D "$PGDATA" -m fast stop || {
         echo "⚠️  Failed to stop PostgreSQL"
     }
     sleep 2
@@ -62,14 +82,14 @@ fi
 
 # Avvia PostgreSQL in background
 echo "🚀 Starting PostgreSQL server..."
-pg_ctl -D "$PGDATA" -o "-c listen_addresses='*' -c port=5432" -l "$PGDATA/postgres.log" start || {
+"$PG_CTL_PATH" -D "$PGDATA" -o "-c listen_addresses='*' -c port=5432" -l "$PGDATA/postgres.log" start || {
     echo "⚠️  PostgreSQL might already be running"
 }
 
 # Attendi che PostgreSQL sia pronto
 echo "⏳ Waiting for PostgreSQL to be ready..."
 for i in {1..30}; do
-    if pg_isready -h localhost -p 5432 -U "$POSTGRES_USER" 2>/dev/null; then
+    if "$PG_ISREADY_PATH" -h localhost -p 5432 -U "$POSTGRES_USER" 2>/dev/null; then
         echo "✅ PostgreSQL is ready!"
         break
     fi

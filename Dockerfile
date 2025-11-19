@@ -11,6 +11,12 @@ RUN if ! id -u postgres > /dev/null 2>&1; then \
         useradd -r -s /bin/bash postgres; \
     fi
 
+# Aggiungi PostgreSQL al PATH
+ENV PATH="/usr/lib/postgresql/15/bin:/usr/lib/postgresql/16/bin:/usr/lib/postgresql/17/bin:${PATH}"
+
+# Verifica che PostgreSQL sia installato
+RUN which initdb && which pg_ctl && which psql && which pg_isready || (echo "PostgreSQL binaries not found" && exit 1)
+
 # Imposta la directory di lavoro
 WORKDIR /app
 
