@@ -33,6 +33,9 @@ dist-ssr
 
 # Railway
 .railway
+# Credenziali (non committare)
+RAILWAY_POSTGRES_CREDENTIALS.md
+RAILWAY_ENV_WITH_CREDENTIALS.txt
 
 # Database
 *.sql.backup
