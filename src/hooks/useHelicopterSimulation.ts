@@ -210,7 +210,7 @@ export const useHelicopterSimulation = () => {
         const { data: newOrgs, error: orgError } = await supabase
           .from('organizations')
           .insert(defaultOrgs)
-          .select('id, name');
+          .select('id, name, slug');
         
         if (orgError) {
           console.error('❌ Errore creazione organizzazioni:', orgError);
