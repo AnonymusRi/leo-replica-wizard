@@ -1,0 +1,62 @@
+# ============================================
+# VARIABILI D'AMBIENTE RAILWAY - DATABASE INTEGRATO
+# ============================================
+# Usa questo file se il database PostgreSQL è INTEGRATO nel servizio Application
+# (non è un servizio separato)
+# ============================================
+# Copia e incolla TUTTO questo contenuto nel Raw Editor di Railway
+# Vai su: Railway Dashboard → Il tuo progetto → Servizio Applicazione → Variables → Raw Editor
+# ============================================
+
+# ============================================
+# DATABASE - PostgreSQL (Integrato)
+# ============================================
+# Quando il database è integrato, Railway fornisce automaticamente queste variabili
+# NON usare ${{Postgres.*}} perché non c'è un servizio separato
+# Railway popola automaticamente queste variabili quando aggiungi un database PostgreSQL
+DATABASE_URL=${{.DATABASE_URL}}
+DATABASE_PRIVATE_URL=${{.DATABASE_PRIVATE_URL}}
+PGHOST=${{.PGHOST}}
+PGPORT=5432
+PGDATABASE=${{.PGDATABASE}}
+PGUSER=${{.PGUSER}}
+PGPASSWORD=${{.PGPASSWORD}}
+POSTGRES_DB=${{.PGDATABASE}}
+POSTGRES_USER=${{.PGUSER}}
+POSTGRES_PASSWORD=${{.PGPASSWORD}}
+DB_HOST=${{.PGHOST}}
+DB_PORT=5432
+DB_NAME=${{.PGDATABASE}}
+DB_USER=${{.PGUSER}}
+DB_PASSWORD=${{.PGPASSWORD}}
+DB_SSL=true
+
+# ============================================
+# APPLICATION
+# ============================================
+NODE_ENV=production
+PORT=5000
+RAILWAY_ENVIRONMENT=true
+
+# ============================================
+# VITE
+# ============================================
+VITE_PUBLIC_URL=https://alidaunia-production.up.railway.app
+VITE_API_URL=https://alidaunia-production.up.railway.app/api
+VITE_APP_ENV=production
+
+# ============================================
+# BUILD
+# ============================================
+NPM_CONFIG_LEGACY_PEER_DEPS=true
+NIXPACKS_PKG_MGR=npm
+
+# ============================================
+# NOTA IMPORTANTE
+# ============================================
+# Se Railway NON risolve ${{.VARIABLE}}, prova senza il punto:
+# DATABASE_URL=${{DATABASE_URL}}
+# PGHOST=${{PGHOST}}
+# ecc.
+# ============================================
+
