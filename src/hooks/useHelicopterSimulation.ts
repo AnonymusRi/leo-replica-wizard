@@ -521,20 +521,188 @@ export const useHelicopterSimulation = () => {
         }
         console.log(`  ✓ Inseriti record olio ${i + 1}-${Math.min(i + BATCH_SIZE, data.oilRecords.length)}/${data.oilRecords.length}`);
       }
+
+      // Creiamo dati associati per ogni crew member (assegnazioni voli, statistiche, ore di volo)
+      console.log('\n📊 Creando dati associati per crew members...');
+      
+      // 1. Assegnazioni voli per ogni crew member
+      console.log('  📅 Creando assegnazioni voli...');
+      const allFlights = data.flights;
+      let assignmentsCreated = 0;
+      
+      for (const crewMember of existingCrewMembers) {
+        // Assegna 5-15 voli casuali a ogni crew member
+        const numAssignments = Math.floor(Math.random() * 11) + 5;
+        const selectedFlights = allFlights
+          .sort(() => Math.random() - 0.5)
+          .slice(0, numAssignments);
+        
+        for (const flight of selectedFlights) {
+          const departureTime = new Date(flight.departure_time);
+          const arrivalTime = new Date(flight.arrival_time);
+          const flightHours = (arrivalTime.getTime() - departureTime.getTime()) / (1000 * 60 * 60);
+          const dutyHours = flightHours + 0.5;
+          
+          // Verifica se l'assegnazione esiste già
+          const { data: existingAssignment } = await supabase
+            .from('crew_flight_assignments')
+            .select('id')
+            .eq('flight_id', flight.id)
+            .eq('crew_member_id', crewMember.id)
+            .maybeSingle();
+          
+          if (!existingAssignment) {
+            await supabase
+              .from('crew_flight_assignments')
+              .insert({
+                flight_id: flight.id,
+                crew_member_id: crewMember.id,
+                position: crewMember.position,
+                reporting_time: new Date(departureTime.getTime() - 30 * 60 * 1000).toISOString(),
+                duty_start_time: departureTime.toISOString(),
+                duty_end_time: new Date(arrivalTime.getTime() + 30 * 60 * 1000).toISOString(),
+                flight_time_hours: parseFloat(flightHours.toFixed(2)),
+                duty_time_hours: parseFloat(dutyHours.toFixed(2)),
+                rest_time_hours: 12.0,
+                ftl_compliant: true,
+                airport_recency_valid: true,
+                currency_valid: true,
+                certificates_valid: true,
+                passport_valid: true,
+                visa_valid: true
+              })
+              .then(() => {
+                assignmentsCreated++;
+              })
+              .catch(() => {
+                // Ignora errori
+              });
+          }
+        }
+      }
+      console.log(`    ✅ Create ${assignmentsCreated} assegnazioni voli`);
+      
+      // 2. Statistiche mensili per ogni crew member (ultimi 6 mesi)
+      console.log('  📊 Creando statistiche mensili...');
+      const today = new Date();
+      let statsCreated = 0;
+      
+      for (const crewMember of existingCrewMembers) {
+        for (let i = 0; i < 6; i++) {
+          const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
+          const monthYear = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
+          
+          // Verifica se le statistiche esistono già
+          const { data: existingStats } = await supabase
+            .from('crew_statistics')
+            .select('id')
+            .eq('crew_member_id', crewMember.id)
+            .eq('month_year', monthYear)
+            .maybeSingle();
+          
+          if (!existingStats) {
+            const flightHours = Math.random() * 50 + 30;
+            const flights = Math.floor(Math.random() * 20 + 10);
+            const dutyHours = flightHours + (Math.random() * 20 + 10);
+            const nightHours = flightHours * 0.2;
+            const sectors = flights * 1.5;
+            
+            await supabase
+              .from('crew_statistics')
+              .insert({
+                crew_member_id: crewMember.id,
+                month_year: monthYear,
+                total_flights: flights,
+                total_sectors: Math.floor(sectors),
+                total_flight_hours: parseFloat(flightHours.toFixed(2)),
+                total_duty_hours: parseFloat(dutyHours.toFixed(2)),
+                night_hours: parseFloat(nightHours.toFixed(2)),
+                simulator_hours: parseFloat((Math.random() * 5).toFixed(2)),
+                training_hours: parseFloat((Math.random() * 3).toFixed(2)),
+                days_off: Math.floor(Math.random() * 5 + 5),
+                ftl_violations: 0,
+                performance_rating: parseFloat((Math.random() * 2 + 8).toFixed(2))
+              })
+              .then(() => {
+                statsCreated++;
+              })
+              .catch(() => {
+                // Ignora errori
+              });
+          }
+        }
+      }
+      console.log(`    ✅ Create ${statsCreated} statistiche mensili`);
+      
+      // 3. Record ore di volo per voli completati
+      console.log('  📝 Creando record ore di volo...');
+      const completedFlights = allFlights.filter(f => f.status === 'completed');
+      let hoursCreated = 0;
+      
+      for (const crewMember of existingCrewMembers) {
+        if (crewMember.position === 'captain' || crewMember.position === 'first_officer') {
+          // Solo piloti hanno record ore di volo
+          const numRecords = Math.floor(Math.random() * 10) + 5;
+          const selectedFlights = completedFlights
+            .sort(() => Math.random() - 0.5)
+            .slice(0, numRecords);
+          
+          for (const flight of selectedFlights) {
+            const departureTime = new Date(flight.departure_time);
+            const arrivalTime = new Date(flight.arrival_time);
+            const flightHours = (arrivalTime.getTime() - departureTime.getTime()) / (1000 * 60 * 60);
+            
+            // Verifica se esiste già
+            const { data: existingHours } = await supabase
+              .from('pilot_flight_hours')
+              .select('id')
+              .eq('pilot_id', crewMember.id)
+              .eq('flight_id', flight.id)
+              .maybeSingle();
+            
+            if (!existingHours) {
+              await supabase
+                .from('pilot_flight_hours')
+                .insert({
+                  pilot_id: crewMember.id,
+                  flight_id: flight.id,
+                  flight_date: departureTime.toISOString().split('T')[0],
+                  flight_type: 'commercial',
+                  flight_hours: parseFloat(flightHours.toFixed(2))
+                })
+                .then(() => {
+                  hoursCreated++;
+                })
+                .catch(() => {
+                  // Ignora errori
+                });
+            }
+          }
+        }
+      }
+      console.log(`    ✅ Creati ${hoursCreated} record ore di volo`);
       
       return {
         totalFlights: data.flights.length,
         totalMaintenance: data.maintenanceRecords.length,
-        totalOilRecords: data.oilRecords.length
+        totalOilRecords: data.oilRecords.length,
+        crewMembersWithData: existingCrewMembers.length,
+        assignmentsCreated,
+        statsCreated,
+        hoursCreated
       };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['flights'] });
       queryClient.invalidateQueries({ queryKey: ['maintenance-records'] });
       queryClient.invalidateQueries({ queryKey: ['oil-consumption'] });
+      queryClient.invalidateQueries({ queryKey: ['crew-flight-assignments'] });
+      queryClient.invalidateQueries({ queryKey: ['crew-statistics'] });
       
       toast.success(
-        `Simulazione completata! ${result.totalFlights} voli, ${result.totalMaintenance} manutenzioni, ${result.totalOilRecords} record olio generati`
+        `Simulazione completata! ${result.totalFlights} voli, ${result.totalMaintenance} manutenzioni, ${result.totalOilRecords} record olio. ` +
+        `${result.crewMembersWithData} crew members con dati associati (password: crew123). ` +
+        `${result.assignmentsCreated} assegnazioni, ${result.statsCreated} statistiche, ${result.hoursCreated} record ore di volo.`
       );
     },
     onError: (error) => {
