@@ -138,6 +138,7 @@ export const useHelicopterSimulation = () => {
       }
       
       // Registrazioni consumo olio (per alcuni voli)
+      // Nota: recorded_by verrà assegnato dopo quando avremo i crew members
       if (Math.random() < 0.4) {
         const engines = ['Engine 1', 'Engine 2'];
         engines.forEach(engine => {
@@ -151,7 +152,7 @@ export const useHelicopterSimulation = () => {
             oil_level_after: Math.random() * 50 + 40,  // 40-90%
             consumption_rate: Math.random() * 0.5 + 0.1, // 0.1-0.6 liters/hour (dentro il limite 99.9)
             notes: 'Controllo routine consumo olio',
-            recorded_by: 'Meccanico di turno'
+            recorded_by: null // Verrà assegnato dopo con l'ID di un meccanico
           };
           
           oilRecords.push(oilRecord);
@@ -366,9 +367,16 @@ export const useHelicopterSimulation = () => {
         }
       });
       
-      // Assegniamo aircraft_id ai record olio
+      // Assegniamo aircraft_id e recorded_by ai record olio
+      const mechanics = existingCrewMembers.filter(c => c.position === 'mechanic');
       data.oilRecords.forEach(record => {
         record.aircraft_id = aircraft[Math.floor(Math.random() * aircraft.length)]?.id;
+        // Assegna un meccanico casuale se disponibile, altrimenti null
+        if (mechanics.length > 0) {
+          record.recorded_by = mechanics[Math.floor(Math.random() * mechanics.length)]?.id;
+        } else {
+          record.recorded_by = null;
+        }
       });
       
       // Inseriamo i dati nel database in batch più piccoli per evitare errori 413
