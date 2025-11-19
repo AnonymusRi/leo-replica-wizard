@@ -1,0 +1,66 @@
+# ============================================
+# VARIABILI D'AMBIENTE RAILWAY - SOLUZIONE ALTERNATIVA
+# ============================================
+# Se le variabili ${{Postgres.*}} non funzionano, usa questa configurazione
+# ============================================
+# IMPORTANTE: Sostituisci "NOME_SERVIZIO_POSTGRES" con il nome esatto del tuo servizio PostgreSQL
+# ============================================
+
+# ============================================
+# METODO 1: Usa il nome del servizio direttamente
+# ============================================
+# Sostituisci "NOME_SERVIZIO_POSTGRES" con il nome esatto del tuo servizio PostgreSQL
+# Esempio: se il servizio si chiama "leo-replica-wizard", usa:
+# DATABASE_URL=${{leo-replica-wizard.DATABASE_URL}}
+# ============================================
+DATABASE_URL=${{NOME_SERVIZIO_POSTGRES.DATABASE_URL}}
+PGHOST=${{NOME_SERVIZIO_POSTGRES.PGHOST}}
+PGPORT=5432
+PGDATABASE=${{NOME_SERVIZIO_POSTGRES.PGDATABASE}}
+PGUSER=${{NOME_SERVIZIO_POSTGRES.PGUSER}}
+PGPASSWORD=${{NOME_SERVIZIO_POSTGRES.PGPASSWORD}}
+POSTGRES_DB=${{NOME_SERVIZIO_POSTGRES.PGDATABASE}}
+POSTGRES_USER=${{NOME_SERVIZIO_POSTGRES.PGUSER}}
+POSTGRES_PASSWORD=${{NOME_SERVIZIO_POSTGRES.PGPASSWORD}}
+DB_HOST=${{NOME_SERVIZIO_POSTGRES.PGHOST}}
+DB_PORT=5432
+DB_NAME=${{NOME_SERVIZIO_POSTGRES.PGDATABASE}}
+DB_USER=${{NOME_SERVIZIO_POSTGRES.PGUSER}}
+DB_PASSWORD=${{NOME_SERVIZIO_POSTGRES.PGPASSWORD}}
+DB_SSL=true
+
+# ============================================
+# APPLICATION
+# ============================================
+NODE_ENV=production
+PORT=5000
+RAILWAY_ENVIRONMENT=true
+
+# ============================================
+# VITE
+# ============================================
+VITE_PUBLIC_URL=https://alidaunia-production.up.railway.app
+VITE_API_URL=https://alidaunia-production.up.railway.app/api
+VITE_APP_ENV=production
+
+# ============================================
+# BUILD
+# ============================================
+NPM_CONFIG_LEGACY_PEER_DEPS=true
+NIXPACKS_PKG_MGR=npm
+
+# ============================================
+# COME TROVARE IL NOME ESATTO DEL SERVIZIO
+# ============================================
+# 1. Vai su Railway Dashboard → Il tuo progetto
+# 2. Guarda la lista dei servizi
+# 3. Il nome del servizio PostgreSQL è quello che vedi nella lista
+# 4. Esempi comuni:
+#    - "Postgres"
+#    - "postgres"
+#    - "PostgreSQL"
+#    - "leo-replica-wizard"
+#    - "database"
+# 5. Il nome è CASE-SENSITIVE!
+# ============================================
+
