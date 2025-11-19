@@ -198,7 +198,7 @@ export const useHelicopterSimulation = () => {
       console.log('🏢 Verificando organizzazioni...');
       let { data: organizations } = await supabase
         .from('organizations')
-        .select('id, name');
+        .select('id, name, slug');
       
       if (!organizations || organizations.length === 0) {
         console.log('📦 Creando organizzazioni di default...');
@@ -219,6 +219,20 @@ export const useHelicopterSimulation = () => {
         }
         organizations = newOrgs;
         console.log(`✅ Create ${organizations.length} organizzazioni`);
+      } else {
+        // Assicuriamoci che tutte le organizzazioni abbiano uno slug
+        for (const org of organizations) {
+          if (!org.slug) {
+            org.slug = org.name.toLowerCase().replace(/\s+/g, '-');
+            await supabase
+              .from('organizations')
+              .update({ slug: org.slug })
+              .eq('id', org.id)
+              .catch(() => {
+                // Ignora errori
+              });
+          }
+        }
       }
       
       // Creiamo profili crew associati alle organizzazioni
@@ -302,76 +316,74 @@ export const useHelicopterSimulation = () => {
       
       for (const crewMember of crewMembers) {
         try {
-          // Verifica se l'account auth esiste già
-          const { data: existingAuth } = await supabase.auth.admin?.getUserByEmail(crewMember.email).catch(() => ({ data: null }));
-          
-          if (!existingAuth?.user) {
-            // Crea l'account di autenticazione
-            const { data: authData, error: authError } = await supabase.auth.signUp({
-              email: crewMember.email,
-              password: CREW_PASSWORD,
-              options: {
-                emailRedirectTo: `${window.location.origin}/crew-dashboard`,
-                data: {
-                  first_name: crewMember.first_name,
-                  last_name: crewMember.last_name,
-                  user_type: 'crew'
-                }
-              }
-            });
-
-            if (authError) {
-              // Se l'utente esiste già, ignora l'errore
-              if (authError.message.includes('already registered') || authError.message.includes('User already registered')) {
-                authSkipped++;
-                continue;
-              }
-              console.warn(`⚠️ Errore creazione auth per ${crewMember.email}:`, authError.message);
-            } else if (authData?.user) {
-              authCreated++;
-              
-              // Aggiorna il profilo con l'auth_id se esiste
-              const { data: existingProfile } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('email', crewMember.email)
-                .maybeSingle();
-              
-              if (existingProfile) {
-                // Il profilo esiste già, aggiorna l'id se necessario
-                await supabase
-                  .from('profiles')
-                  .update({ id: authData.user.id })
-                  .eq('email', crewMember.email)
-                  .then(() => {
-                    // Se l'update fallisce perché l'id è diverso, crea un nuovo profilo
-                  })
-                  .catch(() => {
-                    // Ignora errori di update
-                  });
-              } else {
-                // Crea il profilo collegato all'account auth
-                await supabase
-                  .from('profiles')
-                  .insert({
-                    id: authData.user.id,
-                    email: crewMember.email,
-                    first_name: crewMember.first_name,
-                    last_name: crewMember.last_name,
-                    organization_id: crewMember.organization_id,
-                    is_active: true
-                  })
-                  .catch(() => {
-                    // Ignora errori se il profilo esiste già
-                  });
+          // Prova a creare l'account di autenticazione direttamente
+          // Se esiste già, signUp restituirà un errore che gestiamo
+          const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: crewMember.email,
+            password: CREW_PASSWORD,
+            options: {
+              emailRedirectTo: `${window.location.origin}/crew-dashboard`,
+              data: {
+                first_name: crewMember.first_name,
+                last_name: crewMember.last_name,
+                user_type: 'crew'
               }
             }
-          } else {
-            authSkipped++;
+          });
+
+          if (authError) {
+            // Se l'utente esiste già, ignora l'errore
+            if (authError.message.includes('already registered') || 
+                authError.message.includes('User already registered') ||
+                authError.message.includes('already exists')) {
+              authSkipped++;
+              continue;
+            }
+            console.warn(`⚠️ Errore creazione auth per ${crewMember.email}:`, authError.message);
+          } else if (authData?.user) {
+            authCreated++;
+            
+            // Aggiorna il profilo con l'auth_id se esiste
+            const { data: existingProfile } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('email', crewMember.email)
+              .maybeSingle();
+            
+            if (existingProfile) {
+              // Il profilo esiste già, aggiorna l'id se necessario
+              await supabase
+                .from('profiles')
+                .update({ id: authData.user.id })
+                .eq('email', crewMember.email)
+                .then(() => {
+                  // Se l'update fallisce perché l'id è diverso, crea un nuovo profilo
+                })
+                .catch(() => {
+                  // Ignora errori di update
+                });
+            } else {
+              // Crea il profilo collegato all'account auth
+              await supabase
+                .from('profiles')
+                .insert({
+                  id: authData.user.id,
+                  email: crewMember.email,
+                  first_name: crewMember.first_name,
+                  last_name: crewMember.last_name,
+                  organization_id: crewMember.organization_id,
+                  is_active: true
+                })
+                .catch(() => {
+                  // Ignora errori se il profilo esiste già
+                });
+            }
           }
         } catch (error: any) {
           // Ignora errori e continua
-          if (error?.message?.includes('already registered') || error?.message?.includes('User already registered')) {
+          if (error?.message?.includes('already registered') || 
+              error?.message?.includes('User already registered') ||
+              error?.message?.includes('already exists')) {
             authSkipped++;
           } else {
             console.warn(`⚠️ Errore creazione auth per ${crewMember.email}:`, error.message);
