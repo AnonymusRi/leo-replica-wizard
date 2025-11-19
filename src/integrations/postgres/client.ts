@@ -563,19 +563,42 @@ class InsertBuilder {
         const response = await fetch(`${apiUrl}${endpoint}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            table: this.tableName,
-            data: this.insertData,
-          }),
+          body: JSON.stringify(this.insertData),
         });
         
         if (!response.ok) {
-          const error = await response.json();
+          // Try to parse error as JSON, but handle HTML responses
+          let error;
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            error = await response.json();
+          } else {
+            const text = await response.text();
+            console.error('❌ API returned non-JSON response:', text.substring(0, 200));
+            error = {
+              error: `API returned ${response.status} ${response.statusText}`,
+              code: `HTTP_${response.status}`,
+            };
+          }
           return {
             data: null,
             error: {
               message: error.error || 'API request failed',
               code: error.code,
+            },
+          };
+        }
+        
+        // Verify response is JSON before parsing
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          console.error('❌ API returned non-JSON response:', text.substring(0, 200));
+          return {
+            data: null,
+            error: {
+              message: 'API returned non-JSON response',
+              code: 'INVALID_RESPONSE',
             },
           };
         }
