@@ -276,6 +276,15 @@ class PostgresQueryBuilder {
     // Build WHERE clause
     if (this.whereConditions.length > 0) {
       const conditions = this.whereConditions.map(cond => {
+        // Qualify column name with table name if there are joins to avoid ambiguity
+        // If field is already qualified (contains '.'), use it as-is
+        // Otherwise, assume it refers to the main table
+        let qualifiedField = cond.field;
+        if (this.joins.length > 0 && !cond.field.includes('.')) {
+          // Always qualify with main table name when there are joins
+          qualifiedField = `${this.tableName}.${cond.field}`;
+        }
+        
         if (cond.operator === 'IN') {
           // Ensure we have values for IN clause
           if (!Array.isArray(cond.value) || cond.value.length === 0) {
@@ -283,10 +292,10 @@ class PostgresQueryBuilder {
           }
           const placeholders = cond.value.map(() => `$${paramIndex++}`).join(', ');
           params.push(...cond.value);
-          return `${cond.field} IN (${placeholders})`;
+          return `${qualifiedField} IN (${placeholders})`;
         } else {
           params.push(cond.value);
-          return `${cond.field} ${cond.operator} $${paramIndex++}`;
+          return `${qualifiedField} ${cond.operator} $${paramIndex++}`;
         }
       }).filter(c => c); // Filter out any empty conditions
       if (conditions.length > 0) {
