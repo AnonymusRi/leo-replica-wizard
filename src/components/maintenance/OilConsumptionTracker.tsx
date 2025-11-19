@@ -37,7 +37,8 @@ export const OilConsumptionTracker = () => {
   });
 
   const { data: aircraft = [] } = useAircraft();
-  const { data: oilRecords = [] } = useOilConsumptionRecords();
+  const { data: oilData } = useOilConsumptionRecords(50, 0);
+  const oilRecords = oilData?.data || [];
   const createRecord = useCreateOilConsumptionRecord();
 
   // Filter records by selected aircraft and engine

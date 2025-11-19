@@ -10,7 +10,9 @@
 4. Salva
 
 ### Variabili Automatiche del Servizio Postgres:
+
 Railway fornisce automaticamente queste variabili nel servizio PostgreSQL:
+
 - `PGHOST` - Hostname del database
 - `PGPORT` - Porta (5432)
 - `PGDATABASE` - Nome del database
@@ -43,6 +45,7 @@ Copia tutto il contenuto del file `RAILWAY_ENV_COMPLETE_RAW.txt` e incollalo nel
 **Prima di salvare**, sostituisci:
 
 1. **`Postgres`** → Nome esatto del tuo servizio PostgreSQL
+
    - Esempio: se il servizio si chiama `postgres`, usa `${{postgres.DATABASE_URL}}`
    - Esempio: se il servizio si chiama `PostgreSQL`, usa `${{PostgreSQL.DATABASE_URL}}`
    - **IMPORTANTE**: Le variabili `${{Postgres.*}}` sono riferimenti che Railway risolve automaticamente
@@ -94,6 +97,7 @@ Dopo aver salvato le variabili:
 Vedi il file `RAILWAY_ENV_COMPLETE_RAW.txt` per la lista completa.
 
 ### Variabili Database (Referenze al servizio Postgres):
+
 - `DATABASE_URL=${{Postgres.DATABASE_URL}}`
 - `PGHOST=${{Postgres.PGHOST}}`
 - `PGPORT=${{Postgres.PGPORT}}` (porta 5432)
@@ -108,16 +112,19 @@ Vedi il file `RAILWAY_ENV_COMPLETE_RAW.txt` per la lista completa.
 - `DB_SSL=true`
 
 ### Variabili Applicazione:
+
 - `NODE_ENV=production`
 - `PORT=5000`
 - `RAILWAY_ENVIRONMENT=true`
 
 ### Variabili Vite:
+
 - `VITE_PUBLIC_URL=https://tuo-dominio.up.railway.app`
 - `VITE_API_URL=https://tuo-dominio.up.railway.app/api`
 - `VITE_APP_ENV=production`
 
 ### Variabili Build:
+
 - `NPM_CONFIG_LEGACY_PEER_DEPS=true`
 - `NIXPACKS_PKG_MGR=npm`
 
@@ -151,4 +158,3 @@ Vedi il file `RAILWAY_ENV_COMPLETE_RAW.txt` per la lista completa.
 - [Railway Variables](https://docs.railway.app/variables)
 - [Railway Service References](https://docs.railway.app/variables#service-references)
 - [Railway PostgreSQL](https://docs.railway.app/databases/postgresql)
-

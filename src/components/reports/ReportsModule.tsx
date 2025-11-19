@@ -26,7 +26,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 
 export const ReportsModule = () => {
   const [activeTab, setActiveTab] = useState("overview");
-  const { data: flights = [], isLoading: flightsLoading } = useFlights();
+  const { data: flightsData, isLoading: flightsLoading } = useFlights(50, 0);
+  const flights = flightsData?.data || [];
   const { data: quotes = [], isLoading: quotesLoading } = useQuotes();
   const { data: crewMembers = [], isLoading: crewLoading } = useCrewMembers();
 

@@ -13,10 +13,12 @@ import { HelicopterSimulation } from "./HelicopterSimulation";
 
 export const MaintenanceOverview = () => {
   const { data: technicalData = [] } = useAircraftTechnicalData();
-  const { data: maintenanceRecords = [] } = useMaintenanceRecords();
+  const { data: maintenanceData } = useMaintenanceRecords(50, 0);
+  const maintenanceRecords = maintenanceData?.data || [];
   const { data: documents = [] } = useAircraftDocuments();
   const { data: holdItems = [] } = useAircraftHoldItems();
-  const { data: oilRecords = [] } = useOilConsumptionRecords();
+  const { data: oilData } = useOilConsumptionRecords(50, 0);
+  const oilRecords = oilData?.data || [];
 
   // Calculate metrics
   const overdueMaintenances = maintenanceRecords.filter(

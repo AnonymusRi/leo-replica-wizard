@@ -35,7 +35,8 @@ export const MaintenanceModule = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   
-  const { data: maintenanceRecords = [] } = useMaintenanceRecords();
+  const { data: maintenanceData } = useMaintenanceRecords(50, 0);
+  const maintenanceRecords = maintenanceData?.data || [];
 
   const scheduledCount = maintenanceRecords.filter(m => m.status === 'scheduled').length;
   const inProgressCount = maintenanceRecords.filter(m => m.status === 'in_progress').length;

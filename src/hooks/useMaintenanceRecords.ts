@@ -4,21 +4,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { MaintenanceRecord } from '@/types/database';
 import { toast } from 'sonner';
 
-export const useMaintenanceRecords = () => {
+export const useMaintenanceRecords = (limit: number = 50, offset: number = 0) => {
   return useQuery({
-    queryKey: ['maintenance-records'],
+    queryKey: ['maintenance-records', limit, offset],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from('maintenance_records')
         .select(`
           *,
           aircraft:aircraft(*),
           technician:crew_members(*)
-        `)
-        .order('scheduled_date', { ascending: false });
+        `, { count: 'exact' })
+        .order('scheduled_date', { ascending: false })
+        .range(offset, offset + limit - 1);
       
       if (error) throw error;
-      return data as MaintenanceRecord[];
+      return { data: data as MaintenanceRecord[], count: count || 0 };
     }
   });
 };

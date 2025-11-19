@@ -4,11 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Flight } from '@/types/database';
 import { toast } from 'sonner';
 
-export const useFlights = () => {
+export const useFlights = (limit: number = 50, offset: number = 0) => {
   return useQuery({
-    queryKey: ['flights'],
+    queryKey: ['flights', limit, offset],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from('flights')
         .select(`
           *,
@@ -20,11 +20,12 @@ export const useFlights = () => {
           ),
           flight_legs:flight_legs(*),
           schedule_changes:schedule_changes(*)
-        `)
-        .order('departure_time', { ascending: false });
+        `, { count: 'exact' })
+        .order('departure_time', { ascending: false })
+        .range(offset, offset + limit - 1);
       
       if (error) throw error;
-      return data as Flight[];
+      return { data: data as Flight[], count: count || 0 };
     }
   });
 };

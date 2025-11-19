@@ -27,7 +27,8 @@ import { format } from "date-fns";
 export const ScheduleModule = () => {
   const [activeView, setActiveView] = useState("advanced");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { data: flights = [], isLoading, error } = useFlights();
+  const { data: flightsData, isLoading, error } = useFlights(50, 0);
+  const flights = flightsData?.data || [];
 
   const getStatusColor = (status: string) => {
     switch (status) {

@@ -4,20 +4,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { OilConsumptionRecord } from '@/types/aircraft';
 import { toast } from 'sonner';
 
-export const useOilConsumptionRecords = () => {
+export const useOilConsumptionRecords = (limit: number = 50, offset: number = 0) => {
   return useQuery({
-    queryKey: ['oil-consumption-records'],
+    queryKey: ['oil-consumption-records', limit, offset],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from('oil_consumption_records')
         .select(`
           *,
           aircraft:aircraft(*)
-        `)
-        .order('flight_date', { ascending: false });
+        `, { count: 'exact' })
+        .order('flight_date', { ascending: false })
+        .range(offset, offset + limit - 1);
       
       if (error) throw error;
-      return data as OilConsumptionRecord[];
+      return { data: data as OilConsumptionRecord[], count: count || 0 };
     }
   });
 };

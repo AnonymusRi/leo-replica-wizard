@@ -58,11 +58,13 @@ export const AdvancedScheduleModule = () => {
   
   const [selectedFlight, setSelectedFlight] = useState<any>(null);
 
-  const { data: flights = [], isLoading: flightsLoading } = useFlights();
+  const { data: flightsData, isLoading: flightsLoading } = useFlights(50, 0);
+  const flights = flightsData?.data || [];
   const { data: aircraft = [], isLoading: aircraftLoading } = useAircraft();
   const { data: crewMembers = [] } = useCrewMembers();
   const { data: flightAssignments = [] } = useFlightAssignments();
-  const { data: maintenanceRecords = [] } = useMaintenanceRecords();
+  const { data: maintenanceData } = useMaintenanceRecords(50, 0);
+  const maintenanceRecords = maintenanceData?.data || [];
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });

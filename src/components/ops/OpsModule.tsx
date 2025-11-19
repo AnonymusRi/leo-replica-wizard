@@ -61,7 +61,8 @@ export const OpsModule = () => {
   const [isDocumentModalOpen, setIsDocumentModalOpen] = useState(false);
   const [isCrewAssignmentOpen, setIsCrewAssignmentOpen] = useState(false);
 
-  const { data: flights = [], isLoading: flightsLoading } = useFlights();
+  const { data: flightsData, isLoading: flightsLoading } = useFlights(50, 0);
+  const flights = flightsData?.data || [];
   const { data: aircraft = [] } = useAircraft();
   const { data: crewMembers = [] } = useCrewMembers();
   const { data: flightAssignments = [] } = useFlightAssignments();

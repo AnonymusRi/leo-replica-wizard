@@ -40,7 +40,8 @@ export const SalesModule = () => {
   const [showMessaging, setShowMessaging] = useState(false);
   const { data: quotes = [], isLoading: quotesLoading, error: quotesError } = useQuotes();
   const { data: clients = [], isLoading: clientsLoading } = useClients();
-  const { data: flights = [], isLoading: flightsLoading } = useFlights();
+  const { data: flightsData, isLoading: flightsLoading } = useFlights(50, 0);
+  const flights = flightsData?.data || [];
 
   const getStatusColor = (status: string) => {
     switch (status) {

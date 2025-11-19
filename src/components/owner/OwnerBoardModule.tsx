@@ -26,7 +26,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 export const OwnerBoardModule = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const { data: flights = [], isLoading: flightsLoading } = useFlights();
+  const { data: flightsData, isLoading: flightsLoading } = useFlights(50, 0);
+  const flights = flightsData?.data || [];
   const { data: quotes = [], isLoading: quotesLoading } = useQuotes();
   const { data: aircraft = [], isLoading: aircraftLoading } = useAircraft();
 

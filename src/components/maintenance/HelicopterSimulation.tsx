@@ -20,8 +20,10 @@ import { useAircraft } from "@/hooks/useAircraft";
 
 export const HelicopterSimulation = () => {
   const simulationMutation = useHelicopterSimulation();
-  const { data: flights = [] } = useFlights();
-  const { data: maintenanceRecords = [] } = useMaintenanceRecords();
+  const { data: flightsData } = useFlights(50, 0);
+  const flights = flightsData?.data || [];
+  const { data: maintenanceData } = useMaintenanceRecords(50, 0);
+  const maintenanceRecords = maintenanceData?.data || [];
   const { data: crewMembers = [] } = useCrewMembers();
   const { data: aircraft = [] } = useAircraft();
 

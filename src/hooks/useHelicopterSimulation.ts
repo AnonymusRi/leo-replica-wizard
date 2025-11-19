@@ -167,6 +167,39 @@ export const useHelicopterSimulation = () => {
     mutationFn: async () => {
       console.log('Iniziando simulazione dati per 5 mesi...');
       
+      // PRIMA: Cancella tutti i dati esistenti (tranne superadmin, organizations, profiles, crew_members)
+      console.log('🗑️  Cancellando dati esistenti prima della simulazione...');
+      
+      // Cancella in ordine inverso rispetto alle dipendenze (prima le tabelle figlie, poi le parenti)
+      const tablesToClean = [
+        'pilot_flight_hours',
+        'pilot_schedule',
+        'crew_flight_assignments',
+        'crew_statistics',
+        'oil_consumption_records',
+        'maintenance_records',
+        'flights'
+      ];
+      
+      for (const table of tablesToClean) {
+        try {
+          const { error } = await supabase
+            .from(table)
+            .delete()
+            .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all (using a condition that's always true)
+          
+          if (error) {
+            console.warn(`⚠️  Errore cancellazione ${table}:`, error.message);
+          } else {
+            console.log(`  ✓ Cancellati dati da ${table}`);
+          }
+        } catch (error: any) {
+          console.warn(`⚠️  Errore cancellazione ${table}:`, error.message);
+        }
+      }
+      
+      console.log('✅ Dati esistenti cancellati');
+      
       // Prima creiamo/verifichiamo il superadmin
       console.log('🔐 Verificando/creando SuperAdmin...');
       const { data: existingSuperAdmin } = await supabase

@@ -23,7 +23,8 @@ export const BookingsView = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const { data: quotes = [], isLoading: quotesLoading } = useQuotes();
-  const { data: flights = [], isLoading: flightsLoading } = useFlights();
+  const { data: flightsData, isLoading: flightsLoading } = useFlights(50, 0);
+  const flights = flightsData?.data || [];
 
   const getStatusColor = (status: string) => {
     switch (status) {

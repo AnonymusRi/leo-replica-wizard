@@ -57,4 +57,3 @@ Dopo aver configurato il token:
 - Railway userà automaticamente il Dockerfile se presente
 - Il Dockerfile deve essere nella root del repository
 - Railway rileva automaticamente il Dockerfile e lo usa per il build
-
