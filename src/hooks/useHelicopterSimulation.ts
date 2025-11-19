@@ -20,11 +20,23 @@ export const useHelicopterSimulation = () => {
     const maintenanceRecords: any[] = [];
     const oilRecords: any[] = [];
     
-    const startDate = new Date('2024-08-01');
-    const endDate = new Date('2024-12-31');
+    // Simuliamo 6 mesi: 3 mesi passati + 3 mesi futuri
+    const today = new Date();
+    const threeMonthsAgo = new Date(today);
+    threeMonthsAgo.setMonth(today.getMonth() - 3);
+    const threeMonthsFromNow = new Date(today);
+    threeMonthsFromNow.setMonth(today.getMonth() + 3);
     
-    // Simuliamo 5 mesi di operazioni
-    for (let date = startDate; date <= endDate; date = addDays(date, 1)) {
+    const startDate = new Date(threeMonthsAgo);
+    startDate.setDate(1); // Primo giorno del mese
+    const endDate = new Date(threeMonthsFromNow);
+    endDate.setDate(0); // Ultimo giorno del mese precedente
+    
+    console.log(`📅 Simulazione date: ${format(startDate, 'yyyy-MM-dd')} - ${format(endDate, 'yyyy-MM-dd')}`);
+    console.log(`   Oggi: ${format(today, 'yyyy-MM-dd')}`);
+    
+    // Simuliamo 6 mesi di operazioni (3 passati + 3 futuri)
+    for (let date = new Date(startDate); date <= endDate; date = addDays(date, 1)) {
       const dayOfWeek = date.getDay();
       
       // Voli regolari Foggia-Tremiti (tutti i giorni tranne domenica)
@@ -38,7 +50,7 @@ export const useHelicopterSimulation = () => {
           departure_time: format(addHours(startOfDay(date), 8), 'yyyy-MM-dd HH:mm:ss'),
           arrival_time: format(addHours(startOfDay(date), 8.75), 'yyyy-MM-dd HH:mm:ss'),
           passenger_count: Math.floor(Math.random() * 10) + 2,
-          status: date < new Date() ? 'completed' : 'scheduled',
+          status: date < today ? 'completed' : (date.toDateString() === today.toDateString() ? 'active' : 'scheduled'),
           notes: 'Volo regolare trasporto passeggeri'
         };
         
@@ -51,7 +63,7 @@ export const useHelicopterSimulation = () => {
           departure_time: format(addHours(startOfDay(date), 9), 'yyyy-MM-dd HH:mm:ss'),
           arrival_time: format(addHours(startOfDay(date), 9.75), 'yyyy-MM-dd HH:mm:ss'),
           passenger_count: Math.floor(Math.random() * 8) + 1,
-          status: date < new Date() ? 'completed' : 'scheduled',
+          status: date < today ? 'completed' : (date.toDateString() === today.toDateString() ? 'active' : 'scheduled'),
           notes: 'Volo regolare trasporto passeggeri'
         };
         
@@ -64,7 +76,7 @@ export const useHelicopterSimulation = () => {
           departure_time: format(addHours(startOfDay(date), 15), 'yyyy-MM-dd HH:mm:ss'),
           arrival_time: format(addHours(startOfDay(date), 15.75), 'yyyy-MM-dd HH:mm:ss'),
           passenger_count: Math.floor(Math.random() * 12) + 1,
-          status: date < new Date() ? 'completed' : 'scheduled',
+          status: date < today ? 'completed' : (date.toDateString() === today.toDateString() ? 'active' : 'scheduled'),
           notes: 'Volo regolare trasporto passeggeri'
         };
         
@@ -77,7 +89,7 @@ export const useHelicopterSimulation = () => {
           departure_time: format(addHours(startOfDay(date), 16), 'yyyy-MM-dd HH:mm:ss'),
           arrival_time: format(addHours(startOfDay(date), 16.75), 'yyyy-MM-dd HH:mm:ss'),
           passenger_count: Math.floor(Math.random() * 10) + 1,
-          status: date < new Date() ? 'completed' : 'scheduled',
+          status: date < today ? 'completed' : (date.toDateString() === today.toDateString() ? 'active' : 'scheduled'),
           notes: 'Volo regolare trasporto passeggeri'
         };
         
@@ -102,7 +114,7 @@ export const useHelicopterSimulation = () => {
           departure_time: format(addMinutes(addHours(startOfDay(date), startHour), startMinute), 'yyyy-MM-dd HH:mm:ss'),
           arrival_time: format(addMinutes(addHours(startOfDay(date), startHour), startMinute + duration), 'yyyy-MM-dd HH:mm:ss'),
           passenger_count: Math.floor(Math.random() * 4) + 1, // Pazienti + medici
-          status: date < new Date() ? 'completed' : 'scheduled',
+          status: date < today ? 'completed' : (date.toDateString() === today.toDateString() ? 'active' : 'scheduled'),
           notes: `Missione elisoccorso ${region === 'LIBN' ? 'Puglia' : 'Campania'}`
         };
         
@@ -116,8 +128,8 @@ export const useHelicopterSimulation = () => {
           maintenance_type: Math.random() > 0.5 ? '100-hour inspection' : 'routine maintenance',
           description: 'Ispezione programmata elicottero',
           scheduled_date: format(addHours(startOfDay(date), 6), 'yyyy-MM-dd HH:mm:ss'),
-          completed_date: date < new Date() ? format(addHours(startOfDay(date), 10), 'yyyy-MM-dd HH:mm:ss') : null,
-          status: date < new Date() ? 'completed' : 'scheduled',
+          completed_date: date < today ? format(addHours(startOfDay(date), 10), 'yyyy-MM-dd HH:mm:ss') : null,
+          status: date < today ? 'completed' : 'scheduled',
           cost: Math.floor(Math.random() * 5000) + 1000,
           notes: 'Manutenzione programmata per garantire sicurezza operativa'
         };

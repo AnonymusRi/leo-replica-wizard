@@ -590,19 +590,25 @@ class InsertBuilder {
       try {
         // Determine endpoint based on table name
         let endpoint = '/flights';
+        let requestBody = this.insertData;
+        
         if (this.tableName === 'maintenance_records') {
           endpoint = '/maintenance-records';
         } else if (this.tableName === 'oil_consumption_records') {
           endpoint = '/oil-consumption';
-        } else {
-          // Generic insert endpoint
+        } else if (this.tableName === 'profiles' || this.tableName === 'organizations' || this.tableName === 'super_admins' || this.tableName === 'crew_members') {
+          // Use generic insert endpoint for tables without specific endpoints
           endpoint = '/insert';
+          requestBody = {
+            table: this.tableName,
+            data: this.insertData
+          };
         }
         
         const response = await fetch(`${apiUrl}${endpoint}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.insertData),
+          body: JSON.stringify(requestBody),
         });
         
         if (!response.ok) {
