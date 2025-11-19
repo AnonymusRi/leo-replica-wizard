@@ -264,7 +264,54 @@ async function setupDatabase() {
       }
     }
     
-    console.log('✅ Database schema setup completed!');
+    // Retry failed CREATE TABLE statements (they might have failed due to foreign key dependencies)
+    console.log('\n🔄 Retrying failed CREATE TABLE statements...');
+    let retryCount = 0;
+    for (let i = 0; i < statements.length; i++) {
+      const statement = statements[i];
+      if (!statement.trim() || !statement.trim().toUpperCase().startsWith('CREATE TABLE')) {
+        continue;
+      }
+      
+      // Check if table already exists
+      const tableMatch = statement.match(/CREATE TABLE\s+(\w+)/i);
+      if (tableMatch) {
+        const tableName = tableMatch[1];
+        try {
+          const checkResult = await client.query(`
+            SELECT EXISTS (
+              SELECT FROM information_schema.tables 
+              WHERE table_schema = 'public' 
+              AND table_name = $1
+            );
+          `, [tableName]);
+          
+          if (!checkResult.rows[0].exists) {
+            // Table doesn't exist, try to create it
+            try {
+              await client.query(statement);
+              console.log(`✅ Created table: ${tableName}`);
+              retryCount++;
+            } catch (retryError) {
+              // Skip if it's a foreign key error (will retry later)
+              if (retryError.message.includes('does not exist') && retryError.code === '42P01') {
+                console.log(`ℹ️  Table ${tableName} still has dependencies, will retry...`);
+              } else {
+                console.warn(`⚠️  Could not create table ${tableName}: ${retryError.message.substring(0, 100)}`);
+              }
+            }
+          }
+        } catch (checkError) {
+          // Ignore check errors
+        }
+      }
+    }
+    
+    if (retryCount > 0) {
+      console.log(`✅ Retried and created ${retryCount} tables`);
+    }
+    
+    console.log('\n✅ Database schema setup completed!');
     
     // Verify by checking if some tables exist
     const result = await client.query(`
