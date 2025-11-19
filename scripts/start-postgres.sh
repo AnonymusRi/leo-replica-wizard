@@ -17,18 +17,46 @@ echo "   Database: $POSTGRES_DB"
 mkdir -p "$PGDATA"
 chmod 700 "$PGDATA" 2>/dev/null || true
 
-# Trova il percorso di initdb
-INITDB_PATH=$(which initdb || find /usr -name initdb 2>/dev/null | head -1)
-PG_CTL_PATH=$(which pg_ctl || find /usr -name pg_ctl 2>/dev/null | head -1)
-PSQL_PATH=$(which psql || find /usr -name psql 2>/dev/null | head -1)
-PG_ISREADY_PATH=$(which pg_isready || find /usr -name pg_isready 2>/dev/null | head -1)
+# Trova il percorso di initdb - cerca in tutte le possibili posizioni
+INITDB_PATH=$(which initdb 2>/dev/null || \
+    find /usr/lib/postgresql -name initdb 2>/dev/null | head -1 || \
+    find /usr -name initdb 2>/dev/null | head -1 || \
+    find /usr/local -name initdb 2>/dev/null | head -1)
+
+PG_CTL_PATH=$(which pg_ctl 2>/dev/null || \
+    find /usr/lib/postgresql -name pg_ctl 2>/dev/null | head -1 || \
+    find /usr -name pg_ctl 2>/dev/null | head -1 || \
+    find /usr/local -name pg_ctl 2>/dev/null | head -1)
+
+PSQL_PATH=$(which psql 2>/dev/null || \
+    find /usr/lib/postgresql -name psql 2>/dev/null | head -1 || \
+    find /usr -name psql 2>/dev/null | head -1 || \
+    find /usr/local -name psql 2>/dev/null | head -1)
+
+PG_ISREADY_PATH=$(which pg_isready 2>/dev/null || \
+    find /usr/lib/postgresql -name pg_isready 2>/dev/null | head -1 || \
+    find /usr -name pg_isready 2>/dev/null | head -1 || \
+    find /usr/local -name pg_isready 2>/dev/null | head -1)
 
 if [ -z "$INITDB_PATH" ] || [ -z "$PG_CTL_PATH" ]; then
     echo "❌ PostgreSQL binaries not found!"
     echo "   INITDB: $INITDB_PATH"
     echo "   PG_CTL: $PG_CTL_PATH"
+    echo "   PSQL: $PSQL_PATH"
+    echo "   PG_ISREADY: $PG_ISREADY_PATH"
     echo "   PATH: $PATH"
-    exit 1
+    echo "   Searching for PostgreSQL installation..."
+    find /usr -name "postgres" -type f 2>/dev/null | head -5
+    echo "   Trying to install PostgreSQL..."
+    apt-get update && apt-get install -y postgresql postgresql-contrib || {
+        echo "❌ Failed to install PostgreSQL"
+        exit 1
+    }
+    # Riprova a trovare i binari
+    INITDB_PATH=$(which initdb || find /usr/lib/postgresql -name initdb 2>/dev/null | head -1)
+    PG_CTL_PATH=$(which pg_ctl || find /usr/lib/postgresql -name pg_ctl 2>/dev/null | head -1)
+    PSQL_PATH=$(which psql || find /usr/lib/postgresql -name psql 2>/dev/null | head -1)
+    PG_ISREADY_PATH=$(which pg_isready || find /usr/lib/postgresql -name pg_isready 2>/dev/null | head -1)
 fi
 
 echo "✅ Found PostgreSQL binaries:"

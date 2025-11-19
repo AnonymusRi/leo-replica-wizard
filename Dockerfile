@@ -11,11 +11,26 @@ RUN if ! id -u postgres > /dev/null 2>&1; then \
         useradd -r -s /bin/bash postgres; \
     fi
 
-# Aggiungi PostgreSQL al PATH
-ENV PATH="/usr/lib/postgresql/15/bin:/usr/lib/postgresql/16/bin:/usr/lib/postgresql/17/bin:${PATH}"
+# Trova la versione di PostgreSQL installata e aggiungi al PATH
+RUN PG_VERSION=$(find /usr/lib/postgresql -maxdepth 1 -type d -name "[0-9]*" | sort -V | tail -1 | xargs basename) && \
+    echo "Found PostgreSQL version: $PG_VERSION" && \
+    echo "export PATH=\"/usr/lib/postgresql/$PG_VERSION/bin:\$PATH\"" >> /etc/profile && \
+    echo "export PATH=\"/usr/lib/postgresql/$PG_VERSION/bin:\$PATH\"" >> ~/.bashrc
 
-# Verifica che PostgreSQL sia installato
-RUN which initdb && which pg_ctl && which psql && which pg_isready || (echo "PostgreSQL binaries not found" && exit 1)
+# Aggiungi PostgreSQL al PATH (usa tutte le versioni possibili)
+ENV PATH="/usr/lib/postgresql/15/bin:/usr/lib/postgresql/16/bin:/usr/lib/postgresql/17/bin:/usr/lib/postgresql/14/bin:/usr/bin:${PATH}"
+
+# Verifica che PostgreSQL sia installato e mostra i percorsi
+RUN echo "Checking PostgreSQL installation..." && \
+    find /usr/lib/postgresql -name "initdb" 2>/dev/null | head -1 && \
+    find /usr/lib/postgresql -name "pg_ctl" 2>/dev/null | head -1 && \
+    find /usr/lib/postgresql -name "psql" 2>/dev/null | head -1 && \
+    find /usr/lib/postgresql -name "pg_isready" 2>/dev/null | head -1 && \
+    (which initdb || find /usr/lib/postgresql -name initdb 2>/dev/null | head -1) && \
+    (which pg_ctl || find /usr/lib/postgresql -name pg_ctl 2>/dev/null | head -1) && \
+    (which psql || find /usr/lib/postgresql -name psql 2>/dev/null | head -1) && \
+    (which pg_isready || find /usr/lib/postgresql -name pg_isready 2>/dev/null | head -1) || \
+    (echo "PostgreSQL binaries not found - installation may have failed" && exit 1)
 
 # Imposta la directory di lavoro
 WORKDIR /app
