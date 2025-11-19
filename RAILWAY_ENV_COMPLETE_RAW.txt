@@ -11,23 +11,23 @@
 # ============================================
 # DATABASE - PostgreSQL
 # ============================================
-# ⚠️ IMPORTANTE: Sostituisci "Postgres" con il nome esatto del tuo servizio PostgreSQL
+# Il servizio PostgreSQL si chiama "postgres" e usa postgres.railway.internal
 # Railway fornisce DATABASE_PRIVATE_URL per connessioni interne tra servizi
-DATABASE_URL=${{Postgres.DATABASE_PRIVATE_URL}}
-DATABASE_PRIVATE_URL=${{Postgres.DATABASE_PRIVATE_URL}}
-PGHOST=${{Postgres.PGHOST}}
+DATABASE_URL=${{postgres.DATABASE_PRIVATE_URL}}
+DATABASE_PRIVATE_URL=${{postgres.DATABASE_PRIVATE_URL}}
+PGHOST=${{postgres.PGHOST}}
 PGPORT=5432
-PGDATABASE=${{Postgres.PGDATABASE}}
-PGUSER=${{Postgres.PGUSER}}
-PGPASSWORD=${{Postgres.PGPASSWORD}}
-POSTGRES_DB=${{Postgres.PGDATABASE}}
-POSTGRES_USER=${{Postgres.PGUSER}}
-POSTGRES_PASSWORD=${{Postgres.PGPASSWORD}}
-DB_HOST=${{Postgres.PGHOST}}
+PGDATABASE=${{postgres.PGDATABASE}}
+PGUSER=${{postgres.PGUSER}}
+PGPASSWORD=${{postgres.PGPASSWORD}}
+POSTGRES_DB=${{postgres.PGDATABASE}}
+POSTGRES_USER=${{postgres.PGUSER}}
+POSTGRES_PASSWORD=${{postgres.PGPASSWORD}}
+DB_HOST=${{postgres.PGHOST}}
 DB_PORT=5432
-DB_NAME=${{Postgres.PGDATABASE}}
-DB_USER=${{Postgres.PGUSER}}
-DB_PASSWORD=${{Postgres.PGPASSWORD}}
+DB_NAME=${{postgres.PGDATABASE}}
+DB_USER=${{postgres.PGUSER}}
+DB_PASSWORD=${{postgres.PGPASSWORD}}
 DB_SSL=true
 
 # ============================================

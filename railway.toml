@@ -12,5 +12,5 @@ restartPolicyMaxRetries = 10
 
 [environments.production]
 [environments.production.deploy]
-# Avvia PostgreSQL in background, poi setup database e server
-startCommand = "bash -c 'if [ -d \"/var/lib/postgresql/data\" ]; then (bash scripts/start-postgres.sh &) && sleep 10; fi && npm run build && npm run setup:db && node scripts/start-server-with-api.js'"
+# PostgreSQL è un servizio separato, non serve avviarlo qui
+startCommand = "npm run build && npm run setup:db && node scripts/start-server-with-api.js"

@@ -14,8 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Get database connection from environment variables
-// Check if PostgreSQL volume is mounted (integrated database)
-const isIntegratedDB = process.env.RAILWAY_ENVIRONMENT && !process.env.PGHOST?.includes('railway.internal');
+// PostgreSQL è un servizio separato su Railway
 
 // Use DATABASE_URL if available (Railway provides this - takes precedence)
 let dbConfig = {};
@@ -271,17 +270,17 @@ async function setupDatabase() {
     console.log(`📊 Found ${result.rows.length} tables in database:`);
     if (result.rows.length > 0) {
       result.rows.slice(0, 10).forEach(row => {
-        console.log(`   - ${row.table_name}`);
-      });
+      console.log(`   - ${row.table_name}`);
+    });
       if (result.rows.length > 10) {
         console.log(`   ... and ${result.rows.length - 10} more`);
       }
     }
     
   } catch (error) {
-    console.error('❌ Error setting up database:', error.message);
+      console.error('❌ Error setting up database:', error.message);
     console.error('   Stack:', error.stack);
-    process.exit(1);
+      process.exit(1);
   } finally {
     client.release();
     await pool.end();
