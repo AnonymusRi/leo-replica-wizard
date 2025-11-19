@@ -183,15 +183,38 @@ export const useHelicopterSimulation = () => {
       
       for (const table of tablesToClean) {
         try {
-          const { error } = await supabase
+          // Prima otteniamo tutti gli ID, poi li cancelliamo in batch
+          const { data: allRecords, error: selectError } = await supabase
             .from(table)
-            .delete()
-            .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all (using a condition that's always true)
+            .select('id')
+            .limit(10000); // Limite ragionevole per evitare timeout
           
-          if (error) {
-            console.warn(`⚠️  Errore cancellazione ${table}:`, error.message);
+          if (selectError) {
+            console.warn(`⚠️  Errore selezione ${table}:`, selectError.message);
+            continue;
+          }
+          
+          if (allRecords && allRecords.length > 0) {
+            const ids = allRecords.map(r => r.id);
+            // Cancella in batch per evitare problemi con troppi ID
+            const BATCH_SIZE = 1000;
+            let deletedCount = 0;
+            for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+              const batch = ids.slice(i, i + BATCH_SIZE);
+              const { error: deleteError } = await supabase
+                .from(table)
+                .delete()
+                .in('id', batch);
+              
+              if (deleteError) {
+                console.warn(`⚠️  Errore cancellazione batch ${table}:`, deleteError.message);
+              } else {
+                deletedCount += batch.length;
+              }
+            }
+            console.log(`  ✓ Cancellati ${deletedCount} record da ${table}`);
           } else {
-            console.log(`  ✓ Cancellati dati da ${table}`);
+            console.log(`  ℹ️  Nessun record da cancellare in ${table}`);
           }
         } catch (error: any) {
           console.warn(`⚠️  Errore cancellazione ${table}:`, error.message);
