@@ -1,0 +1,41 @@
+# ============================================
+# VARIABILI PER IL SERVIZIO POSTGRESQL - RAW EDITOR
+# ============================================
+# ⚠️ IMPORTANTE: Queste variabili vanno nel servizio POSTGRESQL, non nell'Application!
+# ============================================
+# Copia e incolla TUTTO questo contenuto nel Raw Editor del servizio PostgreSQL
+# Vai su: Railway Dashboard → Il tuo progetto → Servizio PostgreSQL → Variables → Raw Editor
+# ============================================
+
+# ============================================
+# POSTGRESQL - Configurazione Base (OBBLIGATORIE)
+# ============================================
+POSTGRES_PASSWORD=vbhdKvSPFYkTySnfEqXjLCJibVJygGDm
+POSTGRES_USER=postgres
+POSTGRES_DB=railway
+POSTGRES_HOST_AUTH_METHOD=scram-sha-256
+
+# ============================================
+# POSTGRESQL - Networking (per connessioni interne)
+# ============================================
+PGHOST=postgres.railway.internal
+PGPORT=5432
+PGDATABASE=railway
+PGUSER=postgres
+PGPASSWORD=vbhdKvSPFYkTySnfEqXjLCJibVJygGDm
+
+# ============================================
+# POSTGRESQL - Data Directory
+# ============================================
+PGDATA=/var/lib/postgresql/data/pgdata
+
+# ============================================
+# NOTA IMPORTANTE
+# ============================================
+# Queste variabili configurano il servizio PostgreSQL stesso.
+# Dopo aver salvato, riavvia il servizio PostgreSQL per applicare le modifiche.
+# 
+# Nel servizio Application, usa invece le variabili ${{postgres.*}} per riferirti
+# a queste variabili (vedi RAILWAY_ENV_COMPLETE_RAW.txt)
+# ============================================
+

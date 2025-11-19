@@ -6,11 +6,17 @@
 # Se Railway non inizializza automaticamente il database, aggiungi queste variabili
 # nel servizio PostgreSQL → Variables → Raw Editor
 # ============================================
+# Vedi anche: RAILWAY_POSTGRES_RAW_EDITOR.txt per la lista completa
 
-POSTGRES_PASSWORD=railway_auto_generated
+POSTGRES_PASSWORD=vbhdKvSPFYkTySnfEqXjLCJibVJygGDm
 POSTGRES_USER=postgres
 POSTGRES_DB=railway
 POSTGRES_HOST_AUTH_METHOD=scram-sha-256
+PGHOST=0.0.0.0
+PGPORT=5432
+PGDATABASE=railway
+PGUSER=postgres
+PGPASSWORD=vbhdKvSPFYkTySnfEqXjLCJibVJygGDm
 
 # ============================================
 # NOTA
