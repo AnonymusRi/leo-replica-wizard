@@ -196,35 +196,52 @@ export const useHelicopterSimulation = () => {
         record.aircraft_id = aircraft[Math.floor(Math.random() * aircraft.length)]?.id;
       });
       
-      // Inseriamo i dati nel database in batch
-      console.log(`Inserendo ${data.flights.length} voli...`);
-      const { error: flightsError } = await supabase
-        .from('flights')
-        .insert(data.flights);
+      // Inseriamo i dati nel database in batch più piccoli per evitare errori 413
+      const BATCH_SIZE = 100;
       
-      if (flightsError) {
-        console.error('Errore inserimento voli:', flightsError);
-        throw flightsError;
+      // Inseriamo i voli in batch
+      console.log(`Inserendo ${data.flights.length} voli in batch di ${BATCH_SIZE}...`);
+      for (let i = 0; i < data.flights.length; i += BATCH_SIZE) {
+        const batch = data.flights.slice(i, i + BATCH_SIZE);
+        const { error: flightsError } = await supabase
+          .from('flights')
+          .insert(batch);
+        
+        if (flightsError) {
+          console.error(`Errore inserimento voli batch ${Math.floor(i / BATCH_SIZE) + 1}:`, flightsError);
+          throw flightsError;
+        }
+        console.log(`  ✓ Inseriti voli ${i + 1}-${Math.min(i + BATCH_SIZE, data.flights.length)}/${data.flights.length}`);
       }
       
-      console.log(`Inserendo ${data.maintenanceRecords.length} record manutenzione...`);
-      const { error: maintenanceError } = await supabase
-        .from('maintenance_records')
-        .insert(data.maintenanceRecords);
-      
-      if (maintenanceError) {
-        console.error('Errore inserimento manutenzioni:', maintenanceError);
-        throw maintenanceError;
+      // Inseriamo le manutenzioni in batch
+      console.log(`Inserendo ${data.maintenanceRecords.length} record manutenzione in batch di ${BATCH_SIZE}...`);
+      for (let i = 0; i < data.maintenanceRecords.length; i += BATCH_SIZE) {
+        const batch = data.maintenanceRecords.slice(i, i + BATCH_SIZE);
+        const { error: maintenanceError } = await supabase
+          .from('maintenance_records')
+          .insert(batch);
+        
+        if (maintenanceError) {
+          console.error(`Errore inserimento manutenzioni batch ${Math.floor(i / BATCH_SIZE) + 1}:`, maintenanceError);
+          throw maintenanceError;
+        }
+        console.log(`  ✓ Inseriti record manutenzione ${i + 1}-${Math.min(i + BATCH_SIZE, data.maintenanceRecords.length)}/${data.maintenanceRecords.length}`);
       }
       
-      console.log(`Inserendo ${data.oilRecords.length} record consumo olio...`);
-      const { error: oilError } = await supabase
-        .from('oil_consumption_records')
-        .insert(data.oilRecords);
-      
-      if (oilError) {
-        console.error('Errore inserimento record olio:', oilError);
-        throw oilError;
+      // Inseriamo i record olio in batch
+      console.log(`Inserendo ${data.oilRecords.length} record consumo olio in batch di ${BATCH_SIZE}...`);
+      for (let i = 0; i < data.oilRecords.length; i += BATCH_SIZE) {
+        const batch = data.oilRecords.slice(i, i + BATCH_SIZE);
+        const { error: oilError } = await supabase
+          .from('oil_consumption_records')
+          .insert(batch);
+        
+        if (oilError) {
+          console.error(`Errore inserimento record olio batch ${Math.floor(i / BATCH_SIZE) + 1}:`, oilError);
+          throw oilError;
+        }
+        console.log(`  ✓ Inseriti record olio ${i + 1}-${Math.min(i + BATCH_SIZE, data.oilRecords.length)}/${data.oilRecords.length}`);
       }
       
       return {
