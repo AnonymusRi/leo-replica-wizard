@@ -293,6 +293,98 @@ export const useHelicopterSimulation = () => {
           console.log(`  ✓ Inseriti crew_members ${i + 1}-${Math.min(i + PROFILE_BATCH_SIZE, crewMembers.length)}/${crewMembers.length}`);
         }
       }
+
+      // Creiamo account di autenticazione per ogni crew member con password "crew123"
+      console.log('🔐 Creando account di autenticazione per crew members...');
+      const CREW_PASSWORD = 'crew123';
+      let authCreated = 0;
+      let authSkipped = 0;
+      
+      for (const crewMember of crewMembers) {
+        try {
+          // Verifica se l'account auth esiste già
+          const { data: existingAuth } = await supabase.auth.admin?.getUserByEmail(crewMember.email).catch(() => ({ data: null }));
+          
+          if (!existingAuth?.user) {
+            // Crea l'account di autenticazione
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+              email: crewMember.email,
+              password: CREW_PASSWORD,
+              options: {
+                emailRedirectTo: `${window.location.origin}/crew-dashboard`,
+                data: {
+                  first_name: crewMember.first_name,
+                  last_name: crewMember.last_name,
+                  user_type: 'crew'
+                }
+              }
+            });
+
+            if (authError) {
+              // Se l'utente esiste già, ignora l'errore
+              if (authError.message.includes('already registered') || authError.message.includes('User already registered')) {
+                authSkipped++;
+                continue;
+              }
+              console.warn(`⚠️ Errore creazione auth per ${crewMember.email}:`, authError.message);
+            } else if (authData?.user) {
+              authCreated++;
+              
+              // Aggiorna il profilo con l'auth_id se esiste
+              const { data: existingProfile } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('email', crewMember.email)
+                .maybeSingle();
+              
+              if (existingProfile) {
+                // Il profilo esiste già, aggiorna l'id se necessario
+                await supabase
+                  .from('profiles')
+                  .update({ id: authData.user.id })
+                  .eq('email', crewMember.email)
+                  .then(() => {
+                    // Se l'update fallisce perché l'id è diverso, crea un nuovo profilo
+                  })
+                  .catch(() => {
+                    // Ignora errori di update
+                  });
+              } else {
+                // Crea il profilo collegato all'account auth
+                await supabase
+                  .from('profiles')
+                  .insert({
+                    id: authData.user.id,
+                    email: crewMember.email,
+                    first_name: crewMember.first_name,
+                    last_name: crewMember.last_name,
+                    organization_id: crewMember.organization_id,
+                    is_active: true
+                  })
+                  .catch(() => {
+                    // Ignora errori se il profilo esiste già
+                  });
+              }
+            }
+          } else {
+            authSkipped++;
+          }
+        } catch (error: any) {
+          // Ignora errori e continua
+          if (error?.message?.includes('already registered') || error?.message?.includes('User already registered')) {
+            authSkipped++;
+          } else {
+            console.warn(`⚠️ Errore creazione auth per ${crewMember.email}:`, error.message);
+          }
+        }
+      }
+      
+      if (authCreated > 0) {
+        console.log(`  ✅ Creati ${authCreated} account di autenticazione (password: ${CREW_PASSWORD})`);
+      }
+      if (authSkipped > 0) {
+        console.log(`  ℹ️  Saltati ${authSkipped} account già esistenti`);
+      }
       
       // Verifichiamo se esistono elicotteri, altrimenti li creiamo
       console.log('🚁 Verificando elicotteri...');
@@ -331,10 +423,11 @@ export const useHelicopterSimulation = () => {
       
       const data = generateSimulationData();
       
-      // Recuperiamo i crew members esistenti
+      // Recuperiamo TUTTI i crew members esistenti (inclusi quelli appena creati)
       const { data: existingCrewMembers } = await supabase
         .from('crew_members')
-        .select('id, position, first_name, last_name');
+        .select('id, position, first_name, last_name, email, organization_id')
+        .eq('is_active', true);
       
       if (!aircraft || aircraft.length === 0) {
         throw new Error('Nessun elicottero trovato dopo la creazione. Verifica gli errori sopra.');
@@ -343,6 +436,8 @@ export const useHelicopterSimulation = () => {
       if (!existingCrewMembers || existingCrewMembers.length === 0) {
         throw new Error('Nessun crew member trovato. I crew members sono stati creati sopra.');
       }
+      
+      console.log(`✅ Trovati ${existingCrewMembers.length} crew members totali per assegnazione dati`);
       
       // Assegniamo aircraft_id ai voli
       const passengerHelis = aircraft.filter(a => a.tail_number.startsWith('I-PTR'));
@@ -363,7 +458,7 @@ export const useHelicopterSimulation = () => {
         record.aircraft_id = aircraft[Math.floor(Math.random() * aircraft.length)]?.id;
         const mechanics = existingCrewMembers.filter(c => c.position === 'mechanic');
         if (mechanics.length > 0) {
-          record.technician_id = mechanics[Math.floor(Math.random() * mechanics.length)]?.id;
+        record.technician_id = mechanics[Math.floor(Math.random() * mechanics.length)]?.id;
         }
       });
       
@@ -386,13 +481,13 @@ export const useHelicopterSimulation = () => {
       console.log(`Inserendo ${data.flights.length} voli in batch di ${BATCH_SIZE}...`);
       for (let i = 0; i < data.flights.length; i += BATCH_SIZE) {
         const batch = data.flights.slice(i, i + BATCH_SIZE);
-        const { error: flightsError } = await supabase
-          .from('flights')
+      const { error: flightsError } = await supabase
+        .from('flights')
           .insert(batch);
-        
-        if (flightsError) {
+      
+      if (flightsError) {
           console.error(`Errore inserimento voli batch ${Math.floor(i / BATCH_SIZE) + 1}:`, flightsError);
-          throw flightsError;
+        throw flightsError;
         }
         console.log(`  ✓ Inseriti voli ${i + 1}-${Math.min(i + BATCH_SIZE, data.flights.length)}/${data.flights.length}`);
       }
@@ -401,13 +496,13 @@ export const useHelicopterSimulation = () => {
       console.log(`Inserendo ${data.maintenanceRecords.length} record manutenzione in batch di ${BATCH_SIZE}...`);
       for (let i = 0; i < data.maintenanceRecords.length; i += BATCH_SIZE) {
         const batch = data.maintenanceRecords.slice(i, i + BATCH_SIZE);
-        const { error: maintenanceError } = await supabase
-          .from('maintenance_records')
+      const { error: maintenanceError } = await supabase
+        .from('maintenance_records')
           .insert(batch);
-        
-        if (maintenanceError) {
+      
+      if (maintenanceError) {
           console.error(`Errore inserimento manutenzioni batch ${Math.floor(i / BATCH_SIZE) + 1}:`, maintenanceError);
-          throw maintenanceError;
+        throw maintenanceError;
         }
         console.log(`  ✓ Inseriti record manutenzione ${i + 1}-${Math.min(i + BATCH_SIZE, data.maintenanceRecords.length)}/${data.maintenanceRecords.length}`);
       }
@@ -416,13 +511,13 @@ export const useHelicopterSimulation = () => {
       console.log(`Inserendo ${data.oilRecords.length} record consumo olio in batch di ${BATCH_SIZE}...`);
       for (let i = 0; i < data.oilRecords.length; i += BATCH_SIZE) {
         const batch = data.oilRecords.slice(i, i + BATCH_SIZE);
-        const { error: oilError } = await supabase
-          .from('oil_consumption_records')
+      const { error: oilError } = await supabase
+        .from('oil_consumption_records')
           .insert(batch);
-        
-        if (oilError) {
+      
+      if (oilError) {
           console.error(`Errore inserimento record olio batch ${Math.floor(i / BATCH_SIZE) + 1}:`, oilError);
-          throw oilError;
+        throw oilError;
         }
         console.log(`  ✓ Inseriti record olio ${i + 1}-${Math.min(i + BATCH_SIZE, data.oilRecords.length)}/${data.oilRecords.length}`);
       }
