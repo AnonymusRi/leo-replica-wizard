@@ -726,6 +726,430 @@ export const useHelicopterSimulation = () => {
         console.log(`  ✓ Inseriti record olio ${i + 1}-${Math.min(i + BATCH_SIZE, data.oilRecords.length)}/${data.oilRecords.length}`);
       }
 
+      // Creiamo clients (necessari per voli e quotes)
+      console.log('👥 Creando clients...');
+      const { data: existingClients } = await supabase
+        .from('clients')
+        .select('id');
+      
+      if (!existingClients || existingClients.length === 0) {
+        const clientNames = [
+          'Regione Puglia', 'ASL Foggia', 'ASL Bari', 'Ospedale San Giovanni Rotondo',
+          'Azienda Sanitaria Locale Campania', 'Ospedale Cardarelli Napoli', 'Azienda Ospedaliera Universitaria',
+          'Turismo Tremiti SRL', 'Tremiti Express', 'Isola Bella Tours', 'Parco Nazionale del Gargano',
+          'Ministero della Salute', 'Protezione Civile Puglia', 'Protezione Civile Campania'
+        ];
+        
+        const clients = clientNames.map(name => ({
+          organization_id: organizations[0]?.id,
+          company_name: name,
+          contact_person: name.includes('ASL') || name.includes('Ospedale') ? 'Direttore Sanitario' : 'Responsabile',
+          email: `${name.toLowerCase().replace(/\s+/g, '.')}@example.it`,
+          phone: `+39 0${Math.floor(Math.random() * 9) + 1}${Math.floor(Math.random() * 10000000)}`,
+          city: name.includes('Campania') || name.includes('Napoli') ? 'Napoli' : 'Foggia',
+          country: 'Italia'
+        }));
+        
+        const { data: newClients, error: clientsError } = await supabase
+          .from('clients')
+          .insert(clients)
+          .select('id');
+        
+        if (clientsError) {
+          console.warn('⚠️ Errore creazione clients:', clientsError);
+        } else {
+          console.log(`  ✅ Creati ${newClients?.length || 0} clients`);
+        }
+      } else {
+        console.log(`  ✅ Trovati ${existingClients.length} clients esistenti`);
+      }
+
+      // Recuperiamo tutti i clients (esistenti o appena creati)
+      const { data: allClients } = await supabase
+        .from('clients')
+        .select('id');
+      
+      // Assegniamo clients ai voli
+      if (allClients && allClients.length > 0) {
+        console.log('🔗 Assegnando clients ai voli...');
+        const { data: allFlights } = await supabase
+          .from('flights')
+          .select('id, flight_number');
+        
+        if (allFlights && allFlights.length > 0) {
+          // Assegna client casuale al 60% dei voli
+          const flightsToUpdate = allFlights
+            .filter(() => Math.random() < 0.6)
+            .slice(0, Math.min(100, allFlights.length)); // Limita a 100 per performance
+          
+          for (const flight of flightsToUpdate) {
+            const randomClient = allClients[Math.floor(Math.random() * allClients.length)];
+            await supabase
+              .from('flights')
+              .update({ client_id: randomClient.id })
+              .eq('id', flight.id)
+              .catch(() => {
+                // Ignora errori
+              });
+          }
+          console.log(`  ✅ Assegnati clients a ${flightsToUpdate.length} voli`);
+        }
+      }
+
+      // Creiamo quotes (necessarie per modulo SALES)
+      console.log('💰 Creando quotes...');
+      const { data: existingQuotes } = await supabase
+        .from('quotes')
+        .select('id');
+      
+      if (!existingQuotes || existingQuotes.length === 0 && allClients && allClients.length > 0) {
+        const quotes = [];
+        const statuses = ['pending', 'confirmed', 'expired', 'cancelled'];
+        const airports = ['LIBF', 'LIIT', 'LIBN', 'LIRN', 'LIME', 'LIRQ'];
+        
+        for (let i = 0; i < 25; i++) {
+          const quoteDate = new Date(today);
+          quoteDate.setDate(quoteDate.getDate() + Math.floor(Math.random() * 180) - 30); // -30 a +150 giorni
+          
+          const departureAirport = airports[Math.floor(Math.random() * airports.length)];
+          let arrivalAirport = airports[Math.floor(Math.random() * airports.length)];
+          while (arrivalAirport === departureAirport) {
+            arrivalAirport = airports[Math.floor(Math.random() * airports.length)];
+          }
+          
+          const baseCost = Math.floor(Math.random() * 5000) + 2000;
+          const fuelCost = Math.floor(Math.random() * 1000) + 500;
+          const handlingCost = Math.floor(Math.random() * 500) + 200;
+          const crewCost = Math.floor(Math.random() * 800) + 400;
+          const otherCosts = Math.floor(Math.random() * 300) + 100;
+          const subtotal = baseCost + fuelCost + handlingCost + crewCost + otherCosts;
+          const margin = subtotal * 0.15; // 15% margine
+          const vatRate = 22; // 22% IVA
+          const vatAmount = (subtotal + margin) * (vatRate / 100);
+          const totalAmount = subtotal + margin + vatAmount;
+          
+          quotes.push({
+            organization_id: organizations[0]?.id,
+            client_id: allClients[Math.floor(Math.random() * allClients.length)].id,
+            quote_number: `QT-${format(quoteDate, 'yyyyMMdd')}-${String(i + 1).padStart(3, '0')}`,
+            departure_airport: departureAirport,
+            arrival_airport: arrivalAirport,
+            departure_date: format(quoteDate, 'yyyy-MM-dd'),
+            return_date: Math.random() > 0.5 ? format(addDays(quoteDate, Math.floor(Math.random() * 7) + 1), 'yyyy-MM-dd') : null,
+            aircraft_type: Math.random() > 0.5 ? 'AW139' : 'AW109',
+            passenger_count: Math.floor(Math.random() * 10) + 1,
+            base_cost: baseCost,
+            fuel_cost: fuelCost,
+            handling_cost: handlingCost,
+            crew_cost: crewCost,
+            other_costs: otherCosts,
+            margin_percentage: 15,
+            vat_rate: vatRate,
+            vat_amount: vatAmount,
+            total_amount: totalAmount,
+            pricing_method: Math.random() > 0.5 ? 'fixed' : 'hourly',
+            status: statuses[Math.floor(Math.random() * statuses.length)],
+            valid_until: format(addDays(quoteDate, 30), 'yyyy-MM-dd'),
+            notes: 'Quote generata automaticamente dalla simulazione'
+          });
+        }
+        
+        const { data: newQuotes, error: quotesError } = await supabase
+          .from('quotes')
+          .insert(quotes)
+          .select('id, quote_number');
+        
+        if (quotesError) {
+          console.warn('⚠️ Errore creazione quotes:', quotesError);
+        } else {
+          console.log(`  ✅ Create ${newQuotes?.length || 0} quotes`);
+          
+          // Colleghiamo alcune quotes ai voli
+          if (newQuotes && newQuotes.length > 0) {
+            const { data: flightsForQuotes } = await supabase
+              .from('flights')
+              .select('id')
+              .limit(10);
+            
+            if (flightsForQuotes && flightsForQuotes.length > 0) {
+              const quoteFlightLinks = [];
+              for (let i = 0; i < Math.min(10, newQuotes.length); i++) {
+                quoteFlightLinks.push({
+                  quote_id: newQuotes[i].id,
+                  flight_id: flightsForQuotes[i].id,
+                  status: 'linked',
+                  linked_by: null
+                });
+              }
+              
+              const { error: linksError } = await supabase
+                .from('quote_flight_links')
+                .insert(quoteFlightLinks);
+              
+              if (linksError) {
+                console.warn('⚠️ Errore creazione quote_flight_links:', linksError);
+              } else {
+                console.log(`  ✅ Creati ${quoteFlightLinks.length} collegamenti quote-voli`);
+              }
+            }
+          }
+        }
+      } else {
+        console.log(`  ✅ Trovate ${existingQuotes?.length || 0} quotes esistenti`);
+      }
+
+      // Creiamo flight_legs per alcuni voli multi-tratta
+      console.log('✈️  Creando flight_legs...');
+      const { data: flightsForLegs } = await supabase
+        .from('flights')
+        .select('id, departure_airport, arrival_airport, departure_time, arrival_time')
+        .limit(50);
+      
+      if (flightsForLegs && flightsForLegs.length > 0) {
+        const flightLegs = [];
+        for (const flight of flightsForLegs.slice(0, 20)) { // Solo 20 voli con tratte
+          const depTime = new Date(flight.departure_time);
+          const arrTime = new Date(flight.arrival_time);
+          const duration = (arrTime.getTime() - depTime.getTime()) / (1000 * 60); // minuti
+          
+          // Crea 2-3 tratte
+          const numLegs = Math.floor(Math.random() * 2) + 2;
+          const legDuration = duration / numLegs;
+          
+          for (let leg = 0; leg < numLegs; leg++) {
+            const legDepTime = new Date(depTime.getTime() + leg * legDuration * 60000);
+            const legArrTime = new Date(legDepTime.getTime() + legDuration * 60000);
+            
+            flightLegs.push({
+              flight_id: flight.id,
+              leg_number: leg + 1,
+              departure_airport: leg === 0 ? flight.departure_airport : 'LIBN', // Aeroporto intermedio
+              arrival_airport: leg === numLegs - 1 ? flight.arrival_airport : 'LIBN',
+              departure_time: format(legDepTime, 'yyyy-MM-dd HH:mm:ss'),
+              arrival_time: format(legArrTime, 'yyyy-MM-dd HH:mm:ss'),
+              distance: Math.floor(Math.random() * 200) + 50,
+              fuel_required: Math.floor(Math.random() * 500) + 200
+            });
+          }
+        }
+        
+        if (flightLegs.length > 0) {
+          const { error: legsError } = await supabase
+            .from('flight_legs')
+            .insert(flightLegs);
+          
+          if (legsError) {
+            console.warn('⚠️ Errore creazione flight_legs:', legsError);
+          } else {
+            console.log(`  ✅ Creati ${flightLegs.length} flight_legs`);
+          }
+        }
+      }
+
+      // Creiamo schedule_changes (modifiche schedule)
+      console.log('📅 Creando schedule_changes...');
+      const { data: flightsForChanges } = await supabase
+        .from('flights')
+        .select('id, departure_time, arrival_time, departure_airport, arrival_airport')
+        .limit(30);
+      
+      if (flightsForChanges && flightsForChanges.length > 0) {
+        const scheduleChanges = [];
+        for (const flight of flightsForChanges.slice(0, 15)) { // Solo 15 modifiche
+          const changeTypes = ['time_change', 'airport_change', 'cancellation', 'delay'];
+          const changeType = changeTypes[Math.floor(Math.random() * changeTypes.length)];
+          
+          let oldValue: any = {};
+          let newValue: any = {};
+          
+          if (changeType === 'time_change') {
+            const oldDepTime = new Date(flight.departure_time);
+            const newDepTime = new Date(oldDepTime.getTime() + (Math.floor(Math.random() * 120) - 60) * 60000);
+            oldValue = { departure_time: flight.departure_time };
+            newValue = { departure_time: format(newDepTime, 'yyyy-MM-dd HH:mm:ss') };
+          } else if (changeType === 'airport_change') {
+            oldValue = { arrival_airport: flight.arrival_airport };
+            newValue = { arrival_airport: 'LIBN' };
+          } else if (changeType === 'cancellation') {
+            oldValue = { status: 'scheduled' };
+            newValue = { status: 'cancelled' };
+          } else {
+            oldValue = { status: 'scheduled' };
+            newValue = { status: 'delayed' };
+          }
+          
+          scheduleChanges.push({
+            flight_id: flight.id,
+            change_type: changeType,
+            old_value: oldValue,
+            new_value: newValue,
+            reason: 'Modifica operativa richiesta',
+            changed_at: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+            changed_by: null
+          });
+        }
+        
+        if (scheduleChanges.length > 0) {
+          const { error: changesError } = await supabase
+            .from('schedule_changes')
+            .insert(scheduleChanges);
+          
+          if (changesError) {
+            console.warn('⚠️ Errore creazione schedule_changes:', changesError);
+          } else {
+            console.log(`  ✅ Creati ${scheduleChanges.length} schedule_changes`);
+          }
+        }
+      }
+
+      // Creiamo handling_requests
+      console.log('🛫 Creando handling_requests...');
+      const { data: flightsForHandling } = await supabase
+        .from('flights')
+        .select('id, departure_airport, arrival_airport')
+        .limit(40);
+      
+      if (flightsForHandling && flightsForHandling.length > 0) {
+        const handlingRequests = [];
+        const serviceTypes = ['ground_handling', 'fuel', 'catering', 'cleaning', 'parking'];
+        
+        for (const flight of flightsForHandling.slice(0, 25)) {
+          const serviceType = serviceTypes[Math.floor(Math.random() * serviceTypes.length)];
+          const statuses = ['pending', 'confirmed', 'completed'];
+          const status = statuses[Math.floor(Math.random() * statuses.length)];
+          
+          handlingRequests.push({
+            flight_id: flight.id,
+            airport_code: Math.random() > 0.5 ? flight.departure_airport : flight.arrival_airport,
+            service_type: serviceType,
+            request_details: `Richiesta ${serviceType} per volo ${flight.id.substring(0, 8)}`,
+            status: status,
+            requested_at: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+            requested_by: null,
+            notes: 'Richiesta generata automaticamente'
+          });
+        }
+        
+        if (handlingRequests.length > 0) {
+          const { error: handlingError } = await supabase
+            .from('handling_requests')
+            .insert(handlingRequests);
+          
+          if (handlingError) {
+            console.warn('⚠️ Errore creazione handling_requests:', handlingError);
+          } else {
+            console.log(`  ✅ Create ${handlingRequests.length} handling_requests`);
+          }
+        }
+      }
+
+      // Creiamo messages (messaggi SALES)
+      console.log('💬 Creando messages...');
+      const { data: quotesForMessages } = await supabase
+        .from('quotes')
+        .select('id, quote_number, client_id')
+        .limit(15);
+      
+      if (quotesForMessages && quotesForMessages.length > 0 && allClients && allClients.length > 0) {
+        const messages = [];
+        const messageTypes = ['quote_request', 'quote_response', 'booking_confirmation', 'general'];
+        
+        for (const quote of quotesForMessages) {
+          const messageType = messageTypes[Math.floor(Math.random() * messageTypes.length)];
+          const statuses = ['sent', 'delivered', 'read'];
+          const status = statuses[Math.floor(Math.random() * statuses.length)];
+          
+          messages.push({
+            quote_id: quote.id,
+            sender_name: 'Sales Team',
+            sender_email: 'sales@alidaunia.it',
+            recipient_name: 'Cliente',
+            recipient_email: 'cliente@example.it',
+            subject: `Quote ${quote.quote_number} - ${messageType === 'quote_request' ? 'Richiesta' : 'Conferma'}`,
+            content: `Messaggio relativo alla quote ${quote.quote_number}. Tipo: ${messageType}`,
+            message_type: messageType,
+            status: status,
+            is_internal: false
+          });
+        }
+        
+        if (messages.length > 0) {
+          const { error: messagesError } = await supabase
+            .from('messages')
+            .insert(messages);
+          
+          if (messagesError) {
+            console.warn('⚠️ Errore creazione messages:', messagesError);
+          } else {
+            console.log(`  ✅ Creati ${messages.length} messages`);
+          }
+        }
+      }
+
+      // Creiamo airport_directory (aeroporti principali)
+      console.log('🛬 Creando airport_directory...');
+      const { data: existingAirports } = await supabase
+        .from('airport_directory')
+        .select('id');
+      
+      if (!existingAirports || existingAirports.length === 0) {
+        const airports = [
+          { code: 'LIBF', name: 'Aeroporto di Foggia' },
+          { code: 'LIIT', name: 'Aeroporto delle Isole Tremiti' },
+          { code: 'LIBN', name: 'Aeroporto di Bari' },
+          { code: 'LIRN', name: 'Aeroporto di Napoli' },
+          { code: 'LIME', name: 'Aeroporto di Bergamo' },
+          { code: 'LIRQ', name: 'Aeroporto di Firenze' }
+        ];
+        
+        const airportDirectory = airports.map(airport => ({
+          airport_code: airport.code,
+          airport_name: airport.name,
+          contact_info: { phone: '+39 123 456 7890', email: `info@${airport.code.toLowerCase()}.it` },
+          opening_hours: { from: '06:00', to: '22:00' },
+          available_services: ['fuel', 'ground_handling', 'parking', 'catering']
+        }));
+        
+        const { error: airportsError } = await supabase
+          .from('airport_directory')
+          .insert(airportDirectory);
+        
+        if (airportsError) {
+          console.warn('⚠️ Errore creazione airport_directory:', airportsError);
+        } else {
+          console.log(`  ✅ Creati ${airportDirectory.length} aeroporti in directory`);
+        }
+      } else {
+        console.log(`  ✅ Trovati ${existingAirports.length} aeroporti esistenti`);
+      }
+
+      // Creiamo vat_rates (aliquote IVA)
+      console.log('📊 Creando vat_rates...');
+      const { data: existingVatRates } = await supabase
+        .from('vat_rates')
+        .select('id');
+      
+      if (!existingVatRates || existingVatRates.length === 0) {
+        const vatRates = [
+          { country_code: 'IT', country_name: 'Italia', vat_rate: 22, is_default: true },
+          { country_code: 'FR', country_name: 'Francia', vat_rate: 20, is_default: false },
+          { country_code: 'DE', country_name: 'Germania', vat_rate: 19, is_default: false },
+          { country_code: 'ES', country_name: 'Spagna', vat_rate: 21, is_default: false }
+        ];
+        
+        const { error: vatError } = await supabase
+          .from('vat_rates')
+          .insert(vatRates);
+        
+        if (vatError) {
+          console.warn('⚠️ Errore creazione vat_rates:', vatError);
+        } else {
+          console.log(`  ✅ Create ${vatRates.length} aliquote IVA`);
+        }
+      } else {
+        console.log(`  ✅ Trovate ${existingVatRates.length} aliquote IVA esistenti`);
+      }
+
       // Creiamo dati associati per ogni crew member (assegnazioni voli, statistiche, ore di volo)
       console.log('\n📊 Creando dati associati per crew members...');
       
@@ -1248,6 +1672,31 @@ export const useHelicopterSimulation = () => {
       }
       console.log(`    ✅ Creati ${schedulesCreated} schedule per piloti`);
       
+      // Recuperiamo conteggi finali
+      const { count: clientsCount } = await supabase
+        .from('clients')
+        .select('*', { count: 'exact', head: true });
+      
+      const { count: quotesCount } = await supabase
+        .from('quotes')
+        .select('*', { count: 'exact', head: true });
+      
+      const { count: flightLegsCount } = await supabase
+        .from('flight_legs')
+        .select('*', { count: 'exact', head: true });
+      
+      const { count: scheduleChangesCount } = await supabase
+        .from('schedule_changes')
+        .select('*', { count: 'exact', head: true });
+      
+      const { count: handlingRequestsCount } = await supabase
+        .from('handling_requests')
+        .select('*', { count: 'exact', head: true });
+      
+      const { count: messagesCount } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true });
+
       return {
         totalFlights: data.flights.length,
         totalMaintenance: data.maintenanceRecords.length,
@@ -1256,7 +1705,13 @@ export const useHelicopterSimulation = () => {
         assignmentsCreated,
         statsCreated,
         hoursCreated,
-        schedulesCreated
+        schedulesCreated,
+        clientsCount: clientsCount || 0,
+        quotesCount: quotesCount || 0,
+        flightLegsCount: flightLegsCount || 0,
+        scheduleChangesCount: scheduleChangesCount || 0,
+        handlingRequestsCount: handlingRequestsCount || 0,
+        messagesCount: messagesCount || 0
       };
     },
     onSuccess: (result) => {
@@ -1267,7 +1722,10 @@ export const useHelicopterSimulation = () => {
       queryClient.invalidateQueries({ queryKey: ['crew-statistics'] });
       
       toast.success(
-        `Simulazione completata! ${result.totalFlights} voli, ${result.totalMaintenance} manutenzioni, ${result.totalOilRecords} record olio. ` +
+        `Simulazione completata! ` +
+        `${result.totalFlights} voli, ${result.totalMaintenance} manutenzioni, ${result.totalOilRecords} record olio. ` +
+        `${result.clientsCount} clients, ${result.quotesCount} quotes, ${result.flightLegsCount} flight_legs. ` +
+        `${result.scheduleChangesCount} schedule_changes, ${result.handlingRequestsCount} handling_requests, ${result.messagesCount} messages. ` +
         `${result.crewMembersWithData} crew members con dati associati (password: crew123). ` +
         `${result.assignmentsCreated} assegnazioni, ${result.statsCreated} statistiche, ${result.hoursCreated} record ore di volo, ${result.schedulesCreated} schedule.`
       );
