@@ -217,6 +217,49 @@ app.post('/api/insert', async (req, res) => {
   }
 });
 
+// Endpoint generico per DELETE (per cancellare dati)
+app.delete('/api/delete', async (req, res) => {
+  try {
+    const { table, ids } = req.body;
+    
+    if (!table || !ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Table name and array of IDs are required' });
+    }
+
+    // Sanitize table name to prevent SQL injection
+    const sanitizedTable = table.replace(/[^a-zA-Z0-9_]/g, '');
+    if (sanitizedTable !== table) {
+      return res.status(400).json({ error: 'Invalid table name' });
+    }
+    
+    // Delete in batches to avoid SQL parameter limits
+    const BATCH_SIZE = 1000;
+    let totalDeleted = 0;
+    
+    for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+      const batch = ids.slice(i, i + BATCH_SIZE);
+      const placeholders = batch.map((_, idx) => `$${idx + 1}`).join(', ');
+      const sql = `DELETE FROM ${sanitizedTable} WHERE id IN (${placeholders})`;
+      
+      const result = await query(sql, batch);
+      totalDeleted += result.rowCount || 0;
+    }
+    
+    console.log(`🗑️  Deleted ${totalDeleted} records from ${sanitizedTable}`);
+    
+    res.json({ 
+      count: totalDeleted,
+      message: `Deleted ${totalDeleted} records from ${sanitizedTable}` 
+    });
+  } catch (error) {
+    console.error(`❌ Error deleting from ${req.body?.table || 'unknown table'}:`, error.message);
+    res.status(500).json({ 
+      error: error.message,
+      code: error.code 
+    });
+  }
+});
+
 export default app;
 
 // Non avviare il server qui - sarà avviato da start-server-with-api.js

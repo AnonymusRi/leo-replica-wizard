@@ -369,6 +369,24 @@ CREATE TABLE crew_fatigue_records (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Crew Time (gestione tempo, voli assegnati, fatica)
+CREATE TABLE crew_time (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    crew_member_id UUID REFERENCES crew_members(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    total_duty_hours DECIMAL(5,2) DEFAULT 0,
+    total_flight_hours DECIMAL(5,2) DEFAULT 0,
+    total_rest_hours DECIMAL(5,2) DEFAULT 0,
+    flights_assigned INTEGER DEFAULT 0,
+    fatigue_level INTEGER CHECK (fatigue_level >= 1 AND fatigue_level <= 10),
+    ftl_compliant BOOLEAN DEFAULT true,
+    ftl_violations INTEGER DEFAULT 0,
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(crew_member_id, date)
+);
+
 -- Crew Messages
 CREATE TABLE crew_messages (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

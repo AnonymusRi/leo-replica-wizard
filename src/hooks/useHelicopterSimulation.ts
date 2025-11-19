@@ -20,16 +20,16 @@ export const useHelicopterSimulation = () => {
     const maintenanceRecords: any[] = [];
     const oilRecords: any[] = [];
     
-    // Simuliamo 6 mesi: 3 mesi passati + 3 mesi futuri
+    // Simuliamo 12 mesi: 6 mesi passati + 6 mesi futuri per avere almeno 700 voli
     const today = new Date();
-    const threeMonthsAgo = new Date(today);
-    threeMonthsAgo.setMonth(today.getMonth() - 3);
-    const threeMonthsFromNow = new Date(today);
-    threeMonthsFromNow.setMonth(today.getMonth() + 3);
+    const sixMonthsAgo = new Date(today);
+    sixMonthsAgo.setMonth(today.getMonth() - 6);
+    const sixMonthsFromNow = new Date(today);
+    sixMonthsFromNow.setMonth(today.getMonth() + 6);
     
-    const startDate = new Date(threeMonthsAgo);
+    const startDate = new Date(sixMonthsAgo);
     startDate.setDate(1); // Primo giorno del mese
-    const endDate = new Date(threeMonthsFromNow);
+    const endDate = new Date(sixMonthsFromNow);
     endDate.setDate(0); // Ultimo giorno del mese precedente
     
     console.log(`📅 Simulazione date: ${format(startDate, 'yyyy-MM-dd')} - ${format(endDate, 'yyyy-MM-dd')}`);
@@ -96,8 +96,8 @@ export const useHelicopterSimulation = () => {
         flights.push(flight1, flight2, flight3, flight4);
       }
       
-      // Missioni di elisoccorso (casuali, 2-8 al giorno)
-      const rescueMissions = Math.floor(Math.random() * 7) + 2;
+      // Missioni di elisoccorso (casuali, 3-10 al giorno per avere più voli)
+      const rescueMissions = Math.floor(Math.random() * 8) + 3;
       for (let i = 0; i < rescueMissions; i++) {
         const startHour = Math.floor(Math.random() * 20) + 4; // 04:00 - 23:59
         const startMinute = Math.floor(Math.random() * 60);
@@ -183,7 +183,7 @@ export const useHelicopterSimulation = () => {
       
       for (const table of tablesToClean) {
         try {
-          // Prima otteniamo tutti gli ID, poi li cancelliamo in batch
+          // Prima otteniamo tutti gli ID, poi li cancelliamo tramite API
           const { data: allRecords, error: selectError } = await supabase
             .from(table)
             .select('id')
@@ -196,23 +196,27 @@ export const useHelicopterSimulation = () => {
           
           if (allRecords && allRecords.length > 0) {
             const ids = allRecords.map(r => r.id);
-            // Cancella in batch per evitare problemi con troppi ID
-            const BATCH_SIZE = 1000;
-            let deletedCount = 0;
-            for (let i = 0; i < ids.length; i += BATCH_SIZE) {
-              const batch = ids.slice(i, i + BATCH_SIZE);
-              const { error: deleteError } = await supabase
-                .from(table)
-                .delete()
-                .in('id', batch);
-              
-              if (deleteError) {
-                console.warn(`⚠️  Errore cancellazione batch ${table}:`, deleteError.message);
-              } else {
-                deletedCount += batch.length;
-              }
+            
+            // Usa l'API per cancellare invece di .delete() diretto
+            let baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
+            if (baseUrl.endsWith('/api')) {
+              baseUrl = baseUrl.slice(0, -4);
             }
-            console.log(`  ✓ Cancellati ${deletedCount} record da ${table}`);
+            const apiUrl = baseUrl + '/api';
+            
+            const response = await fetch(`${apiUrl}/delete`, {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ table, ids })
+            });
+            
+            if (!response.ok) {
+              const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+              console.warn(`⚠️  Errore cancellazione ${table}:`, error.error || response.statusText);
+            } else {
+              const result = await response.json();
+              console.log(`  ✓ Cancellati ${result.count || ids.length} record da ${table}`);
+            }
           } else {
             console.log(`  ℹ️  Nessun record da cancellare in ${table}`);
           }
@@ -488,7 +492,7 @@ export const useHelicopterSimulation = () => {
       } else {
         console.log(`✅ Trovati ${aircraft.length} elicotteri esistenti`);
       }
-      
+
       const data = generateSimulationData();
       
       // Recuperiamo TUTTI i crew members esistenti (inclusi quelli appena creati)
@@ -506,6 +510,133 @@ export const useHelicopterSimulation = () => {
       }
       
       console.log(`✅ Trovati ${existingCrewMembers.length} crew members totali per assegnazione dati`);
+
+      // Creiamo certificazioni per i crew members con vari stati (valide, in scadenza, scadute)
+      console.log('📜 Creando certificazioni per crew members...');
+      const certificationTypes = [
+        { type: 'PPL(H)', aircraft: 'helicopter', validity: 24 }, // 24 mesi
+        { type: 'CPL(H)', aircraft: 'helicopter', validity: 24 },
+        { type: 'ATPL(H)', aircraft: 'helicopter', validity: 24 },
+        { type: 'Type Rating AW139', aircraft: 'AW139', validity: 12 },
+        { type: 'Type Rating AW109', aircraft: 'AW109', validity: 12 },
+        { type: 'Medical Class 1', aircraft: null, validity: 12 },
+        { type: 'Medical Class 2', aircraft: null, validity: 24 },
+        { type: 'Instrument Rating', aircraft: 'helicopter', validity: 24 },
+      ];
+      
+      let certsCreated = 0;
+      const today = new Date();
+      
+      for (const crewMember of existingCrewMembers) {
+        // Ogni crew member ha 2-4 certificazioni
+        const numCerts = Math.floor(Math.random() * 3) + 2;
+        const selectedCerts = certificationTypes
+          .sort(() => Math.random() - 0.5)
+          .slice(0, numCerts);
+        
+        for (const certType of selectedCerts) {
+          const issueDate = new Date(today);
+          issueDate.setMonth(issueDate.getMonth() - Math.floor(Math.random() * 18) - 6); // 6-24 mesi fa
+          
+          const expiryDate = new Date(issueDate);
+          expiryDate.setMonth(expiryDate.getMonth() + certType.validity);
+          
+          // Crea vari stati: 30% scadute, 20% in scadenza (prossimi 30 giorni), 50% valide
+          const rand = Math.random();
+          let finalExpiryDate = expiryDate;
+          let isActive = true;
+          
+          if (rand < 0.3) {
+            // Scadute (6-90 giorni fa)
+            finalExpiryDate = new Date(today);
+            finalExpiryDate.setDate(finalExpiryDate.getDate() - Math.floor(Math.random() * 85) - 6);
+            isActive = false;
+          } else if (rand < 0.5) {
+            // In scadenza (prossimi 30 giorni)
+            finalExpiryDate = new Date(today);
+            finalExpiryDate.setDate(finalExpiryDate.getDate() + Math.floor(Math.random() * 30) + 1);
+            isActive = true;
+          }
+          // Altrimenti valide (oltre 30 giorni)
+          
+          await supabase
+            .from('crew_certifications')
+            .insert({
+              crew_member_id: crewMember.id,
+              certification_type: certType.type,
+              aircraft_type: certType.aircraft,
+              certificate_number: `${certType.type.substring(0, 3).toUpperCase()}-${Math.floor(Math.random() * 10000)}`,
+              issue_date: format(issueDate, 'yyyy-MM-dd'),
+              expiry_date: format(finalExpiryDate, 'yyyy-MM-dd'),
+              issuing_authority: 'ENAC',
+              is_active: isActive
+            })
+            .then(() => {
+              certsCreated++;
+            })
+            .catch(() => {
+              // Ignora errori
+            });
+        }
+      }
+      console.log(`  ✅ Create ${certsCreated} certificazioni`);
+      
+      // Creiamo addestramenti da fare (training records con status 'scheduled' o 'pending')
+      console.log('🎓 Creando addestramenti da fare...');
+      const trainingTypes = [
+        { type: 'Recurrent Training', description: 'Addestramento ricorrente obbligatorio', duration: 8 },
+        { type: 'Type Rating Renewal', description: 'Rinnovo type rating', duration: 16 },
+        { type: 'Simulator Training', description: 'Addestramento simulatore', duration: 4 },
+        { type: 'Emergency Procedures', description: 'Procedure di emergenza', duration: 6 },
+        { type: 'Night Operations', description: 'Operazioni notturne', duration: 4 },
+        { type: 'Mountain Flying', description: 'Volo in montagna', duration: 8 },
+      ];
+      
+      let trainingsCreated = 0;
+      const pilots = existingCrewMembers.filter(c => c.position === 'captain' || c.position === 'first_officer');
+      
+      for (const pilot of pilots) {
+        // 1-3 addestramenti da fare per pilota
+        const numTrainings = Math.floor(Math.random() * 3) + 1;
+        const selectedTrainings = trainingTypes
+          .sort(() => Math.random() - 0.5)
+          .slice(0, numTrainings);
+        
+        for (const trainingType of selectedTrainings) {
+          // Addestramenti programmati nei prossimi 90 giorni
+          const trainingDate = new Date(today);
+          trainingDate.setDate(trainingDate.getDate() + Math.floor(Math.random() * 90) + 7); // 7-97 giorni da oggi
+          
+          // 70% scheduled, 30% pending
+          const status = Math.random() < 0.7 ? 'scheduled' : 'pending';
+          
+          await supabase
+            .from('training_records')
+            .insert({
+              pilot_id: pilot.id,
+              instructor_id: null, // Sarà assegnato dopo
+              training_type: trainingType.type,
+              training_description: trainingType.description,
+              training_organization: 'Alidaunia Training Center',
+              training_date: format(trainingDate, 'yyyy-MM-dd'),
+              duration_hours: trainingType.duration,
+              expiry_date: null, // Alcuni addestramenti non hanno scadenza
+              certification_achieved: null,
+              status: status,
+              counts_as_flight_time: false,
+              counts_as_duty_time: true,
+              ftl_applicable: true,
+              notes: 'Addestramento programmato'
+            })
+            .then(() => {
+              trainingsCreated++;
+            })
+            .catch(() => {
+              // Ignora errori
+            });
+        }
+      }
+      console.log(`  ✅ Creati ${trainingsCreated} addestramenti da fare`);
       
       // Assegniamo aircraft_id ai voli
       const passengerHelis = aircraft.filter(a => a.tail_number.startsWith('I-PTR'));
@@ -716,6 +847,91 @@ export const useHelicopterSimulation = () => {
         }
       }
       console.log(`    ✅ Create ${statsCreated} statistiche mensili`);
+      
+      // 2.5. Creiamo crew_time (gestione tempo, voli assegnati, fatica)
+      console.log('  ⏰ Creando crew_time (tempo e fatica)...');
+      let crewTimeCreated = 0;
+      
+      // Per ogni crew member, creiamo record crew_time per i giorni con voli assegnati
+      const { data: allAssignments } = await supabase
+        .from('crew_flight_assignments')
+        .select('crew_member_id, duty_start_time, duty_end_time, flight_time_hours, duty_time_hours, flight_id');
+      
+      if (allAssignments && allAssignments.length > 0) {
+        // Raggruppa per crew member e data
+        const crewTimeMap = new Map<string, {
+          crew_member_id: string;
+          date: string;
+          duty_hours: number;
+          flight_hours: number;
+          flights: number;
+        }>();
+        
+        for (const assignment of allAssignments) {
+          if (!assignment.duty_start_time) continue;
+          
+          const dutyStart = new Date(assignment.duty_start_time);
+          const dateKey = format(dutyStart, 'yyyy-MM-dd');
+          const mapKey = `${assignment.crew_member_id}-${dateKey}`;
+          
+          if (!crewTimeMap.has(mapKey)) {
+            crewTimeMap.set(mapKey, {
+              crew_member_id: assignment.crew_member_id,
+              date: dateKey,
+              duty_hours: 0,
+              flight_hours: 0,
+              flights: 0
+            });
+          }
+          
+          const entry = crewTimeMap.get(mapKey)!;
+          entry.duty_hours += assignment.duty_time_hours || 0;
+          entry.flight_hours += assignment.flight_time_hours || 0;
+          entry.flights += 1;
+        }
+        
+        // Calcola fatica basata su duty hours e voli
+        for (const [key, entry] of crewTimeMap.entries()) {
+          // Fatica: 1-3 (bassa) se < 6h, 4-6 (media) se 6-10h, 7-10 (alta) se > 10h
+          let fatigueLevel = 1;
+          if (entry.duty_hours > 10) {
+            fatigueLevel = Math.floor(Math.random() * 4) + 7; // 7-10
+          } else if (entry.duty_hours > 6) {
+            fatigueLevel = Math.floor(Math.random() * 3) + 4; // 4-6
+          } else {
+            fatigueLevel = Math.floor(Math.random() * 3) + 1; // 1-3
+          }
+          
+          // FTL compliant se duty hours < 14
+          const ftlCompliant = entry.duty_hours < 14;
+          const ftlViolations = ftlCompliant ? 0 : 1;
+          
+          // Rest hours: 12-16 ore (inversamente proporzionale a duty hours)
+          const restHours = Math.max(12, 16 - (entry.duty_hours / 2));
+          
+          await supabase
+            .from('crew_time')
+            .insert({
+              crew_member_id: entry.crew_member_id,
+              date: entry.date,
+              total_duty_hours: parseFloat(entry.duty_hours.toFixed(2)),
+              total_flight_hours: parseFloat(entry.flight_hours.toFixed(2)),
+              total_rest_hours: parseFloat(restHours.toFixed(2)),
+              flights_assigned: entry.flights,
+              fatigue_level: fatigueLevel,
+              ftl_compliant: ftlCompliant,
+              ftl_violations: ftlViolations,
+              notes: `Calcolato da ${entry.flights} voli assegnati`
+            })
+            .then(() => {
+              crewTimeCreated++;
+            })
+            .catch(() => {
+              // Ignora errori (potrebbe già esistere)
+            });
+        }
+      }
+      console.log(`    ✅ Create ${crewTimeCreated} record crew_time`);
       
       // 3. Record ore di volo per voli completati
       console.log('  📝 Creando record ore di volo...');
