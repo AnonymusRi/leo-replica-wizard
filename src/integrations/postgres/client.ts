@@ -596,7 +596,11 @@ class InsertBuilder {
           endpoint = '/maintenance-records';
         } else if (this.tableName === 'oil_consumption_records') {
           endpoint = '/oil-consumption';
-        } else if (this.tableName === 'profiles' || this.tableName === 'organizations' || this.tableName === 'super_admins' || this.tableName === 'crew_members') {
+        } else if (this.tableName === 'profiles' || 
+                   this.tableName === 'organizations' || 
+                   this.tableName === 'super_admins' || 
+                   this.tableName === 'crew_members' ||
+                   this.tableName === 'aircraft') {
           // Use generic insert endpoint for tables without specific endpoints
           endpoint = '/insert';
           requestBody = {
