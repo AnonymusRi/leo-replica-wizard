@@ -12,7 +12,9 @@
 # DATABASE - PostgreSQL
 # ============================================
 # ⚠️ IMPORTANTE: Sostituisci "Postgres" con il nome esatto del tuo servizio PostgreSQL
-DATABASE_URL=${{Postgres.DATABASE_URL}}
+# Railway fornisce DATABASE_PRIVATE_URL per connessioni interne tra servizi
+DATABASE_URL=${{Postgres.DATABASE_PRIVATE_URL}}
+DATABASE_PRIVATE_URL=${{Postgres.DATABASE_PRIVATE_URL}}
 PGHOST=${{Postgres.PGHOST}}
 PGPORT=5432
 PGDATABASE=${{Postgres.PGDATABASE}}
