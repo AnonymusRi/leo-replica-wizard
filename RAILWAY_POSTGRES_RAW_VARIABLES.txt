@@ -16,15 +16,6 @@ POSTGRES_DB=railway
 POSTGRES_HOST_AUTH_METHOD=scram-sha-256
 
 # ============================================
-# POSTGRESQL - Networking (per connessioni interne)
-# ============================================
-PGHOST=postgres.railway.internal
-PGPORT=5432
-PGDATABASE=railway
-PGUSER=postgres
-PGPASSWORD=vbhdKvSPFYkTySnfEqXjLCJibVJygGDm
-
-# ============================================
 # POSTGRESQL - Data Directory
 # ============================================
 PGDATA=/var/lib/postgresql/data/pgdata
@@ -33,9 +24,14 @@ PGDATA=/var/lib/postgresql/data/pgdata
 # NOTA IMPORTANTE
 # ============================================
 # Queste variabili configurano il servizio PostgreSQL stesso.
-# Dopo aver salvato, riavvia il servizio PostgreSQL per applicare le modifiche.
+# 
+# ⚠️ NON includere PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD qui!
+# Queste variabili sono per i CLIENT che si connettono al database,
+# non per la configurazione del server PostgreSQL stesso.
 # 
 # Nel servizio Application, usa invece le variabili ${{postgres.*}} per riferirti
 # a queste variabili (vedi RAILWAY_ENV_COMPLETE_RAW.txt)
+# 
+# Dopo aver salvato, riavvia il servizio PostgreSQL per applicare le modifiche.
 # ============================================
 

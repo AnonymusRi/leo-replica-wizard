@@ -12,11 +12,6 @@ POSTGRES_PASSWORD=vbhdKvSPFYkTySnfEqXjLCJibVJygGDm
 POSTGRES_USER=postgres
 POSTGRES_DB=railway
 POSTGRES_HOST_AUTH_METHOD=scram-sha-256
-PGHOST=0.0.0.0
-PGPORT=5432
-PGDATABASE=railway
-PGUSER=postgres
-PGPASSWORD=vbhdKvSPFYkTySnfEqXjLCJibVJygGDm
 
 # ============================================
 # NOTA
