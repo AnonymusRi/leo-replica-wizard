@@ -293,20 +293,50 @@ export const useHelicopterSimulation = () => {
         }
       }
       
-      const data = generateSimulationData();
-      
-      // Prima recuperiamo gli ID degli elicotteri e crew
-      const { data: aircraft } = await supabase
+      // Verifichiamo se esistono elicotteri, altrimenti li creiamo
+      console.log('🚁 Verificando elicotteri...');
+      let { data: aircraft } = await supabase
         .from('aircraft')
-        .select('id, tail_number')
+        .select('id, tail_number, aircraft_type')
         .eq('aircraft_type', 'helicopter');
       
+      if (!aircraft || aircraft.length === 0) {
+        console.log('📦 Creando elicotteri di default...');
+        const defaultAircraft = [
+          // Elicotteri passeggeri (PTR)
+          { tail_number: 'I-PTR01', manufacturer: 'AgustaWestland', model: 'AW139', aircraft_type: 'helicopter', organization_id: organizations[0]?.id, status: 'available' },
+          { tail_number: 'I-PTR02', manufacturer: 'AgustaWestland', model: 'AW139', aircraft_type: 'helicopter', organization_id: organizations[0]?.id, status: 'available' },
+          { tail_number: 'I-PTR03', manufacturer: 'AgustaWestland', model: 'AW109', aircraft_type: 'helicopter', organization_id: organizations[0]?.id, status: 'available' },
+          // Elicotteri elisoccorso (SOC)
+          { tail_number: 'I-SOC01', manufacturer: 'AgustaWestland', model: 'AW139', aircraft_type: 'helicopter', organization_id: organizations[1]?.id || organizations[0]?.id, status: 'available' },
+          { tail_number: 'I-SOC02', manufacturer: 'AgustaWestland', model: 'AW139', aircraft_type: 'helicopter', organization_id: organizations[2]?.id || organizations[0]?.id, status: 'available' },
+          { tail_number: 'I-SOC03', manufacturer: 'AgustaWestland', model: 'AW109', aircraft_type: 'helicopter', organization_id: organizations[1]?.id || organizations[0]?.id, status: 'available' },
+        ];
+        
+        const { data: newAircraft, error: aircraftError } = await supabase
+          .from('aircraft')
+          .insert(defaultAircraft)
+          .select('id, tail_number, aircraft_type');
+        
+        if (aircraftError) {
+          console.error('❌ Errore creazione elicotteri:', aircraftError);
+          throw aircraftError;
+        }
+        aircraft = newAircraft;
+        console.log(`✅ Creati ${aircraft.length} elicotteri`);
+      } else {
+        console.log(`✅ Trovati ${aircraft.length} elicotteri esistenti`);
+      }
+      
+      const data = generateSimulationData();
+      
+      // Recuperiamo i crew members esistenti
       const { data: existingCrewMembers } = await supabase
         .from('crew_members')
         .select('id, position, first_name, last_name');
       
       if (!aircraft || aircraft.length === 0) {
-        throw new Error('Nessun elicottero trovato. Crea prima gli elicotteri.');
+        throw new Error('Nessun elicottero trovato dopo la creazione. Verifica gli errori sopra.');
       }
       
       if (!existingCrewMembers || existingCrewMembers.length === 0) {
