@@ -1,7 +1,9 @@
 [build]
-builder = "NIXPACKS"
-buildCommand = "npm install"
-# Forza l'uso di npm invece di bun
+builder = "DOCKERFILE"
+# Usa Dockerfile per avere PostgreSQL installato
+# Se preferisci NIXPACKS, decommenta le righe seguenti e commenta builder = "DOCKERFILE"
+# builder = "NIXPACKS"
+# buildCommand = "npm install"
 [build.environment]
 NIXPACKS_PKG_MGR = "npm"
 
@@ -13,4 +15,4 @@ restartPolicyMaxRetries = 10
 [environments.production]
 [environments.production.deploy]
 # Avvia PostgreSQL in background, poi setup database e server
-startCommand = "bash -c 'if [ -d \"/var/lib/postgresql/data\" ]; then (./scripts/start-postgres.sh &) && sleep 5; fi && npm run build && npm run setup:db && node scripts/start-server-with-api.js'"
+startCommand = "bash -c 'if [ -d \"/var/lib/postgresql/data\" ]; then (bash scripts/start-postgres.sh &) && sleep 10; fi && npm run build && npm run setup:db && node scripts/start-server-with-api.js'"
