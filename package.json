@@ -12,6 +12,7 @@
     "setup:db": "node scripts/setup-db.js",
     "setup:db:cli": "node scripts/setup-db-railway-cli.js",
     "init:superadmin": "node scripts/init-superadmin.js",
+    "init:crew": "node scripts/init-crew-member.js",
     "start": "node scripts/start-server.js"
   },
   "dependencies": {
