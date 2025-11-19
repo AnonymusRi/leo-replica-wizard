@@ -165,6 +165,7 @@ export const useHelicopterSimulation = () => {
 
   return useMutation({
     mutationFn: async () => {
+      const today = new Date(); // Dichiarata una sola volta all'inizio
       console.log('Iniziando simulazione dati per 5 mesi...');
       
       // PRIMA: Cancella tutti i dati esistenti (tranne superadmin, organizations, profiles, crew_members)
@@ -525,7 +526,6 @@ export const useHelicopterSimulation = () => {
       ];
       
       let certsCreated = 0;
-      const today = new Date();
       
       for (const crewMember of existingCrewMembers) {
         // Ogni crew member ha 2-4 certificazioni
@@ -798,7 +798,6 @@ export const useHelicopterSimulation = () => {
       
       // 2. Statistiche mensili per ogni crew member (ultimi 6 mesi)
       console.log('  📊 Creando statistiche mensili...');
-      const today = new Date();
       let statsCreated = 0;
       
       for (const crewMember of existingCrewMembers) {
