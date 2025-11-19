@@ -772,27 +772,32 @@ export const useHelicopterSimulation = () => {
       // Assegniamo clients ai voli
       if (allClients && allClients.length > 0) {
         console.log('🔗 Assegnando clients ai voli...');
-        const { data: allFlights } = await supabase
+        // Recupera solo gli ID dei voli senza join
+        const { data: allFlights, error: flightsSelectError } = await supabase
           .from('flights')
-          .select('id, flight_number');
+          .select('id')
+          .limit(100); // Limita a 100 per performance
         
-        if (allFlights && allFlights.length > 0) {
+        if (flightsSelectError) {
+          console.warn('⚠️ Errore recupero voli per assegnazione clients:', flightsSelectError);
+        } else if (allFlights && allFlights.length > 0) {
           // Assegna client casuale al 60% dei voli
           const flightsToUpdate = allFlights
-            .filter(() => Math.random() < 0.6)
-            .slice(0, Math.min(100, allFlights.length)); // Limita a 100 per performance
+            .filter(() => Math.random() < 0.6);
           
+          let updatedCount = 0;
           for (const flight of flightsToUpdate) {
             const randomClient = allClients[Math.floor(Math.random() * allClients.length)];
-            await supabase
+            const { error: updateError } = await supabase
               .from('flights')
               .update({ client_id: randomClient.id })
-              .eq('id', flight.id)
-              .catch(() => {
-                // Ignora errori
-              });
+              .eq('id', flight.id);
+            
+            if (!updateError) {
+              updatedCount++;
+            }
           }
-          console.log(`  ✅ Assegnati clients a ${flightsToUpdate.length} voli`);
+          console.log(`  ✅ Assegnati clients a ${updatedCount} voli`);
         }
       }
 
