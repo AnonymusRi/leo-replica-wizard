@@ -14,10 +14,13 @@ RUN npm install --legacy-peer-deps
 # Copia il resto del codice
 COPY . .
 
+# Build dell'applicazione (Vite)
+RUN npm run build
+
 # Esponi la porta
 EXPOSE 5000
 
 # Comando di avvio (PostgreSQL è un servizio separato)
-# Build è fatto durante il build step, quindi qui eseguiamo solo setup:db e start
+# Build è già fatto, quindi eseguiamo solo setup:db e start
 CMD ["bash", "-c", "npm run setup:db && node scripts/start-server-with-api.js"]
 
