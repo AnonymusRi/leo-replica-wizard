@@ -244,10 +244,18 @@ async function setupDatabase() {
           console.log(`ℹ️  Skipping (dependency not ready): ${statement.substring(0, 50)}...`);
           continue;
         }
-        // Skip errors for foreign keys that reference tables not yet created
+        // Skip errors for foreign keys that reference tables not yet created (but only for ALTER TABLE, not CREATE TABLE)
         if (error.message.includes('does not exist') && 
-            (statement.includes('REFERENCES') || error.code === '42P01')) {
+            error.code === '42P01' &&
+            !statement.trim().toUpperCase().startsWith('CREATE TABLE')) {
           console.log(`ℹ️  Skipping (table dependency not ready): ${statement.substring(0, 50)}...`);
+          continue;
+        }
+        // For CREATE TABLE errors, log but don't skip (unless it's "already exists")
+        if (statement.trim().toUpperCase().startsWith('CREATE TABLE')) {
+          console.warn(`⚠️  Warning creating table: ${error.message.substring(0, 100)}`);
+          console.warn(`   Statement: ${statement.substring(0, 150)}...`);
+          // Continue anyway - might be a foreign key issue that will resolve on retry
           continue;
         }
         // For other errors, log and continue (some statements might fail if dependencies don't exist yet)
