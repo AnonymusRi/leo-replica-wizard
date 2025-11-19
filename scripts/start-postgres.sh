@@ -56,19 +56,19 @@ if [ ! -f "$PGDATA/PG_VERSION" ]; then
         echo "⚠️  Failed to start PostgreSQL for initial setup"
     }
     
-    # Attendi che PostgreSQL sia pronto
+    # Attendi che PostgreSQL sia pronto (usa localhost per connessioni interne al container)
     sleep 3
     until "$PG_ISREADY_PATH" -h localhost -p 5432 -U "$POSTGRES_USER" 2>/dev/null; do
         echo "⏳ Waiting for PostgreSQL to be ready for setup..."
         sleep 1
     done
     
-    # Crea database se non esiste
+    # Crea database se non esiste (usa localhost per connessioni interne al container)
     "$PSQL_PATH" -h localhost -p 5432 -U "$POSTGRES_USER" -d postgres -c "CREATE DATABASE $POSTGRES_DB;" 2>/dev/null || {
         echo "ℹ️  Database $POSTGRES_DB might already exist"
     }
     
-    # Imposta password
+    # Imposta password (usa localhost per connessioni interne al container)
     "$PSQL_PATH" -h localhost -p 5432 -U "$POSTGRES_USER" -d postgres -c "ALTER USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';" 2>/dev/null || {
         echo "⚠️  Failed to set password"
     }
@@ -86,11 +86,16 @@ echo "🚀 Starting PostgreSQL server..."
     echo "⚠️  PostgreSQL might already be running"
 }
 
-# Attendi che PostgreSQL sia pronto
+# Attendi che PostgreSQL sia pronto (usa localhost per verifiche interne al container)
 echo "⏳ Waiting for PostgreSQL to be ready..."
 for i in {1..30}; do
     if "$PG_ISREADY_PATH" -h localhost -p 5432 -U "$POSTGRES_USER" 2>/dev/null; then
-        echo "✅ PostgreSQL is ready!"
+        echo "✅ PostgreSQL is ready on localhost:5432!"
+        # Verifica anche sul hostname Railway se disponibile
+        RAILWAY_HOST="${RAILWAY_SERVICE_NAME:-leo-replica-wizard}.railway.internal"
+        if "$PG_ISREADY_PATH" -h "$RAILWAY_HOST" -p 5432 -U "$POSTGRES_USER" 2>/dev/null; then
+            echo "✅ PostgreSQL is also accessible via Railway private network: $RAILWAY_HOST:5432"
+        fi
         break
     fi
     if [ $i -eq 30 ]; then

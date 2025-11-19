@@ -11,9 +11,10 @@
 # ============================================
 # DATABASE - PostgreSQL (Locale/Integrato)
 # ============================================
-# Il database è locale (localhost) quando il volume è montato sul servizio Application
-DATABASE_URL=postgresql://postgres:railway_auto_generated@localhost:5432/railway
-PGHOST=localhost
+# Il database usa il networking privato Railway quando il volume è montato sul servizio Application
+# Sostituisci "leo-replica-wizard" con il nome del tuo servizio
+DATABASE_URL=postgresql://postgres:railway_auto_generated@leo-replica-wizard.railway.internal:5432/railway
+PGHOST=leo-replica-wizard.railway.internal
 PGPORT=5432
 PGDATABASE=railway
 PGUSER=postgres
@@ -23,7 +24,7 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=railway_auto_generated
 POSTGRES_HOST_AUTH_METHOD=scram-sha-256
 PGDATA=/var/lib/postgresql/data
-DB_HOST=localhost
+DB_HOST=leo-replica-wizard.railway.internal
 DB_PORT=5432
 DB_NAME=railway
 DB_USER=postgres
