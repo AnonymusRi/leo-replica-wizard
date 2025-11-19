@@ -9,41 +9,79 @@ POSTGRES_DB=${POSTGRES_DB:-railway}
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-railway_auto_generated}
 
 echo "🐘 Starting PostgreSQL..."
+echo "   PGDATA: $PGDATA"
+echo "   User: $POSTGRES_USER"
+echo "   Database: $POSTGRES_DB"
+
+# Crea directory se non esiste
+mkdir -p "$PGDATA"
+chmod 700 "$PGDATA" 2>/dev/null || true
 
 # Inizializza il database se non esiste
-if [ ! -d "$PGDATA/pgdata" ] && [ ! -f "$PGDATA/PG_VERSION" ]; then
+if [ ! -f "$PGDATA/PG_VERSION" ]; then
     echo "📦 Initializing PostgreSQL database..."
-    mkdir -p "$PGDATA"
-    chmod 700 "$PGDATA"
     
     # Inizializza il database
-    initdb -D "$PGDATA" --encoding=UTF8 --locale=C
+    initdb -D "$PGDATA" --encoding=UTF8 --locale=C -U "$POSTGRES_USER" || {
+        echo "⚠️  initdb failed, trying with existing data..."
+    }
     
-    # Avvia PostgreSQL in background per configurazione
-    pg_ctl -D "$PGDATA" -o "-c listen_addresses='localhost'" -w start
+    # Configura PostgreSQL per accettare connessioni
+    echo "host all all 0.0.0.0/0 md5" >> "$PGDATA/pg_hba.conf"
+    echo "listen_addresses = '*'" >> "$PGDATA/postgresql.conf"
+    echo "port = 5432" >> "$PGDATA/postgresql.conf"
     
-    # Crea database e utente
-    psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
-        ALTER USER "$POSTGRES_USER" WITH PASSWORD '$POSTGRES_PASSWORD';
-        CREATE DATABASE "$POSTGRES_DB";
-EOSQL
+    # Avvia PostgreSQL per configurazione iniziale
+    pg_ctl -D "$PGDATA" -o "-c listen_addresses='*' -c port=5432" -l "$PGDATA/postgres.log" start || {
+        echo "⚠️  Failed to start PostgreSQL for initial setup"
+    }
     
-    # Ferma PostgreSQL
-    pg_ctl -D "$PGDATA" -m fast stop
+    # Attendi che PostgreSQL sia pronto
+    sleep 3
+    until pg_isready -h localhost -p 5432 -U "$POSTGRES_USER" 2>/dev/null; do
+        echo "⏳ Waiting for PostgreSQL to be ready for setup..."
+        sleep 1
+    done
+    
+    # Crea database se non esiste
+    psql -h localhost -p 5432 -U "$POSTGRES_USER" -d postgres -c "CREATE DATABASE $POSTGRES_DB;" 2>/dev/null || {
+        echo "ℹ️  Database $POSTGRES_DB might already exist"
+    }
+    
+    # Imposta password
+    psql -h localhost -p 5432 -U "$POSTGRES_USER" -d postgres -c "ALTER USER $POSTGRES_USER WITH PASSWORD '$POSTGRES_PASSWORD';" 2>/dev/null || {
+        echo "⚠️  Failed to set password"
+    }
+    
+    # Ferma PostgreSQL per riavviarlo con la configurazione corretta
+    pg_ctl -D "$PGDATA" -m fast stop || {
+        echo "⚠️  Failed to stop PostgreSQL"
+    }
+    sleep 2
 fi
 
 # Avvia PostgreSQL in background
 echo "🚀 Starting PostgreSQL server..."
-pg_ctl -D "$PGDATA" -o "-c listen_addresses='*' -c port=5432" -l "$PGDATA/postgres.log" start
+pg_ctl -D "$PGDATA" -o "-c listen_addresses='*' -c port=5432" -l "$PGDATA/postgres.log" start || {
+    echo "⚠️  PostgreSQL might already be running"
+}
 
 # Attendi che PostgreSQL sia pronto
 echo "⏳ Waiting for PostgreSQL to be ready..."
-until pg_isready -h localhost -p 5432 -U "$POSTGRES_USER"; do
+for i in {1..30}; do
+    if pg_isready -h localhost -p 5432 -U "$POSTGRES_USER" 2>/dev/null; then
+        echo "✅ PostgreSQL is ready!"
+        break
+    fi
+    if [ $i -eq 30 ]; then
+        echo "❌ PostgreSQL failed to start after 30 attempts"
+        exit 1
+    fi
     sleep 1
 done
 
-echo "✅ PostgreSQL is ready!"
-
-# Mantieni lo script in esecuzione
-tail -f "$PGDATA/postgres.log"
+# Mantieni lo script in esecuzione per tenere PostgreSQL attivo
+echo "🔄 Keeping PostgreSQL running..."
+tail -f "$PGDATA/postgres.log" &
+wait
 
