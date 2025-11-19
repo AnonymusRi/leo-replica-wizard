@@ -609,7 +609,11 @@ class InsertBuilder {
                    this.tableName === 'organizations' || 
                    this.tableName === 'super_admins' || 
                    this.tableName === 'crew_members' ||
-                   this.tableName === 'aircraft') {
+                   this.tableName === 'aircraft' ||
+                   this.tableName === 'crew_flight_assignments' ||
+                   this.tableName === 'crew_statistics' ||
+                   this.tableName === 'pilot_flight_hours' ||
+                   this.tableName === 'pilot_schedule') {
           // Use generic insert endpoint for tables without specific endpoints
           endpoint = '/insert';
           requestBody = {
