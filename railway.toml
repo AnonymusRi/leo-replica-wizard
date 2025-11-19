@@ -13,5 +13,6 @@ restartPolicyMaxRetries = 10
 [environments.production]
 [environments.production.deploy]
 # PostgreSQL è un servizio separato, non serve avviarlo qui
-# Build è già fatto, quindi eseguiamo solo setup:db e start server
-startCommand = "npm run setup:db && node scripts/start-server-with-api.js"
+# Build è già fatto nel Dockerfile, quindi eseguiamo solo setup:db e start server
+# Usa bash -c per garantire che entrambi i comandi vengano eseguiti
+startCommand = "bash -c 'npm run setup:db && node scripts/start-server-with-api.js'"
