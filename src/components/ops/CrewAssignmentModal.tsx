@@ -82,6 +82,13 @@ export const CrewAssignmentModal = ({ isOpen, onClose, flight }: CrewAssignmentM
 
   const performAssignment = async () => {
     try {
+      // Validate flight has an ID
+      if (!flight?.id) {
+        toast.error("Errore: il volo non ha un ID valido");
+        console.error('Flight object:', flight);
+        return;
+      }
+
       await assignCrewToFlight.mutateAsync({
         flight_id: flight.id,
         crew_member_id: selectedCrewMember,
@@ -146,7 +153,10 @@ export const CrewAssignmentModal = ({ isOpen, onClose, flight }: CrewAssignmentM
     }
   };
 
-  if (!flight) return null;
+  if (!flight || !flight.id) {
+    console.warn('CrewAssignmentModal: flight is missing or has no id', flight);
+    return null;
+  }
 
   return (
     <>

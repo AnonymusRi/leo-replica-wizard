@@ -14,7 +14,7 @@ export const useFlights = (limit: number = 50, offset: number = 0) => {
           *,
           aircraft:aircraft(*),
           client:clients(*),
-          flight_assignments:flight_assignments(
+          flight_assignments(
             *,
             crew_member:crew_members(*)
           ),
@@ -40,7 +40,7 @@ export const useFlightById = (id: string) => {
           *,
           aircraft:aircraft(*),
           client:clients(*),
-          flight_assignments:flight_assignments(
+          flight_assignments(
             *,
             crew_member:crew_members(*)
           ),
@@ -67,7 +67,7 @@ export const useFlightsByDateRange = (startDate: string, endDate: string) => {
           *,
           aircraft:aircraft(*),
           client:clients(*),
-          flight_assignments:flight_assignments(
+          flight_assignments(
             *,
             crew_member:crew_members(*)
           )
