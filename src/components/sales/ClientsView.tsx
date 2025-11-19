@@ -367,7 +367,7 @@ export const ClientsView = () => {
                   <div className="text-center">
                     <p className="text-sm text-gray-600">Revenue</p>
                     <p className="font-semibold text-green-600">
-                      €{(stats.totalValue / 1000).toFixed(0)}k
+                      €{((Number(stats.totalValue) || 0) / 1000).toFixed(0)}k
                     </p>
                   </div>
                 </div>

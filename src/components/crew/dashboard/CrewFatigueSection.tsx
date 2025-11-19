@@ -123,7 +123,7 @@ export const CrewFatigueSection = ({ crewMemberId }: CrewFatigueSectionProps) =>
               {todayRecord?.sleep_hours || '-'}h
             </div>
             <p className="text-sm text-gray-500">
-              Media: {averageSleep.toFixed(1)}h
+              Media: {(Number(averageSleep) || 0).toFixed(1)}h
             </p>
           </CardContent>
         </Card>

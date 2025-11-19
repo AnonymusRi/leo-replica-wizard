@@ -51,7 +51,7 @@ export const CrewScheduleSection = ({ crewMemberId }: CrewScheduleSectionProps) 
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {upcomingAssignments.reduce((sum, assignment) => sum + (assignment.flight_time_hours || 0), 0).toFixed(1)}h
+              {(upcomingAssignments.reduce((sum, assignment) => sum + (Number(assignment.flight_time_hours) || 0), 0)).toFixed(1)}h
             </div>
             <p className="text-sm text-gray-500">Nei prossimi 30 giorni</p>
           </CardContent>
@@ -63,7 +63,7 @@ export const CrewScheduleSection = ({ crewMemberId }: CrewScheduleSectionProps) 
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">
-              {upcomingAssignments.reduce((sum, assignment) => sum + (assignment.duty_time_hours || 0), 0).toFixed(1)}h
+              {(upcomingAssignments.reduce((sum, assignment) => sum + (Number(assignment.duty_time_hours) || 0), 0)).toFixed(1)}h
             </div>
             <p className="text-sm text-gray-500">Nei prossimi 30 giorni</p>
           </CardContent>

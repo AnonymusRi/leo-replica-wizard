@@ -56,12 +56,12 @@ export const OilConsumptionTracker = () => {
     oilAdded: item.oil_added_liters || 0
   }));
 
-  // Statistics
+  // Statistics - ensure values are numbers
   const averageConsumption = filteredRecords.length > 0 
-    ? filteredRecords.reduce((sum, item) => sum + (item.consumption_rate || 0), 0) / filteredRecords.length 
+    ? filteredRecords.reduce((sum, item) => sum + (Number(item.consumption_rate) || 0), 0) / filteredRecords.length 
     : 0;
-  const totalOilAdded = filteredRecords.reduce((sum, item) => sum + (item.oil_added_liters || 0), 0);
-  const totalFlightHours = filteredRecords.reduce((sum, item) => sum + (item.flight_hours || 0), 0);
+  const totalOilAdded = filteredRecords.reduce((sum, item) => sum + (Number(item.oil_added_liters) || 0), 0);
+  const totalFlightHours = filteredRecords.reduce((sum, item) => sum + (Number(item.flight_hours) || 0), 0);
 
   const handleCreateRecord = async () => {
     if (!newRecord.aircraft_id || !newRecord.flight_date) {
@@ -235,7 +235,7 @@ export const OilConsumptionTracker = () => {
             <CardTitle className="text-sm font-medium text-gray-600">Average Consumption</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{averageConsumption.toFixed(3)} L/Hr</div>
+            <div className="text-2xl font-bold">{(Number(averageConsumption) || 0).toFixed(3)} L/Hr</div>
             <p className="text-xs text-gray-500">Current selection</p>
           </CardContent>
         </Card>
@@ -244,7 +244,7 @@ export const OilConsumptionTracker = () => {
             <CardTitle className="text-sm font-medium text-gray-600">Total Oil Added</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{totalOilAdded.toFixed(1)} L</div>
+            <div className="text-2xl font-bold text-blue-600">{(Number(totalOilAdded) || 0).toFixed(1)} L</div>
             <p className="text-xs text-gray-500">Current selection</p>
           </CardContent>
         </Card>
@@ -253,7 +253,7 @@ export const OilConsumptionTracker = () => {
             <CardTitle className="text-sm font-medium text-gray-600">Flight Hours</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{totalFlightHours.toFixed(1)} Hrs</div>
+            <div className="text-2xl font-bold text-green-600">{(Number(totalFlightHours) || 0).toFixed(1)} Hrs</div>
             <p className="text-xs text-gray-500">Total monitored</p>
           </CardContent>
         </Card>

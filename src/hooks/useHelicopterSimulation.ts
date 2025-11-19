@@ -724,37 +724,190 @@ export const useHelicopterSimulation = () => {
       // Creiamo dati associati per ogni crew member (assegnazioni voli, statistiche, ore di volo)
       console.log('\n📊 Creando dati associati per crew members...');
       
-      // 1. Assegnazioni voli per ogni crew member
+      // 1. Assegnazioni voli - PRIMA assegniamo i PILOTI a ogni volo, poi gli altri crew
       console.log('  📅 Creando assegnazioni voli...');
       const allFlights = data.flights;
       let assignmentsCreated = 0;
       
-      for (const crewMember of existingCrewMembers) {
-        // Assegna 5-15 voli casuali a ogni crew member
-        const numAssignments = Math.floor(Math.random() * 11) + 5;
-        const selectedFlights = allFlights
+      // Separa piloti dagli altri crew members
+      const pilots = existingCrewMembers.filter(c => c.position === 'captain' || c.position === 'first_officer');
+      const otherCrew = existingCrewMembers.filter(c => c.position !== 'captain' && c.position !== 'first_officer');
+      
+      console.log(`    👨‍✈️ Trovati ${pilots.length} piloti e ${otherCrew.length} altri crew members`);
+      
+      if (pilots.length === 0) {
+        throw new Error('Nessun pilota trovato! Assicurati che ci siano crew members con position "captain" o "first_officer"');
+      }
+      
+      // PRIMA FASE: Assegna piloti a ogni volo (ogni volo deve avere almeno un pilota)
+      console.log('    ✈️  Assegnando piloti ai voli...');
+      
+      // Separa captain e first_officer per distribuzione migliore
+      const captains = pilots.filter(p => p.position === 'captain');
+      const firstOfficers = pilots.filter(p => p.position === 'first_officer');
+      
+      // Traccia quante assegnazioni ha ogni pilota per distribuzione uniforme
+      const pilotAssignmentCount = new Map<string, number>();
+      pilots.forEach(p => pilotAssignmentCount.set(p.id, 0));
+      
+      // Mescola i voli per distribuzione casuale
+      const shuffledFlights = [...allFlights].sort(() => Math.random() - 0.5);
+      
+      for (const flight of shuffledFlights) {
+        if (!flight.departure_time || !flight.arrival_time || !flight.id) {
+          continue; // Salta voli senza dati validi
+        }
+        
+        const departureTime = new Date(flight.departure_time);
+        const arrivalTime = new Date(flight.arrival_time);
+        
+        // Verifica che le date siano valide
+        if (isNaN(departureTime.getTime()) || isNaN(arrivalTime.getTime())) {
+          continue; // Salta date non valide
+        }
+        
+        const flightHours = (arrivalTime.getTime() - departureTime.getTime()) / (1000 * 60 * 60);
+        const dutyHours = flightHours + 0.5;
+        
+        // Verifica che flightHours sia un numero valido
+        if (isNaN(flightHours) || !isFinite(flightHours) || flightHours <= 0) {
+          continue; // Salta calcoli non validi
+        }
+        
+        // Assegna sempre un captain (distribuisci uniformemente tra i captain disponibili)
+        let captain;
+        if (captains.length > 0) {
+          // Ordina i captain per numero di assegnazioni (meno assegnati prima)
+          const sortedCaptains = captains.sort((a, b) => {
+            const countA = pilotAssignmentCount.get(a.id) || 0;
+            const countB = pilotAssignmentCount.get(b.id) || 0;
+            return countA - countB;
+          });
+          captain = sortedCaptains[0];
+        } else {
+          // Se non ci sono captain, usa il primo pilota disponibile
+          captain = pilots[0];
+        }
+        
+        if (captain) {
+          const { data: existingAssignment } = await supabase
+            .from('crew_flight_assignments')
+            .select('id')
+            .eq('flight_id', flight.id)
+            .eq('crew_member_id', captain.id)
+            .maybeSingle();
+          
+          if (!existingAssignment) {
+            await supabase
+              .from('crew_flight_assignments')
+              .insert({
+                flight_id: flight.id,
+                crew_member_id: captain.id,
+                position: captain.position,
+                reporting_time: new Date(departureTime.getTime() - 30 * 60 * 1000).toISOString(),
+                duty_start_time: departureTime.toISOString(),
+                duty_end_time: new Date(arrivalTime.getTime() + 30 * 60 * 1000).toISOString(),
+                flight_time_hours: parseFloat(Number(flightHours).toFixed(2)),
+                duty_time_hours: parseFloat(Number(dutyHours).toFixed(2)),
+                rest_time_hours: 12.0,
+                ftl_compliant: true,
+                airport_recency_valid: true,
+                currency_valid: true,
+                certificates_valid: true,
+                passport_valid: true,
+                visa_valid: true
+              })
+              .then(() => {
+                assignmentsCreated++;
+                pilotAssignmentCount.set(captain.id, (pilotAssignmentCount.get(captain.id) || 0) + 1);
+              })
+              .catch(() => {
+                // Ignora errori
+              });
+          }
+        }
+        
+        // 70% dei voli ha anche un first_officer
+        const needsTwoPilots = Math.random() < 0.7;
+        if (needsTwoPilots && firstOfficers.length > 0) {
+          // Ordina i first_officer per numero di assegnazioni (meno assegnati prima)
+          const sortedFirstOfficers = firstOfficers.sort((a, b) => {
+            const countA = pilotAssignmentCount.get(a.id) || 0;
+            const countB = pilotAssignmentCount.get(b.id) || 0;
+            return countA - countB;
+          });
+          const firstOfficer = sortedFirstOfficers[0];
+          
+          if (firstOfficer && firstOfficer.id !== captain?.id) {
+            const { data: existingAssignment } = await supabase
+              .from('crew_flight_assignments')
+              .select('id')
+              .eq('flight_id', flight.id)
+              .eq('crew_member_id', firstOfficer.id)
+              .maybeSingle();
+            
+            if (!existingAssignment) {
+              await supabase
+                .from('crew_flight_assignments')
+                .insert({
+                  flight_id: flight.id,
+                  crew_member_id: firstOfficer.id,
+                  position: firstOfficer.position,
+                  reporting_time: new Date(departureTime.getTime() - 30 * 60 * 1000).toISOString(),
+                  duty_start_time: departureTime.toISOString(),
+                  duty_end_time: new Date(arrivalTime.getTime() + 30 * 60 * 1000).toISOString(),
+                  flight_time_hours: parseFloat(Number(flightHours).toFixed(2)),
+                  duty_time_hours: parseFloat(Number(dutyHours).toFixed(2)),
+                  rest_time_hours: 12.0,
+                  ftl_compliant: true,
+                  airport_recency_valid: true,
+                  currency_valid: true,
+                  certificates_valid: true,
+                  passport_valid: true,
+                  visa_valid: true
+                })
+                .then(() => {
+                  assignmentsCreated++;
+                  pilotAssignmentCount.set(firstOfficer.id, (pilotAssignmentCount.get(firstOfficer.id) || 0) + 1);
+                })
+                .catch(() => {
+                  // Ignora errori
+                });
+            }
+          }
+        }
+      }
+      
+      console.log(`    ✅ Assegnati piloti a ${allFlights.length} voli`);
+      
+      // SECONDA FASE: Assegna altri crew members (cabin_crew, mechanic) ad alcuni voli
+      console.log('    👥 Assegnando altri crew members ad alcuni voli...');
+      const flightsWithPilots = allFlights.filter(f => f.id); // Voli che hanno già piloti
+      
+      for (const crewMember of otherCrew) {
+        // Assegna 3-10 voli casuali a ogni altro crew member
+        const numAssignments = Math.floor(Math.random() * 8) + 3;
+        const selectedFlights = flightsWithPilots
           .sort(() => Math.random() - 0.5)
           .slice(0, numAssignments);
         
         for (const flight of selectedFlights) {
           if (!flight.departure_time || !flight.arrival_time || !flight.id) {
-            continue; // Salta voli senza dati validi
+            continue;
           }
           
           const departureTime = new Date(flight.departure_time);
           const arrivalTime = new Date(flight.arrival_time);
           
-          // Verifica che le date siano valide
           if (isNaN(departureTime.getTime()) || isNaN(arrivalTime.getTime())) {
-            continue; // Salta date non valide
+            continue;
           }
           
           const flightHours = (arrivalTime.getTime() - departureTime.getTime()) / (1000 * 60 * 60);
           const dutyHours = flightHours + 0.5;
           
-          // Verifica che flightHours sia un numero valido
           if (isNaN(flightHours) || !isFinite(flightHours) || flightHours <= 0) {
-            continue; // Salta calcoli non validi
+            continue;
           }
           
           // Verifica se l'assegnazione esiste già
@@ -794,7 +947,8 @@ export const useHelicopterSimulation = () => {
           }
         }
       }
-      console.log(`    ✅ Create ${assignmentsCreated} assegnazioni voli`);
+      
+      console.log(`    ✅ Create ${assignmentsCreated} assegnazioni voli totali (pilot + altri crew)`);
       
       // 2. Statistiche mensili per ogni crew member (ultimi 6 mesi)
       console.log('  📊 Creando statistiche mensili...');
@@ -884,37 +1038,56 @@ export const useHelicopterSimulation = () => {
           }
           
           const entry = crewTimeMap.get(mapKey)!;
-          entry.duty_hours += assignment.duty_time_hours || 0;
-          entry.flight_hours += assignment.flight_time_hours || 0;
+          // Converti in numero e verifica che sia valido
+          const dutyHours = parseFloat(assignment.duty_time_hours) || 0;
+          const flightHours = parseFloat(assignment.flight_time_hours) || 0;
+          
+          if (isNaN(dutyHours) || !isFinite(dutyHours)) {
+            continue; // Salta assegnazioni con dati non validi
+          }
+          if (isNaN(flightHours) || !isFinite(flightHours)) {
+            continue; // Salta assegnazioni con dati non validi
+          }
+          
+          entry.duty_hours += dutyHours;
+          entry.flight_hours += flightHours;
           entry.flights += 1;
         }
         
         // Calcola fatica basata su duty hours e voli
         for (const [key, entry] of crewTimeMap.entries()) {
+          // Assicurati che i valori siano numeri validi
+          const dutyHours = Number(entry.duty_hours) || 0;
+          const flightHours = Number(entry.flight_hours) || 0;
+          
+          if (isNaN(dutyHours) || !isFinite(dutyHours) || isNaN(flightHours) || !isFinite(flightHours)) {
+            continue; // Salta entry con dati non validi
+          }
+          
           // Fatica: 1-3 (bassa) se < 6h, 4-6 (media) se 6-10h, 7-10 (alta) se > 10h
           let fatigueLevel = 1;
-          if (entry.duty_hours > 10) {
+          if (dutyHours > 10) {
             fatigueLevel = Math.floor(Math.random() * 4) + 7; // 7-10
-          } else if (entry.duty_hours > 6) {
+          } else if (dutyHours > 6) {
             fatigueLevel = Math.floor(Math.random() * 3) + 4; // 4-6
           } else {
             fatigueLevel = Math.floor(Math.random() * 3) + 1; // 1-3
           }
           
           // FTL compliant se duty hours < 14
-          const ftlCompliant = entry.duty_hours < 14;
+          const ftlCompliant = dutyHours < 14;
           const ftlViolations = ftlCompliant ? 0 : 1;
           
           // Rest hours: 12-16 ore (inversamente proporzionale a duty hours)
-          const restHours = Math.max(12, 16 - (entry.duty_hours / 2));
+          const restHours = Math.max(12, 16 - (dutyHours / 2));
           
           await supabase
             .from('crew_time')
             .insert({
               crew_member_id: entry.crew_member_id,
               date: entry.date,
-              total_duty_hours: parseFloat(entry.duty_hours.toFixed(2)),
-              total_flight_hours: parseFloat(entry.flight_hours.toFixed(2)),
+              total_duty_hours: parseFloat(dutyHours.toFixed(2)),
+              total_flight_hours: parseFloat(flightHours.toFixed(2)),
               total_rest_hours: parseFloat(restHours.toFixed(2)),
               flights_assigned: entry.flights,
               fatigue_level: fatigueLevel,
@@ -932,68 +1105,105 @@ export const useHelicopterSimulation = () => {
       }
       console.log(`    ✅ Create ${crewTimeCreated} record crew_time`);
       
-      // 3. Record ore di volo per voli completati
-      console.log('  📝 Creando record ore di volo...');
-      const completedFlights = allFlights.filter(f => f.status === 'completed');
+      // 3. Record ore di volo per voli completati - basati sulle assegnazioni esistenti
+      console.log('  📝 Creando record ore di volo per piloti (basati su assegnazioni volo)...');
       let hoursCreated = 0;
       
-      for (const crewMember of existingCrewMembers) {
-        if (crewMember.position === 'captain' || crewMember.position === 'first_officer') {
-          // Solo piloti hanno record ore di volo
-          const numRecords = Math.floor(Math.random() * 10) + 5;
-          const selectedFlights = completedFlights
-            .sort(() => Math.random() - 0.5)
-            .slice(0, numRecords);
+      // Recupera tutte le assegnazioni volo per i piloti che hanno voli completati
+      const { data: pilotAssignments } = await supabase
+        .from('crew_flight_assignments')
+        .select(`
+          crew_member_id, 
+          flight_id, 
+          flight_time_hours, 
+          duty_time_hours,
+          flight:flights(id, departure_time, arrival_time, status)
+        `)
+        .in('crew_member_id', pilots.map(p => p.id));
+      
+      if (pilotAssignments && pilotAssignments.length > 0) {
+        // Filtra solo le assegnazioni per voli completati
+        const completedAssignments = pilotAssignments.filter(a => 
+          a.flight && a.flight.status === 'completed'
+        );
+        
+        console.log(`    📊 Trovate ${completedAssignments.length} assegnazioni per voli completati`);
+        
+        // Per ogni assegnazione, crea un record pilot_flight_hours
+        for (const assignment of completedAssignments) {
+          if (!assignment.flight || !assignment.flight.departure_time || !assignment.flight.arrival_time) {
+            continue;
+          }
           
-          for (const flight of selectedFlights) {
-            if (!flight.departure_time || !flight.arrival_time || !flight.id) {
-              continue; // Salta voli senza dati validi
-            }
+          const departureTime = new Date(assignment.flight.departure_time);
+          const arrivalTime = new Date(assignment.flight.arrival_time);
+          
+          if (isNaN(departureTime.getTime()) || isNaN(arrivalTime.getTime())) {
+            continue;
+          }
+          
+          // Usa flight_time_hours dall'assegnazione se disponibile, altrimenti calcola
+          const flightHours = assignment.flight_time_hours 
+            ? Number(assignment.flight_time_hours)
+            : (arrivalTime.getTime() - departureTime.getTime()) / (1000 * 60 * 60);
+          
+          if (isNaN(flightHours) || !isFinite(flightHours) || flightHours <= 0) {
+            continue;
+          }
+          
+          // Trova il pilota corrispondente
+          const pilot = pilots.find(p => p.id === assignment.crew_member_id);
+          if (!pilot) continue;
+          
+          // Verifica se esiste già
+          const { data: existingHours } = await supabase
+            .from('pilot_flight_hours')
+            .select('id')
+            .eq('pilot_id', pilot.id)
+            .eq('flight_id', assignment.flight_id)
+            .maybeSingle();
+          
+          if (!existingHours) {
+            // Determina se è volo single o multi-pilot
+            const { data: flightPilots } = await supabase
+              .from('crew_flight_assignments')
+              .select('position')
+              .eq('flight_id', assignment.flight_id)
+              .in('position', ['captain', 'first_officer']);
             
-            const departureTime = new Date(flight.departure_time);
-            const arrivalTime = new Date(flight.arrival_time);
+            const hasTwoPilots = flightPilots && flightPilots.length >= 2;
             
-            // Verifica che le date siano valide
-            if (isNaN(departureTime.getTime()) || isNaN(arrivalTime.getTime())) {
-              continue; // Salta date non valide
-            }
-            
-            const flightHours = (arrivalTime.getTime() - departureTime.getTime()) / (1000 * 60 * 60);
-            
-            // Verifica che flightHours sia un numero valido
-            if (isNaN(flightHours) || !isFinite(flightHours) || flightHours <= 0) {
-              continue; // Salta calcoli non validi
-            }
-            
-            // Verifica se esiste già
-            const { data: existingHours } = await supabase
+            await supabase
               .from('pilot_flight_hours')
-              .select('id')
-              .eq('pilot_id', crewMember.id)
-              .eq('flight_id', flight.id)
-              .maybeSingle();
-            
-            if (!existingHours) {
-              await supabase
-                .from('pilot_flight_hours')
-                .insert({
-                  pilot_id: crewMember.id,
-                  flight_id: flight.id,
-                  flight_date: departureTime.toISOString().split('T')[0],
-                  flight_type: 'commercial',
-                  flight_hours: parseFloat(Number(flightHours).toFixed(2))
-                })
-                .then(() => {
-                  hoursCreated++;
-                })
-                .catch(() => {
-                  // Ignora errori
-                });
-            }
+              .insert({
+                pilot_id: pilot.id,
+                flight_id: assignment.flight_id,
+                flight_date: departureTime.toISOString().split('T')[0],
+                flight_type: 'commercial',
+                block_time_hours: parseFloat(Number(flightHours).toFixed(2)),
+                flight_time_single_pilot_hours: (!hasTwoPilots && pilot.position === 'captain') ? parseFloat(Number(flightHours).toFixed(2)) : 0,
+                flight_time_multi_pilot_hours: (hasTwoPilots || pilot.position === 'first_officer') ? parseFloat(Number(flightHours).toFixed(2)) : 0,
+                night_hours: (Math.random() < 0.3) ? parseFloat((flightHours * 0.2).toFixed(2)) : 0,
+                ifr_hours: (Math.random() < 0.5) ? parseFloat((flightHours * 0.5).toFixed(2)) : 0,
+                pic_hours: (pilot.position === 'captain') ? parseFloat(Number(flightHours).toFixed(2)) : 0,
+                sic_hours: (pilot.position === 'first_officer') ? parseFloat(Number(flightHours).toFixed(2)) : 0,
+                dual_hours: 0,
+                instructor_hours: 0,
+                simulator_hours: 0,
+                landings_day: Math.floor(Math.random() * 2) + 1,
+                landings_night: (Math.random() < 0.3) ? Math.floor(Math.random() * 1) + 1 : 0,
+                notes: 'Record ore di volo simulato'
+              })
+              .then(() => {
+                hoursCreated++;
+              })
+              .catch(() => {
+                // Ignora errori
+              });
           }
         }
       }
-      console.log(`    ✅ Creati ${hoursCreated} record ore di volo`);
+      console.log(`    ✅ Creati ${hoursCreated} record ore di volo per piloti`);
       
       // 4. Crea pilot_schedule per ogni pilota (schedule mensili)
       console.log('  📅 Creando schedule per piloti...');

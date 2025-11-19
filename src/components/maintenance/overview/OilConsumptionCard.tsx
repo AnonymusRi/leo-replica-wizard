@@ -25,14 +25,14 @@ export const OilConsumptionCard = ({ recentOilRecords }: OilConsumptionCardProps
           {['Engine 1', 'Engine 2', 'APU'].map((engine) => {
             const engineRecords = recentOilRecords.filter(r => r.engine_position === engine);
             const avgConsumption = engineRecords.length > 0 
-              ? engineRecords.reduce((sum, r) => sum + (r.consumption_rate || 0), 0) / engineRecords.length
+              ? engineRecords.reduce((sum, r) => sum + (Number(r.consumption_rate) || 0), 0) / engineRecords.length
               : 0;
             
             return (
               <div key={engine} className="text-center p-4 border rounded-lg">
                 <div className="font-medium text-lg">{engine}</div>
                 <div className="text-2xl font-bold text-blue-600">
-                  {avgConsumption.toFixed(2)}
+                  {(Number(avgConsumption) || 0).toFixed(2)}
                 </div>
                 <div className="text-sm text-gray-500">L/hr average</div>
                 <div className="text-xs text-gray-400">

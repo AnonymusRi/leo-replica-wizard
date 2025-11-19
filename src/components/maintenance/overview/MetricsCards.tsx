@@ -79,7 +79,7 @@ export const MetricsCards = ({
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-blue-600">
-            {averageOilConsumption.toFixed(2)}
+            {(Number(averageOilConsumption) || 0).toFixed(2)}
           </div>
           <p className="text-xs text-gray-500">
             L/hr (last 30 days)

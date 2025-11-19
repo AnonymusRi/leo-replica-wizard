@@ -36,20 +36,20 @@ export const CrewFTLSection = ({ crewMemberId }: CrewFTLSectionProps) => {
     return isAfter(startTime, subDays(now, 28));
   });
 
-  // Calculate totals
+  // Calculate totals - ensure values are numbers
   const daily = {
-    flight: last24Hours.reduce((sum, a) => sum + (a.flight_time_hours || 0), 0),
-    duty: last24Hours.reduce((sum, a) => sum + (a.duty_time_hours || 0), 0)
+    flight: last24Hours.reduce((sum, a) => sum + (Number(a.flight_time_hours) || 0), 0),
+    duty: last24Hours.reduce((sum, a) => sum + (Number(a.duty_time_hours) || 0), 0)
   };
 
   const weekly = {
-    flight: last7Days.reduce((sum, a) => sum + (a.flight_time_hours || 0), 0),
-    duty: last7Days.reduce((sum, a) => sum + (a.duty_time_hours || 0), 0)
+    flight: last7Days.reduce((sum, a) => sum + (Number(a.flight_time_hours) || 0), 0),
+    duty: last7Days.reduce((sum, a) => sum + (Number(a.duty_time_hours) || 0), 0)
   };
 
   const monthly = {
-    flight: last28Days.reduce((sum, a) => sum + (a.flight_time_hours || 0), 0),
-    duty: last28Days.reduce((sum, a) => sum + (a.duty_time_hours || 0), 0)
+    flight: last28Days.reduce((sum, a) => sum + (Number(a.flight_time_hours) || 0), 0),
+    duty: last28Days.reduce((sum, a) => sum + (Number(a.duty_time_hours) || 0), 0)
   };
 
   // Get default FTL limits (EASA standard)
@@ -159,7 +159,7 @@ export const CrewFTLSection = ({ crewMemberId }: CrewFTLSectionProps) => {
                   variant="outline" 
                   className={`bg-${getComplianceStatus(daily.duty, defaultLimits.dailyDuty).color}-100 text-${getComplianceStatus(daily.duty, defaultLimits.dailyDuty).color}-800`}
                 >
-                  {daily.duty.toFixed(1)}/{defaultLimits.dailyDuty}h
+                  {(Number(daily.duty) || 0).toFixed(1)}/{defaultLimits.dailyDuty}h
                 </Badge>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
@@ -177,7 +177,7 @@ export const CrewFTLSection = ({ crewMemberId }: CrewFTLSectionProps) => {
                   variant="outline" 
                   className={`bg-${getComplianceStatus(daily.flight, defaultLimits.dailyFlight).color}-100 text-${getComplianceStatus(daily.flight, defaultLimits.dailyFlight).color}-800`}
                 >
-                  {daily.flight.toFixed(1)}/{defaultLimits.dailyFlight}h
+                  {(Number(daily.flight) || 0).toFixed(1)}/{defaultLimits.dailyFlight}h
                 </Badge>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
@@ -205,7 +205,7 @@ export const CrewFTLSection = ({ crewMemberId }: CrewFTLSectionProps) => {
                   variant="outline" 
                   className={`bg-${getComplianceStatus(weekly.duty, defaultLimits.weeklyDuty).color}-100 text-${getComplianceStatus(weekly.duty, defaultLimits.weeklyDuty).color}-800`}
                 >
-                  {weekly.duty.toFixed(1)}/{defaultLimits.weeklyDuty}h
+                  {(Number(weekly.duty) || 0).toFixed(1)}/{defaultLimits.weeklyDuty}h
                 </Badge>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
@@ -223,7 +223,7 @@ export const CrewFTLSection = ({ crewMemberId }: CrewFTLSectionProps) => {
                   variant="outline" 
                   className={`bg-${getComplianceStatus(weekly.flight, defaultLimits.weeklyFlight).color}-100 text-${getComplianceStatus(weekly.flight, defaultLimits.weeklyFlight).color}-800`}
                 >
-                  {weekly.flight.toFixed(1)}/{defaultLimits.weeklyFlight}h
+                  {(Number(weekly.flight) || 0).toFixed(1)}/{defaultLimits.weeklyFlight}h
                 </Badge>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">

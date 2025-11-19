@@ -14,10 +14,10 @@ export const CrewStatisticsSection = ({ crewMemberId }: CrewStatisticsSectionPro
   const { data: statistics = [] } = useCrewStatistics(crewMemberId, 12);
   const { data: currentMonth } = useCurrentMonthStatistics(crewMemberId);
 
-  const totalFlightHours = statistics.reduce((sum, stat) => sum + stat.total_flight_hours, 0);
-  const totalFlights = statistics.reduce((sum, stat) => sum + stat.total_flights, 0);
+  const totalFlightHours = statistics.reduce((sum, stat) => sum + (Number(stat.total_flight_hours) || 0), 0);
+  const totalFlights = statistics.reduce((sum, stat) => sum + (stat.total_flights || 0), 0);
   const averageRating = statistics.length > 0 
-    ? statistics.reduce((sum, stat) => sum + (stat.performance_rating || 0), 0) / statistics.filter(s => s.performance_rating).length
+    ? statistics.reduce((sum, stat) => sum + (Number(stat.performance_rating) || 0), 0) / statistics.filter(s => s.performance_rating).length
     : 0;
 
   return (
@@ -85,7 +85,7 @@ export const CrewStatisticsSection = ({ crewMemberId }: CrewStatisticsSectionPro
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Ore di Volo</span>
-              <span className="font-bold text-lg">{totalFlightHours.toFixed(1)}h</span>
+              <span className="font-bold text-lg">{(Number(totalFlightHours) || 0).toFixed(1)}h</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Numero Voli</span>
@@ -94,7 +94,7 @@ export const CrewStatisticsSection = ({ crewMemberId }: CrewStatisticsSectionPro
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Valutazione Media</span>
               <span className="font-bold text-lg">
-                {averageRating > 0 ? averageRating.toFixed(1) : 'N/A'}/10
+                {averageRating > 0 ? (Number(averageRating) || 0).toFixed(1) : 'N/A'}/10
               </span>
             </div>
           </CardContent>
@@ -111,13 +111,13 @@ export const CrewStatisticsSection = ({ crewMemberId }: CrewStatisticsSectionPro
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Ore Notturne</span>
               <span className="font-bold text-lg">
-                {statistics.reduce((sum, stat) => sum + stat.night_hours, 0).toFixed(1)}h
+                {(statistics.reduce((sum, stat) => sum + (Number(stat.night_hours) || 0), 0)).toFixed(1)}h
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Ore Simulatore</span>
               <span className="font-bold text-lg">
-                {statistics.reduce((sum, stat) => sum + stat.simulator_hours, 0).toFixed(1)}h
+                {(statistics.reduce((sum, stat) => sum + (Number(stat.simulator_hours) || 0), 0)).toFixed(1)}h
               </span>
             </div>
             <div className="flex justify-between items-center">
@@ -140,7 +140,7 @@ export const CrewStatisticsSection = ({ crewMemberId }: CrewStatisticsSectionPro
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Ore Formazione</span>
               <span className="font-bold text-lg">
-                {statistics.reduce((sum, stat) => sum + stat.training_hours, 0).toFixed(1)}h
+                {(statistics.reduce((sum, stat) => sum + (Number(stat.training_hours) || 0), 0)).toFixed(1)}h
               </span>
             </div>
             <div className="flex justify-between items-center">

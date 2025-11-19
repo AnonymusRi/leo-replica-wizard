@@ -311,7 +311,7 @@ export const OwnerBoardModule = () => {
                     <span>Quote Conversion Rate</span>
                     <span className="font-bold">
                       {quotes.length > 0 
-                        ? ((quotes.filter(q => q.status === 'confirmed').length / quotes.length) * 100).toFixed(1)
+                        ? (Number((quotes.filter(q => q.status === 'confirmed').length / quotes.length) * 100) || 0).toFixed(1)
                         : 0}%
                     </span>
                   </div>
@@ -326,7 +326,7 @@ export const OwnerBoardModule = () => {
                   <div className="flex justify-between items-center">
                     <span>Fleet Efficiency</span>
                     <span className="font-bold text-green-600">
-                      {((activeAircraft / aircraft.length) * 100).toFixed(1)}%
+                      {(Number((activeAircraft / (aircraft.length || 1)) * 100) || 0).toFixed(1)}%
                     </span>
                   </div>
                 </CardContent>
